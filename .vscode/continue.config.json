@@ -1,0 +1,35 @@
+{
+  "$schema": "https://raw.githubusercontent.com/continuedev/continue/main/website/static/config.schema.json",
+  "models": [
+    {
+      "title": "Deepseek (Ollama)",
+      "provider": "ollama",
+      "model": "deepseek-coder:6.7b",
+      "apiBase": "http://localhost:11434", 
+      "systemMessage": "You are a helpful and expert AI coding assistant with deep knowledge of C#, MAUI, and modern .NET development. Respond with complete code, brief explanations, and follow good MVVM and performance practices when possible."
+    }
+  ],
+  "context": [
+    "current-file",
+    "open-files",
+    "project-files"
+  ],
+  "defaultModel": "Deepseek (Ollama)",
+  "customCommands": [
+    {
+      "name": "Explain Selection",
+      "description": "Explain the selected code block in plain English.",
+      "prompt": "Explain the following code clearly: {{selection}}"
+    },
+    {
+      "name": "Refactor",
+      "description": "Refactor the selected code using best C# and MAUI practices.",
+      "prompt": "Refactor this code and explain why you made changes: {{selection}}"
+    },
+    {
+      "name": "Add Unit Tests",
+      "description": "Generate xUnit-style unit tests for the selected method or class.",
+      "prompt": "Write xUnit tests for the following C# code: {{selection}}"
+    }
+  ]
+}
