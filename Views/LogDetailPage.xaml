@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="LocalAIAssistant.Views.LogDetailPage"
+             Title="Log Entry Details">
+
+    <ScrollView Padding="20">
+        <VerticalStackLayout Spacing="10">
+            <Label Text="{Binding FormattedTimestamp}"
+                   FontSize="12"
+                   TextColor="Gray" />
+
+            <Label Text="{Binding Level}"
+                   FontAttributes="Bold"
+                   FontSize="14"
+                   TextColor="DarkRed" />
+
+            <Label Text="{Binding FullText}"
+                   FontSize="14"
+                   LineBreakMode="WordWrap" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

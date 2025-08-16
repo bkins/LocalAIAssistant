@@ -1,14 +1,60 @@
-<?xml version="1.0" encoding="UTF-8" ?>
 <Shell
     x:Class="LocalAIAssistant.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:LocalAIAssistant"
+    xmlns:localAiAssistant="clr-namespace:LocalAIAssistant"
+    xmlns:views="clr-namespace:LocalAIAssistant.Views"
+    xmlns:converters="clr-namespace:LocalAIAssistant.Converters"
+    xmlns:localAiAssistant1="clr-namespace:LocalAIAssistant"
     Title="LocalAIAssistant">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <Shell.Resources>
+        <ResourceDictionary>
+            <Style x:Key="BaseStyle" TargetType="Element">
+                <Setter Property="Shell.BackgroundColor" Value="#512BD4"/>
+                <Setter Property="Shell.ForegroundColor" Value="White"/>
+                <Setter Property="Shell.TitleColor" Value="White"/>
+                <Setter Property="Shell.NavBarHasShadow" Value="True"/>
+            </Style>
+            <converters:ApiStatusTextConverter x:Key="ApiStatusTextConverter" />
+            <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
+        </ResourceDictionary>
+    </Shell.Resources>
 
+    <!-- This applies your TitleView globally -->
+    <Shell.TitleView>
+        <HorizontalStackLayout Padding="8" 
+                               Spacing="8" 
+                               HorizontalOptions="End" 
+                               VerticalOptions="Center">
+            <BoxView WidthRequest="14"
+                     HeightRequest="14"
+                     CornerRadius="7"
+                     BackgroundColor="{Binding IsApiAvailable, Converter={StaticResource BoolToColorConverter}}" >
+                <BoxView.GestureRecognizers>
+                    <TapGestureRecognizer
+                        NumberOfTapsRequired="1"
+                        Command="{Binding CheckApiStatusCommand}" />
+                </BoxView.GestureRecognizers>
+            </BoxView>
+            <Label Text="{Binding IsApiAvailable, Converter={StaticResource ApiStatusTextConverter}}"
+                   VerticalOptions="Center"
+                   FontAttributes="Bold"
+                   TextColor="Black" 
+                   IsVisible="False"/>
+        </HorizontalStackLayout>
+    </Shell.TitleView>
+
+    <TabBar>
+        <Tab Title="Home">
+            <ShellContent ContentTemplate="{DataTemplate localAiAssistant1:MainPage}"/>
+        </Tab>
+        <Tab Title="AI Memory">
+            <ShellContent x:Name="MemoryShellContent"
+                          ContentTemplate="{DataTemplate views:MemoryManagementPage}"/>            
+        </Tab>
+        <Tab Title="Logs" Icon="reports.png">
+            <ShellContent ContentTemplate="{DataTemplate views:LogsPage}" Route="Logs" />
+        </Tab>
+    </TabBar>
 </Shell>

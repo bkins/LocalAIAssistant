@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="LocalAIAssistant.Views.MemoryManagementPage">
+
+    <ScrollView>
+    <VerticalStackLayout>
+        <HorizontalStackLayout Padding="10" Spacing="15" HorizontalOptions="Center">
+            <!--Command="{Binding ClearShortTermAsyncCommand}" -->
+            <Button x:Name="ClearShorTermButton"
+                    Text="Clear Short Term" 
+                    Clicked="ClearShorTermButton_OnClicked"
+                    BackgroundColor="#FF6F61" 
+                    TextColor="White"
+                    CornerRadius="8"/>
+            <!--Command="{Binding ClearLongTermAsyncCommand}" -->
+            <Button x:Name="ClearLongTermButton"
+                    Text="Clear Long Term" 
+                    Clicked="ClearLongTermButton_OnClicked"
+                    BackgroundColor="#FFB74D" 
+                    TextColor="White"
+                    CornerRadius="8"/>
+            <!--Command="{Binding RefreshAsyncCommand}"-->
+            <Button x:Name="RefreshButton"
+                    Text="Refresh" 
+                    Clicked="RefreshButton_OnClicked"
+                    BackgroundColor="#4CAF50" 
+                    TextColor="White"
+                    CornerRadius="8"/>
+        </HorizontalStackLayout>
+    
+        <Grid Padding="10"
+              ColumnDefinitions="*,*"
+              RowDefinitions="Auto,*"
+              ColumnSpacing="10">
+
+            <!-- Column headers -->
+            <Label Grid.Column="0"
+                   Text="Short Term Memory"
+                   FontAttributes="Bold"
+                   FontSize="Medium"
+                   HorizontalOptions="Center"/>
+            <Label Grid.Column="1"
+                   Text="Long Term Memory"
+                   FontAttributes="Bold"
+                   FontSize="Medium"
+                   HorizontalOptions="Center"/>
+
+            <!-- Short Term Messages -->
+            <CollectionView Grid.Row="1"
+                            Grid.Column="0"
+                            ItemsSource="{Binding ShortTermMessages}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame Padding="5"
+                               Margin="3"
+                               BorderColor="LightGray"
+                               CornerRadius="6">
+                            <VerticalStackLayout>
+                                <Label Text="{Binding Sender}"
+                                       FontAttributes="Bold"
+                                       FontSize="Small"/>
+                                <Label Text="{Binding Content}"
+                                       FontSize="Small"/>
+                                <Label Text="{Binding Timestamp, StringFormat='{0:yyyy-MM-dd HH:mm:ss}'}"
+                                       FontSize="Micro"
+                                       TextColor="Gray"/>
+                            </VerticalStackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <!-- Long Term Messages -->
+            <CollectionView Grid.Row="1"
+                            Grid.Column="1"
+                            ItemsSource="{Binding LongTermMessages}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame Padding="5"
+                               Margin="3"
+                               BorderColor="LightGray"
+                               CornerRadius="6">
+                            <VerticalStackLayout>
+                                <Label Text="{Binding Sender}"
+                                       FontAttributes="Bold"
+                                       FontSize="Small"/>
+                                <Label Text="{Binding Content}"
+                                       FontSize="Small"/>
+                                <Label Text="{Binding Timestamp, StringFormat='{0:yyyy-MM-dd HH:mm:ss}'}"
+                                       FontSize="Micro"
+                                       TextColor="Gray"/>
+                            </VerticalStackLayout>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+        </Grid>
+    </VerticalStackLayout>
+</ScrollView>
+
+</ContentPage>
