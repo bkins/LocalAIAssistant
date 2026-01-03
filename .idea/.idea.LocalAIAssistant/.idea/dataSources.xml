@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
+    <data-source source="LOCAL" name="AiMemory" uuid="58bb5954-4bd7-456a-9f79-c6f66ecc192d">
+      <driver-ref>f8b75187-6ba1-423d-8b3a-b23f47e39c9b</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
+      <jdbc-url>jdbc:sqlite:$USER_HOME$/AppData/Local/JetBrains/Rider2025.2/device-explorer/motorola moto g stylus 5G - 2023/_/data/data/com.companyname.localaiassistant/files/AiMemory.db</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
+    <data-source source="LOCAL" name="TODO_ your SQLite connection string" uuid="fa8f5838-3ef6-4c9a-8d81-35a764db1a98">
+      <driver-ref>sqlite.xerial</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
+      <jdbc-url>jdbc:sqlite:$USER_HOME$/AppData/Local/JetBrains/Rider2025.2/device-explorer/motorola moto g stylus 5G - 2023/_/data/data/com.companyname.localaiassistant/files/TODO_ your SQLite connection string</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
+    <data-source source="LOCAL" name="AiAss" uuid="1e1eb4f3-c0a4-49f6-9ddd-47fdf8c5f2a4">
+      <driver-ref>sqlite.xerial</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
+      <jdbc-url>jdbc:sqlite:$USER_HOME$/AppData/Local/JetBrains/Rider2025.2/device-explorer/motorola moto g stylus 5G - 2023/_/data/data/com.companyname.localaiassistant/files/AiAss.db</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
+  </component>
+</project>
