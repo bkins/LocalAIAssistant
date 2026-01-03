@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Services.Logging;
 using Microsoft.Data.Sqlite;
@@ -9,7 +11,7 @@ public class SqliteAiMemoryStore : IShortTermMemoryStore
     private readonly ILoggingService _loggingService;
     
     private readonly string _dbPath;
-    private const    string TableName = "AiMemory";
+    private const    string TableName = StringConsts.AiMemoryTableName;
 
     public SqliteAiMemoryStore(ILoggingService loggingService
                              , string          dbPath)
@@ -156,6 +158,25 @@ public class SqliteAiMemoryStore : IShortTermMemoryStore
         }
 
         return messages;
+    }
+    public async Task DeleteMessagesOlderThanAsync(DateTime cutoffUtc, [CallerMemberName] string caller = null)
+    {
+        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        await connection.OpenAsync();
+        
+        using var cmd = connection.CreateCommand();
+        var sql = $"DELETE FROM {TableName} WHERE Timestamp < '{cutoffUtc}'";
+        cmd.CommandText = sql;
+        
+        // connection.Execute("DELETE FROM Messages WHERE Timestamp < ?", cutoffUtc);
+        try
+        {
+            await cmd.ExecuteNonQueryAsync();
+        }
+        catch (Exception e)
+        {
+            _loggingService.LogError(e, $"Calling method: {caller}",  Category.MemoryService);
+        }
     }
 
     

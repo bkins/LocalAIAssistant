@@ -9,19 +9,17 @@ public partial class AppShell : Shell
 
 	private readonly ApiHealthService _apiHealthService;
 
-	public AppShell(ApiHealthService   apiHealthService
-	              , ApiHealthViewModel apiHealthViewModel)
+	public AppShell(AppShellMasterViewModel masterViewModel)
 	{
 		InitializeComponent();
 
 		Routing.RegisterRoute(nameof(LogDetailPage)
 		                    , typeof(LogDetailPage));
 
-		_apiHealthService = apiHealthService;
+		BindingContext = masterViewModel;
 
-		BindingContext = apiHealthViewModel;
-
-		_ = apiHealthViewModel.CheckApiStatusAsync();
+		// Trigger the initial API status check via the master view model's property
+		_ = masterViewModel.ApiHealthViewModel.CheckApiStatusAsync();
 	}
 
 }

@@ -13,9 +13,7 @@
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto, *" Padding="10">
-        <!-- Top Section: Error, Loading, Buttons -->
         <VerticalStackLayout Spacing="10" Grid.Row="0">
-            <!-- Error Message -->
             <VerticalStackLayout IsVisible="{Binding HasError}">
                 <Border BackgroundColor="#FFEBEE"
                         Stroke="#FFCDD2"
@@ -26,12 +24,10 @@
                 </Border>
             </VerticalStackLayout>
 
-            <!-- Loading Indicator -->
             <ActivityIndicator IsRunning="{Binding IsLoading}"
                                IsVisible="{Binding IsLoading}"
                                HorizontalOptions="Center"/>
 
-            <!-- Action Buttons -->
             <HorizontalStackLayout Spacing="10" 
                                    HorizontalOptions="Center">
                 <Button Text="Refresh"
@@ -44,17 +40,28 @@
                         Command="{Binding TestLoggingCommand}"
                         BackgroundColor="LightGreen"/>
             </HorizontalStackLayout>
+            
+            <HorizontalStackLayout Spacing="10" HorizontalOptions="Center" VerticalOptions="Center">
+                <Label Text="Information" VerticalOptions="Center" />
+                <Switch IsToggled="{Binding ShowInformation}"
+                        Toggled="OnFilterToggled"/>
+                
+                <Label Text="Warnings" VerticalOptions="Center" />
+                <Switch IsToggled="{Binding ShowWarning}"
+                        Toggled="OnFilterToggled"/>
+
+                <Label Text="Errors" VerticalOptions="Center" />
+                <Switch IsToggled="{Binding ShowError}"
+                        Toggled="OnFilterToggled"/>
+            </HorizontalStackLayout>
+            
         </VerticalStackLayout>
 
-        <!-- Scrollable Logs -->
         <CollectionView x:Name="LogCollection"
                         Grid.Row="1"
                         ItemsSource="{Binding LogEntries}"
                         SelectionMode="Single"
                         SelectedItem="{Binding SelectedLogEntry, Mode=TwoWay}">
-            
-            <!-- SelectedItem="{Binding SelectedLogEntry}" -->
-                        <!-- SelectionChanged="OnSelectionChanged"> -->
             <CollectionView.ItemTemplate>
                 <DataTemplate>
                     <Border Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
@@ -64,7 +71,6 @@
                             Padding="10">
                         <Grid RowDefinitions="Auto, Auto" 
                               ColumnDefinitions="*, Auto">
-                            <!-- Timestamp and Level -->
                             <HorizontalStackLayout Grid.Row="0" 
                                                    Grid.Column="0" 
                                                    Spacing="10">
@@ -81,7 +87,11 @@
                                 </Border>
                             </HorizontalStackLayout>
 
-                            <!-- Message -->
+                            <Label Grid.Row="1" Grid.Column="0"
+                                   Text="{Binding RenderedMessage}"
+                                   FontSize="14"
+                                   TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray100}}"
+                                   LineBreakMode="WordWrap"/>
                             <Label Grid.Row="1" Grid.Column="0"
                                    Text="{Binding Message}"
                                    FontSize="14"
@@ -99,7 +109,15 @@
                            HorizontalOptions="Center"
                            FontSize="16"
                            TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
-                    <Label Text="Try adding some test logs or check if logging is working"
+                    <Label Text="If you just cleared the log, please restart app to reinitiate the logger."
+                           HorizontalOptions="Center"
+                           FontSize="16"
+                           TextColor="Red"/>
+                    <Label Text="TODO: Fix this!!"
+                           HorizontalOptions="Center"
+                           FontSize="16"
+                           TextColor="Green"/>
+                    <Label Text="Otherwise, try adding some test logs or check your filters"
                            HorizontalOptions="Center"
                            FontSize="12"
                            TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray500}}"/>
@@ -113,7 +131,6 @@
 <!-- <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui" -->
 <!--              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" -->
 <!--              xmlns:viewModels="clr-namespace:LocalAIAssistant.ViewModels" -->
-<!--              xmlns:converters="clr-namespace:LocalAiAssistant.Converters" -->
 <!--              xmlns:converters1="clr-namespace:LocalAIAssistant.Converters" -->
 <!--              x:Class="LocalAIAssistant.Views.LogsPage" -->
 <!--              Title="Application Logs" -->
@@ -124,42 +141,49 @@
 <!--         <converters1:LogLevelToColorConverter x:Key="LogLevelToColorConverter"/> -->
 <!--     </ContentPage.Resources> -->
 <!-- -->
-<!--     <VerticalStackLayout Spacing="10" Margin="10"> -->
-<!--         ~1~ Error Message @1@ -->
-<!--         <VerticalStackLayout IsVisible="{Binding HasError}"> -->
-<!--             <Border BackgroundColor="#FFEBEE" -->
-<!--                     Stroke="#FFCDD2" -->
-<!--                     StrokeThickness="1" -->
-<!--                     Padding="10"> -->
-<!--                 <Label Text="{Binding ErrorMessage}" -->
-<!--                        TextColor="#B71C1C"/> -->
-<!--             </Border> -->
+<!--     <Grid RowDefinitions="Auto, *" Padding="10"> -->
+<!--         ~1~ Top Section: Error, Loading, Buttons @1@ -->
+<!--         <VerticalStackLayout Spacing="10" Grid.Row="0"> -->
+<!--             ~1~ Error Message @1@ -->
+<!--             <VerticalStackLayout IsVisible="{Binding HasError}"> -->
+<!--                 <Border BackgroundColor="#FFEBEE" -->
+<!--                         Stroke="#FFCDD2" -->
+<!--                         StrokeThickness="1" -->
+<!--                         Padding="10"> -->
+<!--                     <Label Text="{Binding ErrorMessage}" -->
+<!--                            TextColor="#B71C1C"/> -->
+<!--                 </Border> -->
+<!--             </VerticalStackLayout> -->
+<!-- -->
+<!--             ~1~ Loading Indicator @1@ -->
+<!--             <ActivityIndicator IsRunning="{Binding IsLoading}" -->
+<!--                                IsVisible="{Binding IsLoading}" -->
+<!--                                HorizontalOptions="Center"/> -->
+<!-- -->
+<!--             ~1~ Action Buttons @1@ -->
+<!--             <HorizontalStackLayout Spacing="10"  -->
+<!--                                    HorizontalOptions="Center"> -->
+<!--                 <Button Text="Refresh" -->
+<!--                         Command="{Binding RefreshLogsCommand}" -->
+<!--                         BackgroundColor="LightBlue"/> -->
+<!--                 <Button Text="Clear Logs" -->
+<!--                         Command="{Binding ClearLogsCommand}" -->
+<!--                         BackgroundColor="Orange"/> -->
+<!--                 <Button Text="Test Logging" -->
+<!--                         Command="{Binding TestLoggingCommand}" -->
+<!--                         BackgroundColor="LightGreen"/> -->
+<!--             </HorizontalStackLayout> -->
 <!--         </VerticalStackLayout> -->
 <!-- -->
-<!--         ~1~ Loading Indicator @1@ -->
-<!--         <ActivityIndicator IsRunning="{Binding IsLoading}" -->
-<!--                           IsVisible="{Binding IsLoading}" -->
-<!--                           HorizontalOptions="Center"/> -->
-<!-- -->
-<!--         ~1~ Action Buttons @1@ -->
-<!--         <HorizontalStackLayout Spacing="10" HorizontalOptions="Center"> -->
-<!--             <Button Text="Refresh" -->
-<!--                     Command="{Binding RefreshLogsCommand}" -->
-<!--                     BackgroundColor="LightBlue"/> -->
-<!-- -->
-<!--             <Button Text="Clear Logs" -->
-<!--                     Command="{Binding ClearLogsCommand}" -->
-<!--                     BackgroundColor="Orange"/> -->
-<!-- -->
-<!--             <Button Text="Test Logging" -->
-<!--                     Command="{Binding TestLoggingCommand}" -->
-<!--                     BackgroundColor="LightGreen"/> -->
-<!--         </HorizontalStackLayout> -->
-<!-- -->
-<!--         ~1~ Log Entries @1@ -->
-<!--         <CollectionView ItemsSource="{Binding LogEntries}" -->
-<!--                        SelectionMode="Single" -->
-<!--                        SelectedItem="{Binding SelectedLogEntry}"> -->
+<!--         ~1~ Scrollable Logs @1@ -->
+<!--         <CollectionView x:Name="LogCollection" -->
+<!--                         Grid.Row="1" -->
+<!--                         ItemsSource="{Binding LogEntries}" -->
+<!--                         SelectionMode="Single" -->
+<!--                         SelectedItem="{Binding SelectedLogEntry, Mode=TwoWay}"> -->
+<!--              -->
+<!--             ~1~ SelectedItem="{Binding SelectedLogEntry}" @1@ -->
+<!--                         ~1~ SelectionChanged="OnSelectionChanged"> @1@ -->
 <!--             <CollectionView.ItemTemplate> -->
 <!--                 <DataTemplate> -->
 <!--                     <Border Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}" -->
@@ -167,13 +191,15 @@
 <!--                             StrokeShape="RoundRectangle 5" -->
 <!--                             Margin="5" -->
 <!--                             Padding="10"> -->
-<!--                         <Grid RowDefinitions="Auto, Auto" ColumnDefinitions="*, Auto"> -->
+<!--                         <Grid RowDefinitions="Auto, Auto"  -->
+<!--                               ColumnDefinitions="*, Auto"> -->
 <!--                             ~1~ Timestamp and Level @1@ -->
-<!--                             <HorizontalStackLayout Grid.Row="0" Grid.Column="0" Spacing="10"> -->
+<!--                             <HorizontalStackLayout Grid.Row="0"  -->
+<!--                                                    Grid.Column="0"  -->
+<!--                                                    Spacing="10"> -->
 <!--                                 <Label Text="{Binding FormattedTimestamp}" -->
 <!--                                        FontSize="12" -->
 <!--                                        TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/> -->
-<!-- -->
 <!--                                 <Border BackgroundColor="{Binding Level, Converter={StaticResource LogLevelToColorConverter}}" -->
 <!--                                         StrokeThickness="0" -->
 <!--                                         Padding="4,2"> -->
@@ -196,7 +222,8 @@
 <!--             </CollectionView.ItemTemplate> -->
 <!-- -->
 <!--             <CollectionView.EmptyView> -->
-<!--                 <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center"> -->
+<!--                 <VerticalStackLayout HorizontalOptions="Center"  -->
+<!--                                      VerticalOptions="Center"> -->
 <!--                     <Label Text="No log entries found" -->
 <!--                            HorizontalOptions="Center" -->
 <!--                            FontSize="16" -->
@@ -208,6 +235,5 @@
 <!--                 </VerticalStackLayout> -->
 <!--             </CollectionView.EmptyView> -->
 <!--         </CollectionView> -->
-<!--     </VerticalStackLayout> -->
+<!--     </Grid> -->
 <!-- </ContentPage> -->
-

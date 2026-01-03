@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LocalAIAssistant.Services.Logging;
 using LocalAIAssistant.Views;
+using CommunityToolkit.Mvvm.Messaging;
 
 namespace LocalAIAssistant.ViewModels;
 
@@ -11,14 +12,26 @@ public partial class LogsViewModel : ObservableObject
     private readonly ILoggingService _loggingService;
 
     [ObservableProperty] private ObservableCollection<LogEntry> _logEntries = new();
-    [ObservableProperty] private bool _isLoading;
-    [ObservableProperty] private bool _hasError;
-    [ObservableProperty] private string _errorMessage = string.Empty;
-    [ObservableProperty] private LogEntry? _selectedLogEntry;
+    [ObservableProperty] private bool                           _isLoading;
+    [ObservableProperty] private bool                           _hasError;
+    [ObservableProperty] private string                         _errorMessage = string.Empty;
+    [ObservableProperty] private LogEntry?                      _selectedLogEntry;
+
+    // Filter properties
+    [ObservableProperty] private bool _showInformation = true;
+    [ObservableProperty] private bool _showWarning     = true;
+    [ObservableProperty] private bool _showError       = true;
 
     public LogsViewModel(ILoggingService loggingService)
     {
         _loggingService = loggingService;
+        LogEntries.CollectionChanged += (sender, args) =>
+        {
+            if (LogEntries.Any(e => e.Level == "Error"))
+            {
+                WeakReferenceMessenger.Default.Send(new LogErrorsChangedMessage(true));
+            }
+        };
     }
 
     [RelayCommand]
@@ -31,8 +44,15 @@ public partial class LogsViewModel : ObservableObject
 
             var logs = await _loggingService.GetLogEntriesAsync();
             
+            // Apply the filters
+            var filteredLogs = logs.Where(log => (ShowInformation && log.Level == "Information")
+                                              || (ShowWarning && log.Level == "Warning")
+                                              || (ShowError && log.Level == "Error"))
+                                   .OrderByDescending(log=>log.Timestamp)
+                                   .ToList();
+
             LogEntries.Clear();
-            foreach (var log in logs)
+            foreach (var log in filteredLogs)
             {
                 LogEntries.Add(log);
             }
@@ -47,7 +67,13 @@ public partial class LogsViewModel : ObservableObject
             IsLoading = false;
         }
     }
-
+    
+    [RelayCommand]
+    private async Task ApplyFilters()
+    {
+        await LoadLogs();
+    }
+    
     [RelayCommand]
     private async Task ClearLogs()
     {
@@ -58,6 +84,7 @@ public partial class LogsViewModel : ObservableObject
 
             await _loggingService.ClearLogsAsync();
             await LoadLogs();
+            WeakReferenceMessenger.Default.Send(new LogErrorsChangedMessage(false)); // Reset the status
         }
         catch (Exception ex)
         {
@@ -81,10 +108,20 @@ public partial class LogsViewModel : ObservableObject
     {
         try
         {
+            var test = "test value";
+            
             // Test both Serilog and direct file writing
-            _loggingService.LogInformation("This is a test information message");
-            _loggingService.LogWarning("This is a test warning message");
-            _loggingService.LogError(new Exception("Test Exception"), "This is a test error message");
+            _loggingService.LogInformation($"This is a test information message [{test}]", Category.App);
+            _loggingService.LogInformation("This is a test information message",           Category.App);
+            
+            // Pass the message template and the value separately
+            _loggingService.LogWarning("This is a test warning message [{Test}]", Category.App, test);
+
+            // If you have a different log message that doesn't need additional properties
+            _loggingService.LogWarning("This is a test message without a value.", Category.App);
+            
+            _loggingService.LogError(new Exception("Test Exception"), $"This is a test error message [{test}]", Category.App);
+            _loggingService.LogError(new Exception("Test Exception"), "This is a test error message", Category.App);
             
             // Also write directly to file to test
             // _loggingService.WriteDirectToFile("This is a direct file write test");
@@ -148,3 +185,13 @@ public partial class LogsViewModel : ObservableObject
         SelectedLogEntry = null;
     }
 } 
+
+public class LogErrorsChangedMessage
+{
+    public bool HasErrors { get; }
+
+    public LogErrorsChangedMessage(bool hasErrors)
+    {
+        HasErrors = hasErrors;
+    }
+}

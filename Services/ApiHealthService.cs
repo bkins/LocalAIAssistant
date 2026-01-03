@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using LocalAIAssistant.Data;
 
 namespace LocalAIAssistant.Services;
 
@@ -45,7 +46,7 @@ public class ApiHealthService : INotifyPropertyChanged, IDisposable
     {
         try
         {
-            var response = await _httpClient.GetAsync("http://192.168.0.33:11434/");
+            var response = await _httpClient.GetAsync(StringConsts.OllamaServerUrl);
             IsApiAvailable = response.IsSuccessStatusCode;
         }
         catch

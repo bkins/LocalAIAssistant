@@ -15,7 +15,7 @@
                    FontSize="14"
                    TextColor="DarkRed" />
 
-            <Label Text="{Binding FullText}"
+            <Label Text="{Binding PrettifiedFullText}"
                    FontSize="14"
                    LineBreakMode="WordWrap" />
         </VerticalStackLayout>

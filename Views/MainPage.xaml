@@ -1,0 +1,262 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:rendering="clr-namespace:LocalAIAssistant.CognitivePlatform.Rendering"
+             xmlns:controls="clr-namespace:LocalAIAssistant.Views.Controls"
+             x:Class="LocalAIAssistant.Views.MainPage"
+             BackgroundColor="{StaticResource SplashBackgroundColor}"
+             Title="Local AI Assistant">
+
+    <Grid x:Name="Root"
+          Opacity="0"
+          BackgroundColor="Black">
+
+        <Grid RowDefinitions="Auto,*,Auto">
+
+            <!-- Header -->
+            <Grid RowDefinitions="*, *"
+                  Padding="16"
+                  BackgroundColor="{StaticResource SurfaceAltColor}"
+                  Row="0">
+            <!--      -->
+            <!--     ~1~ <Label Text="Cognitive Assistant" @1@ -->
+            <!--     ~1~        FontSize="24" @1@ -->
+            <!--     ~1~        FontAttributes="Bold" @1@ -->
+            <!--     ~1~        TextColor="{StaticResource PrimaryTextColor}" /> @1@ -->
+            <!-- -->
+            <!--     ~1~ Streaming toggle @1@ -->
+                <HorizontalStackLayout Grid.Row="1"
+                                       Spacing="40"
+                                       VerticalOptions="Center">
+            
+            <Label Text="Streaming"
+                   TextColor="{StaticResource SecondaryTextColor}"
+                   VerticalTextAlignment="Center"/>
+            
+            <Switch IsToggled="{Binding UseStreaming}"
+                    VerticalOptions="Center"
+                    HorizontalOptions="End" />
+            
+            </HorizontalStackLayout>
+            </Grid>
+
+            <!-- Messages -->
+            <!-- <CollectionView x:Name="MessagesView" -->
+            <!--                 Grid.Row="1" -->
+            <!--                 ItemsSource="{Binding Messages}" -->
+            <!--                 BackgroundColor="{StaticResource SurfaceAltColor}" -->
+            <!--                 Margin="12" -->
+            <!--                 VerticalOptions="FillAndExpand"> -->
+            <!-- -->
+            <!--     <CollectionView.ItemTemplate> -->
+            <!--         <DataTemplate> -->
+            <!--             <Frame -->
+            <!--                 Padding="12" -->
+            <!--                 Margin="0,6" -->
+            <!--                 BorderColor="#000000" -->
+            <!--                 HasShadow="False" -->
+            <!--                 CornerRadius="12" -->
+            <!--                 MaximumWidthRequest="320" -->
+            <!--                 HorizontalOptions="Start" -->
+            <!--                 BackgroundColor="{StaticResource SurfaceColor}" -->
+            <!--                 > -->
+            <!-- -->
+            <!--                 <Frame.Triggers> -->
+            <!-- -->
+            <!--                     ~1~ USER MESSAGE @1@ -->
+            <!--                     <DataTrigger -->
+            <!--                         TargetType="Frame" -->
+            <!--                         Binding="{Binding Sender}" -->
+            <!--                         Value="user"> -->
+            <!--                         <Setter Property="BackgroundColor" Value="#4CAF50" /> -->
+            <!--                         <Setter Property="HorizontalOptions" Value="End" /> -->
+            <!--                     </DataTrigger> -->
+            <!-- -->
+            <!--                     ~1~ ASSISTANT MESSAGE @1@ -->
+            <!--                     <DataTrigger -->
+            <!--                         TargetType="Frame" -->
+            <!--                         Binding="{Binding Sender}" -->
+            <!--                         Value="assistant"> -->
+            <!--                         <Setter Property="BackgroundColor" Value="#7C5CE6" /> -->
+            <!--                         <Setter Property="HorizontalOptions" Value="Start" /> -->
+            <!--                     </DataTrigger> -->
+            <!-- -->
+            <!--                     ~1~ SYSTEM MESSAGE (Errors and such) @1@ -->
+            <!--                     <DataTrigger -->
+            <!--                         TargetType="Frame" -->
+            <!--                         Binding="{Binding Sender}" -->
+            <!--                         Value="system"> -->
+            <!--                         <Setter Property="BackgroundColor" Value="Transparent" /> -->
+            <!--                         <Setter Property="HorizontalOptions" Value="Center" /> -->
+            <!--                     </DataTrigger> -->
+            <!-- -->
+            <!--                 </Frame.Triggers> -->
+            <!-- -->
+            <!--                 <Label Text="{Binding Content}" -->
+            <!--                        LineBreakMode="WordWrap" -->
+            <!--                        FontSize="14"> -->
+            <!-- -->
+            <!--                     <Label.Triggers> -->
+            <!-- -->
+            <!--                         ~1~ USER TEXT @1@ -->
+            <!--                         <DataTrigger TargetType="Label" -->
+            <!--                                      Binding="{Binding Sender}" -->
+            <!--                                      Value="user"> -->
+            <!--                             <Setter Property="TextColor" Value="White" /> -->
+            <!--                             <Setter Property="FontFamily" Value="Default" /> -->
+            <!--                         </DataTrigger> -->
+            <!-- -->
+            <!--                         ~1~ ASSISTANT TEXT @1@ -->
+            <!--                         <DataTrigger TargetType="Label" -->
+            <!--                                      Binding="{Binding Sender}" -->
+            <!--                                      Value="assistant"> -->
+            <!--                             <Setter Property="TextColor" Value="#0F172A" /> -->
+            <!--                             <Setter Property="FontFamily" Value="JetBrainsMono" /> -->
+            <!--                         </DataTrigger> -->
+            <!-- -->
+            <!--                         ~1~ SYSTEM TEXT @1@ -->
+            <!--                         <DataTrigger TargetType="Label" -->
+            <!--                                      Binding="{Binding Sender}" -->
+            <!--                                      Value="system"> -->
+            <!--                             <Setter Property="TextColor" Value="#64748B" /> -->
+            <!--                             <Setter Property="FontAttributes" Value="Italic" /> -->
+            <!--                             <Setter Property="HorizontalTextAlignment" Value="Center" /> -->
+            <!--                         </DataTrigger> -->
+            <!--                     </Label.Triggers> -->
+            <!--                 </Label> -->
+            <!--             </Frame> -->
+            <!--         </DataTemplate> -->
+            <!--     </CollectionView.ItemTemplate> -->
+            <!-- -->
+            <!-- </CollectionView> -->
+            <!-- Messages Background Layer -->
+            <!-- Messages Background Layer -->
+            <Grid Grid.Row="1"
+                  Margin="12">
+
+                <!-- Dark overlay to keep contrast -->
+                <BoxView
+                    Color="Black" />
+
+                <!-- Background image -->
+                <Image x:Name="BackgroundGlyph"
+                       Source="appicon_background.png"
+                       Aspect="Center"
+                       Scale="0.5"
+                       Opacity="0.5" />
+
+
+                <!-- Messages -->
+                <CollectionView x:Name="MessagesView"
+                                ItemsSource="{Binding Messages}"
+                                BackgroundColor="Transparent"
+                                VerticalOptions="FillAndExpand">
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Frame
+                                Padding="12"
+                                Margin="0,6"
+                                BorderColor="#000000"
+                                HasShadow="False"
+                                CornerRadius="12"
+                                MaximumWidthRequest="320"
+                                HorizontalOptions="Start"
+                                BackgroundColor="{StaticResource SurfaceColor}">
+
+                                <Frame.Triggers>
+
+                                    <!-- USER MESSAGE -->
+                                    <DataTrigger TargetType="Frame"
+                                                 Binding="{Binding Sender}"
+                                                 Value="user">
+                                        <Setter Property="BackgroundColor" Value="#4CAF50" />
+                                        <Setter Property="HorizontalOptions" Value="End" />
+                                    </DataTrigger>
+
+                                    <!-- ASSISTANT MESSAGE -->
+                                    <DataTrigger TargetType="Frame"
+                                                 Binding="{Binding Sender}"
+                                                 Value="assistant">
+                                        <Setter Property="BackgroundColor" Value="#7C5CE6" />
+                                        <Setter Property="HorizontalOptions" Value="Start" />
+                                    </DataTrigger>
+
+                                    <!-- SYSTEM MESSAGE -->
+                                    <DataTrigger TargetType="Frame"
+                                                 Binding="{Binding Sender}"
+                                                 Value="system">
+                                        <Setter Property="BackgroundColor" Value="Transparent" />
+                                        <Setter Property="HorizontalOptions" Value="Center" />
+                                    </DataTrigger>
+
+                                </Frame.Triggers>
+
+                                <Label Text="{Binding Content}"
+                                       LineBreakMode="WordWrap"
+                                       FontSize="14">
+
+                                    <Label.Triggers>
+
+                                        <!-- USER TEXT -->
+                                        <DataTrigger TargetType="Label"
+                                                     Binding="{Binding Sender}"
+                                                     Value="user">
+                                            <Setter Property="TextColor" Value="White" />
+                                            <Setter Property="FontFamily" Value="Default" />
+                                        </DataTrigger>
+
+                                        <!-- ASSISTANT TEXT -->
+                                        <DataTrigger TargetType="Label"
+                                                     Binding="{Binding Sender}"
+                                                     Value="assistant">
+                                            <Setter Property="TextColor" Value="#0F172A" />
+                                            <Setter Property="FontFamily" Value="JetBrainsMono" />
+                                        </DataTrigger>
+
+                                        <!-- SYSTEM TEXT -->
+                                        <DataTrigger TargetType="Label"
+                                                     Binding="{Binding Sender}"
+                                                     Value="system">
+                                            <Setter Property="TextColor" Value="Red" />
+                                            <Setter Property="FontAttributes" Value="Italic" />
+                                            <Setter Property="HorizontalTextAlignment" Value="Center" />
+                                        </DataTrigger>
+
+                                    </Label.Triggers>
+                                </Label>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+
+                </CollectionView>
+            </Grid>
+
+
+            <!-- Input Bar -->
+            <Grid Row="2"
+                  Padding="12"
+                  ColumnDefinitions="*,Auto"
+                  BackgroundColor="{StaticResource SurfaceColor}">
+
+                <Entry Grid.Column="0"
+                       Text="{Binding PromptText}"
+                       Placeholder="Type a message…"
+                       FontSize="16"
+                       HeightRequest="44"
+                       VerticalOptions="Center"
+                       BackgroundColor="{StaticResource InputBackgroundColor}"
+                       TextColor="White"
+
+                       Margin="0,0,8,0" />
+                <!-- Command="{Binding SendForStreamingCommand}" -->
+                <Button Grid.Column="1"
+                        Text="Send"
+                        Command="{Binding SendCommand}"
+                        HeightRequest="44"
+                        Padding="16,0" />
+            </Grid>
+        </Grid>
+    </Grid>
+</ContentPage>

@@ -1,6 +1,10 @@
 using System.Text.Json;
+using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
+using LocalAIAssistant.Extensions;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
+using LocalAIAssistant.Services.Logging;
+using Microsoft.Extensions.Options;
 
 namespace LocalAIAssistant.Services.AiMemory;
 
@@ -8,87 +12,182 @@ public class MemoryService : IMemoryService
 {
     private readonly Dictionary<string, string> _shortTermMemory = new();
     private readonly string                     _longTermMemoryPath;
-    private readonly string                     _filePath;
     
     private readonly IConversationMemory        _conversationMemory;
     private readonly ILongTermMemoryStore?      _ltm; // optional fallback if not registered
 
+    private static ILoggingService _loggingService;
+    
     public MemoryService(IConversationMemory         conversationMemory
                        , IEnumerable<IAiMemoryStore> stores
                        , string                      factsPath
-                       , string                      filePath)
+                       , ILoggingService             loggingService)
     {
+        _loggingService     = loggingService;
         _conversationMemory = conversationMemory ?? throw new ArgumentNullException(nameof(conversationMemory));
         _ltm                = stores.OfType<ILongTermMemoryStore>().FirstOrDefault();
-
         _longTermMemoryPath = factsPath ?? throw new ArgumentNullException(nameof(factsPath));
-        if (!File.Exists(_longTermMemoryPath))
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(_longTermMemoryPath)!);
-            File.WriteAllText(_longTermMemoryPath
-                            , "{}");
-        }
+        
+        if (!File.Exists(_longTermMemoryPath).Not()) return;
+        
+        Directory.CreateDirectory(Path.GetDirectoryName(_longTermMemoryPath)!);
+        File.WriteAllText(_longTermMemoryPath, "{}");
 
-        _filePath = filePath;
     }
 
     // Save an entry (only AI final response in Phase 1)
-    public async Task SaveEntryAsync(string   role
-                                   , string   content
-                                   , DateTime utcNow)
+    public async Task SaveEntryAsync(string role, string content, DateTime utcNow)
     {
-        var entry = new MemoryEntry
+        var entry = new Message
                     {
-                        Role      = role
-                      , Timestamp = DateTime.UtcNow
+                        Sender    = role
+                      , Timestamp = utcNow
                       , Content   = content
                     };
 
-        var json = JsonSerializer.Serialize(entry);
-        await File.AppendAllTextAsync(_filePath, json + Environment.NewLine);
+        if (_ltm != null)
+        {
+            await _ltm.SaveMessageAsync(entry); // delegate to LTM store
+        }
     }
-    
-    public async Task<List<MemoryEntry>> LoadEntriesAsync()
-    {
-        if (!File.Exists(_filePath))
-            return new List<MemoryEntry>();
 
-        var lines = await File.ReadAllLinesAsync(_filePath);
-        return lines.Where(line => !string.IsNullOrWhiteSpace(line))
-                    .Select(line => JsonSerializer.Deserialize<MemoryEntry>(line))
-                    .Where(entry => entry != null)
-                    .ToList()!;
-    }
-    
-    public async Task<MemoryContext> GetContextForTurnAsync(string userInput
-                                                          , MemoryRetrievalOptions opts
-                                                          , CancellationToken ct = default)
+    public async Task<MemoryContext> GetContextForTurnAsync(string                           userInput
+                                                          , IOptions<MemoryRetrievalOptions> memoryOptions
+                                                          , CancellationToken                cancel = default)
     {
-        // 1) STM: take a bit more, then trim to target
-        var stmPool = _conversationMemory.GetRecentEntries(opts.MaxStmMessages * 2).ToList();
-        var stmUsed = stmPool.TakeLast(opts.MaxStmMessages).ToList();
+        // --- 1) Short-Term Memory (STM) ---
+        // var stmPool = _conversationMemory.GetRecentEntries(memoryOptions.Value.MaxStmMessages * 2)
+        //                                  .ToList();
+        //
+        // var stmUsed = stmPool.TakeLast(memoryOptions.Value.MaxStmMessages)
+        //                      .ToList();
+        
+        // --- 1) Short-Term Memory (STM, grouped into turns) ---
+        //BUG: If the assistant never replies, then this approach may not work as intended
+        var recent = _conversationMemory.GetRecentEntries(memoryOptions.Value.MaxStmMessages * 2)
+                                        .OrderBy(message => message.Timestamp)
+                                        .ToList();
 
-        // 2) LTM: naive keyword match within a recency window (if LTM exists)
+        var turns       = new List<List<Message>>();
+        var currentTurn = new List<Message>();
+
+        foreach (var message in recent)
+        {
+            currentTurn.Add(message);
+
+            // Heuristic: close the turn when assistant replies
+            if (message.Sender != Senders.Assistant) continue;
+            
+            turns.Add(currentTurn);
+            currentTurn = new List<Message>();
+        }
+
+        LogTurns(turns);
+        
+        // Take last N turns (flattened back into a single list)
+        var stmUsed = turns.TakeLast(memoryOptions.Value.MaxStmMessages)
+                           .SelectMany(messages => messages)
+                           .ToList();
+
+        // --- 2) Long-Term Memory (LTM) ---
         IEnumerable<Message> ltmCandidates = Array.Empty<Message>();
         if (_ltm != null)
         {
-            var since = DateTime.UtcNow - opts.LtmRecencyWindow;
+            var since = DateTime.UtcNow - memoryOptions.Value.LtmRecencyWindow;
             ltmCandidates = await _ltm.GetMessagesSinceAsync(since);
         }
+        else
+        {
+            _loggingService.LogInformation("No LTM");
+        }
+        
+        var factMessages = ltmCandidates.Where(IsUserFact).ToList();
+        
+        var ltmUsed = RankByKeywordOverlap(ltmCandidates
+                                         , userInput
+                                         , stmUsed
+                                         , memoryOptions.Value.MaxLtmSnippets).ToList();
+        
+        var merged = factMessages.Concat(ltmUsed)
+                                 .GroupBy(message => message.Content) // remove duplicates
+                                 .Select(messages => messages.First())
+                                 .Take(memoryOptions.Value.MaxLtmSnippets) // still respect cap
+                                 .ToList();
+        
+        foreach (var item in ltmUsed.TakeWhile(item => merged.Count < memoryOptions.Value.MaxLtmSnippets)
+                                    .Where(item => merged.Any(message => message.Content == item.Content)
+                                                         .Not()))
+        {
+            merged.Add(item);
+        }
 
-        var ltmUsed = RankByKeywordOverlap(ltmCandidates, userInput, stmUsed, opts.MaxLtmSnippets).ToList();
+        _loggingService.LogInformation("Debug: LTM (merged) messages before BuildSummary:");
+        
+        foreach (var message in merged)
+        {
+            _loggingService.LogInformation($"'{message.Content}' Score: {message.Score} Timestamp: {message.Timestamp}", Category.MemoryService);
+        }
 
-        // 3) Compress
-        var summary = SimpleCompressor.BuildSummary(stmUsed, ltmUsed, opts.SummaryMaxChars, opts.IncludeTimestamps);
-
+        // --- 3) Build Summary (delegated to SimpleCompressor) ---
+        var summary = SimpleCompressor.BuildSummary(shortTermMemory:   stmUsed
+                                                  , longTermMemory:    merged
+                                                  , maxChars:          memoryOptions.Value.SummaryMaxChars
+                                                  , includeTimestamps: memoryOptions.Value.IncludeTimestamps
+                                                  , maxStmItems:       memoryOptions.Value.MaxStmMessages
+                                                  , maxLtmItems:       memoryOptions.Value.MaxLtmSnippets
+        );
+        
+        _loggingService.LogInformation("Facts carried into context:");
+        foreach (var fact in factMessages)
+            _loggingService.LogInformation($"  FACT: {fact.Content}");
+        
+        // --- 4) Return Context ---
         return new MemoryContext
                {
-                   Summary = summary,
-                   StmUsed = stmUsed,
-                   LtmUsed = ltmUsed
+                   Summary = summary
+                 , StmUsed = stmUsed
+                 , LtmUsed = merged
                };
     }
-    public async Task AddMemoryAsync(MemoryType type, string key, string value)
+    
+    private void LogTurns(List<List<Message>> turns)
+    {
+        _loggingService.LogInformation($"[STM] Grouped into {turns.Count} turns:");
+
+        int turnIndex = 1;
+        foreach (var turn in turns)
+        {
+            _loggingService.LogInformation($"--- Turn {turnIndex} ---");
+
+            foreach (var msg in turn)
+            {
+                var who  = msg.Sender.ToString();
+                var when = msg.Timestamp.ToString("u");
+                
+                _loggingService.LogInformation($"[{who} @ {when}] {msg.Content}");
+            }
+
+            turnIndex++;
+        }
+    }
+
+    private static bool IsUserFact(Message message)
+    {
+        if (message.Sender != Senders.User) return false;
+        
+        var text = message.Content.ToLowerInvariant();
+
+        return text.Contains("my name is")
+            || text.Contains("i am")
+            || text.Contains("i live")
+            || text.Contains("i work")
+            || text.Contains("i have")
+            || text.Contains("i like")
+            || text.Contains("i enjoy");
+    }
+    public async Task AddMemoryAsync(MemoryType type
+                                   , string key
+                                   , string value)
     {
         if (type == MemoryType.ShortTerm)
         {
@@ -98,6 +197,7 @@ public class MemoryService : IMemoryService
         {
             var memories = await LoadLongTermMemoryAsync();
             memories[key] = value;
+            
             await SaveLongTermMemoryAsync(memories);
         }
     }
@@ -111,6 +211,7 @@ public class MemoryService : IMemoryService
         else
         {
             var memories = await LoadLongTermMemoryAsync();
+            
             return memories.TryGetValue(key, out var value) ? value : null;
         }
     }
@@ -121,11 +222,10 @@ public class MemoryService : IMemoryService
         {
             return _shortTermMemory.Values;
         }
-        else
-        {
-            var memories = await LoadLongTermMemoryAsync();
-            return memories.Values;
-        }
+
+        var memories = await LoadLongTermMemoryAsync();
+        
+        return memories.Values;
     }
 
     public Task RemoveMemoryAsync(MemoryType type, string key)
@@ -175,12 +275,12 @@ public class MemoryService : IMemoryService
     private async Task<Dictionary<string, string>> LoadLongTermMemoryAsync()
     {
         var json = await File.ReadAllTextAsync(_longTermMemoryPath);
-        return System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(json) ?? new();
+        return JsonSerializer.Deserialize<Dictionary<string, string>>(json) ?? new();
     }
 
     private async Task SaveLongTermMemoryAsync(Dictionary<string, string> memories)
     {
-        var json = System.Text.Json.JsonSerializer.Serialize(memories, new System.Text.Json.JsonSerializerOptions
+        var json = JsonSerializer.Serialize(memories, new JsonSerializerOptions
         {
             WriteIndented = true
         });
@@ -196,30 +296,64 @@ public class MemoryService : IMemoryService
         }
     }
     // ---- helpers ----
-    private static IEnumerable<Message> RankByKeywordOverlap(IEnumerable<Message> candidates, string userInput, IEnumerable<Message> recent, int take)
+    public static IEnumerable<Message> RankByKeywordOverlap(IEnumerable<Message> candidates
+                                                          , string               userInput
+                                                          , IEnumerable<Message> recentMessages
+                                                          , int                  take
+                                                          , double importanceWeight = 0.5) // tune 0.25..1.0
     {
-        if (!candidates.Any() || take <= 0) return Enumerable.Empty<Message>();
+        var enumerable = candidates.ToList();
+        if (enumerable.Count == 0 || take <= 0) return [];
 
-        var queryText = (userInput ?? "") + " " + string.Join(" ", recent.Select(m => m.Content ?? ""));
-        var q = Tokenize(queryText);
+        var queryText = (userInput ?? "") 
+                      + " " 
+                      + string.Join(" ", recentMessages.Select(m => m.Content ?? ""));
+        var hashSet = Tokenize(queryText);
 
-        return candidates
-               .Select(m => new { Msg = m, Score = OverlapScore(q, Tokenize(m.Content ?? "")) })
-               .Where(x => x.Score > 0)
-               .OrderByDescending(x => x.Score)
-               .ThenBy(x => x.Msg.Timestamp)
-               .Take(take)
-               .Select(x => x.Msg);
+        var ranked = enumerable.Select(message =>
+                               {
+                                   var overlap = OverlapScore(hashSet, Tokenize(message.Content ?? ""));
+                                   message.Score = overlap <= 0 
+                                                    ? 0
+                                                    : overlap + (message.Importance - 1) * importanceWeight;
+                                   return message;
+                               })
+                               .Where(message => message.Score > 0)
+                               .OrderByDescending(message => message.Score)
+                               .ThenByDescending(message => message.Timestamp)
+                               .Take(take)
+                               .ToList();
+        
+        foreach (var entry in ranked)
+        {
+            _loggingService.LogInformation($"Ranked Message: '{entry.Content}' Score: {entry.Score:0.##} Importance: {entry.Importance} Timestamp: {entry.Timestamp}");
+        }
+        
+        return ranked; //.Select(candidate => candidate);
     }
-
-    private static HashSet<string> Tokenize(string text)
+    
+    public static HashSet<string> Tokenize(string text)
     {
         var parts = (text ?? "").ToLowerInvariant()
-                                .Split(new[] { ' ', '\t', '\r', '\n', '.', ',', '!', '?', ':', ';', '(', ')', '[', ']', '{', '}', '-', '_', '"', '\'' },
-                                       StringSplitOptions.RemoveEmptyEntries);
-        return new HashSet<string>(parts.Where(p => p.Length <= 48));
+                                .Split(new[] { ' ', '\t', '\r', '\n', '.', ',', '!', '?', ':', ';', '(', ')', '[', ']', '{', '}', '-', '_', '"', '\'' }
+                                      , StringSplitOptions.RemoveEmptyEntries);
+        return new HashSet<string>(parts.Where(part => part.Length <= 48));
     }
 
-    private static int OverlapScore(HashSet<string> a, HashSet<string> b) => b.Count(a.Contains);
+    public static int OverlapScore(HashSet<string> leftHash, HashSet<string> rightHash)
+    {
+        return rightHash.Count(leftHash.Contains);
+    }
+    public static void ApplyScoring(IEnumerable<Message> messages, string query, IEnumerable<Message> context, double importanceWeight = 0.5)
+    {
+        var contextTokens = Tokenize(query + " " + string.Join(" ", context.Select(m => m.Content ?? "")));
 
+        foreach (var msg in messages)
+        {
+            var overlap = OverlapScore(contextTokens, Tokenize(msg.Content ?? ""));
+            msg.Score = overlap <= 0
+                ? 0
+                : overlap + (msg.Importance - 1) * importanceWeight;
+        }
+    }
 }

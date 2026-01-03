@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="LocalAIAssistant.Views.SettingsPage"
+             Title="Settings">
+       <ScrollView Padding="20">
+    <VerticalStackLayout Padding="20" 
+                         Spacing="15">
+
+        <Label Text="Model:" 
+               FontAttributes="Bold" />
+        <Entry Text="{Binding Model}" 
+               Placeholder="Enter Ollama model..." />
+
+        <Label Text="Endpoint:" 
+               FontAttributes="Bold" />
+        <Entry Text="{Binding Endpoint}" 
+               Placeholder="http://localhost:11434" />
+        
+        <Label Text="Num Predict:" 
+               FontAttributes="Bold" />
+        <Slider Minimum="1"
+                Maximum="2048"
+                Value="{Binding NumPredict, Mode=TwoWay}" />
+        <Label Text="{Binding NumPredict}" />
+
+        <Label Text="Temperature:" 
+               FontAttributes="Bold" />
+        
+        <!-- <Entry Text="{Binding Temperature}" Keyboard="Numeric" /> -->
+        <!-- <Slider Minimum="0" Maximum="1" Value="{Binding Temperature}" /> -->
+
+        <Slider Minimum="0"
+                Maximum="1"
+                Value="{Binding Temperature, Mode=TwoWay}" />
+        
+        <Label Text="{Binding Temperature}" />
+<!--, StringFormat='F2'-->
+        <Button Text="Save" 
+                Command="{Binding SaveCommand}" />
+        <Button Text="Apply Personality Settings"
+                Command="{Binding ApplyPersonalityCommand}"/>
+        
+        <Label Text=
+               "In Ollama, num_predict sets the maximum number of tokens the model generates in a response, while temperature controls the randomness of the output, with lower values yielding more predictable text and higher values promoting more creative and surprising results."/> 
+       <Label Text="'num_predict' "/>
+       <Label Text="Purpose: This parameter defines the maximum number of tokens the model will generate for your response."/> 
+       <Label Text="Behavior: A higher num_predict value allows the model to create longer, more detailed content."/> 
+       <Label Text="Positive integers: Sets the exact token limit for the response. A higher value generates a longer response.
+-1: Allows for 'infinite' generation, limited only by the model's total context size (num_ctx).
+-2: Fills the remaining context with the model's response."/>
+       <Label Text="Example: For a short, quick answer, you might set num_predict to a low number like 50. For a long, detailed story, you would set it to a higher number. "/>
+       
+        <Label Text="'temperature'"/>
+       <Label Text="Purpose: This parameter influences the creativity and randomness of the model's output."/> 
+       <Label Text="Behavior: Lower temperature (e.g., 0.1): Produces more focused, precise, and predictable responses. 
+Higher temperature (e.g., 1.0): Encourages more diverse, creative, and potentially unexpected text."/>
+        <Label Text="Low values (e.g., 0.2): Produce more focused and deterministic responses. This is suitable for tasks that require factual accuracy and precision.
+Medium values (e.g., 0.7–0.8): Offer a balance between creativity and coherence. This is often the default setting.
+High values (e.g., 1.0 or higher): Increase randomness and creativity. This can lead to more surprising and diverse outputs but also has a higher risk of producing nonsensical or irrelevant content."/>
+        <Label Text="Example: A low temperature is best for answering 'What is the capital of France?' A high temperature would be more appropriate for generating a creative poem. "/>
+
+
+    </VerticalStackLayout>
+              </ScrollView>
+</ContentPage>

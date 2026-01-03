@@ -1,4 +1,5 @@
 using System.Globalization;
+using LocalAIAssistant.Data;
 
 namespace LocalAIAssistant.Converters;
 
@@ -11,9 +12,9 @@ public class SenderToColorConverter: IValueConverter
     {
         return (value?.ToString()?.ToLower()) switch
         {
-            "user" => Colors.LightBlue
-           , "ai"  => Colors.LightGray
-           , _     => Colors.White
+            Senders.UserLowered => Colors.LightBlue
+          , Senders.AiLowered => Colors.LightGray
+          , _ => Colors.White
         };
     }
 

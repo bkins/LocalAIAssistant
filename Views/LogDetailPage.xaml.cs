@@ -15,10 +15,11 @@ public partial class LogDetailPage : ContentPage
             BindingContext = _entry;
         }
     }
-    
+
     public LogDetailPage()
     {
         InitializeComponent();
+        
         //BindingContext = entry;
     }
 }

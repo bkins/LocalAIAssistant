@@ -1,6 +1,8 @@
 ﻿using Android.App;
 using Android.Content.PM;
 using Android.OS;
+using Android.Views;
+using Microsoft.Maui.Controls.PlatformConfiguration;
 
 namespace LocalAIAssistant;
 
@@ -22,6 +24,23 @@ public class MainActivity : MauiAppCompatActivity
         
         Window?.SetSoftInputMode(Android.Views.SoftInput.AdjustResize);
         
+        // Match status bar to app dark theme
+        Window.SetStatusBarColor(Android.Graphics.Color.ParseColor("#000000"));
+        Window.SetNavigationBarColor(Android.Graphics.Color.ParseColor("#000000"));
+        
+        // Ensure status bar icons are light (important!)
+        if (Build.VERSION.SdkInt >= BuildVersionCodes.R)
+        {
+            var decorView = Window.DecorView;
+            decorView.SystemUiVisibility =
+                    (StatusBarVisibility)(SystemUiFlags.LayoutStable);
+
+        }
+        else
+        {
+            Window.DecorView.SystemUiVisibility =
+                    (StatusBarVisibility)SystemUiFlags.Visible;
+        }
     }
 }
 

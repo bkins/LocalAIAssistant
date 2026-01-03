@@ -1,3 +1,4 @@
+using LocalAIAssistant.Extensions;
 using LocalAIAssistant.Services.AiMemory;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
 using LocalAIAssistant.Services.Interfaces;
@@ -30,22 +31,25 @@ public class RoleInjectionService : IRoleInjectionService
         if (includeShortTermMemory)
         {
             var stmEntries = await _memoryService.GetAllMemoriesAsync(MemoryType.ShortTerm);
-            if (stmEntries.Any())
+            var enumerable = stmEntries.ToList();
+            
+            if (enumerable.Any())
             {
                 prompt += "\n\n[Short-Term Memory]\n"
                         + string.Join("\n"
-                                    , stmEntries);
+                                    , enumerable);
             }
         }
 
         if (includeLongTermMemory)
         {
             var ltmEntries = await _memoryService.GetAllMemoriesAsync(MemoryType.LongTerm);
-            if (ltmEntries.Any())
+            var enumerable = ltmEntries.ToList();
+            
+            if (enumerable.Any())
             {
                 prompt += "\n\n[Long-Term Memory]\n"
-                        + string.Join("\n"
-                                    , ltmEntries);
+                        + string.Join("\n", enumerable);
             }
         }
 
@@ -65,7 +69,7 @@ public class RoleInjectionService : IRoleInjectionService
 
         var systemPrompt = $"{baseSystemPrompt}\n\nYou are now roleplaying as '{personaName}'.\nStay in character at all times.";
 
-        if (!string.IsNullOrWhiteSpace(contextSummary))
+        if (contextSummary.HasValue())
             systemPrompt += $"\n\n[Current Context]\n{contextSummary}";
 
         return systemPrompt;

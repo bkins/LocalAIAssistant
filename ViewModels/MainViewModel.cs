@@ -2,7 +2,10 @@ using System.Collections.ObjectModel;
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
+using LocalAIAssistant.Extensions;
+using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.AiMemory;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
 using LocalAIAssistant.Services.Interfaces;
@@ -17,7 +20,13 @@ public partial class MainViewModel : ObservableObject
     private readonly ILoggingService     _logger;
     private readonly IConversationMemory _conversationMemory;
     private readonly IMemoryService      _memoryService;
+    private readonly OllamaConfigService _ollamaConfigService;
 
+    public ObservableCollection<string> Models { get; } = new(AvailableModels.Models);
+
+    [ObservableProperty]
+    private string selectedModel;
+    
     [ObservableProperty] private string _promptText = string.Empty;
 
     public string LastResponse { get; set; } = string.Empty;
@@ -34,120 +43,18 @@ public partial class MainViewModel : ObservableObject
     public MainViewModel(ILlmService         llmService
                        , ILoggingService     logger
                        , IConversationMemory conversationMemory
-                       , IMemoryService      memoryService)
+                       , IMemoryService      memoryService
+                       , OllamaConfigService configService)
     {
         _logger = logger;
         _logger.LogInformation("Initializing main view model");
 
-        _llmService         = llmService;
-        _conversationMemory = conversationMemory;
-        _memoryService      = memoryService;
+        _llmService          = llmService;
+        _conversationMemory  = conversationMemory;
+        _memoryService       = memoryService;
+        _ollamaConfigService = configService;
     }
-
-
-    // [RelayCommand]
-    // public async Task SendPromptAsync()
-    // {
-    //     try
-    //     {
-    //         IsBusy = true;
-    //     
-    //         var prompt = PromptText?.Trim();
-    //         if (string.IsNullOrEmpty(prompt)) return;
-    //         var userPrompt = new Message { Sender = "User", Content = prompt };
-    //     
-    //         await _conversationMemory.AddAsync(userPrompt);
-    //     
-    //         Messages.Add(userPrompt);
-    //         PromptText = string.Empty;
-    //
-    //         var assistantMessage = new Message { Sender = "AI", Content = string.Empty };
-    //         Messages.Add(assistantMessage);
-    //
-    //         // Now stream and update UI in real-time
-    //         _ = Task.Run(async () =>
-    //         {
-    //             var sb = new StringBuilder();
-    //
-    //             await foreach (var chunk in _llmService.SendPromptStreamingAsync(prompt))
-    //             {
-    //                 sb.Append(chunk);
-    //
-    //                 // Update UI
-    //                 MainThread.BeginInvokeOnMainThread(() =>
-    //                 {
-    //                     assistantMessage.Content += chunk;
-    //                 });
-    //             }
-    //
-    //             // Ensure logging happens with the complete response
-    //             var finalResponse = sb.ToString();
-    //             assistantMessage.Content = finalResponse;
-    //         
-    //         
-    //             await _conversationMemory.AddAsync(assistantMessage);
-    //         });
-    //     }
-    //     finally
-    //     {
-    //         _isBusy = false;    
-    //     }
-    // }
-    // [RelayCommand]
-    // public async Task SendPromptAsync()
-    // {
-    //     try
-    //     {
-    //         IsBusy = true;
-    //
-    //         var prompt = PromptText?.Trim();
-    //         if (string.IsNullOrEmpty(prompt)) return;
-    //         var userPrompt = new Message { Sender = "User", Content = prompt };
-    //
-    //         await _conversationMemory.AddAsync(userPrompt);
-    //
-    //         Messages.Add(userPrompt);
-    //         PromptText = string.Empty;
-    //
-    //         var assistantMessage = new Message { Sender = "AI", Content = string.Empty };
-    //         Messages.Add(assistantMessage);
-    //
-    //         // Run the streaming logic on a background thread
-    //         await Task.Run(async () =>
-    //         {
-    //             var sb = new StringBuilder();
-    //
-    //             // Use ConfigureAwait(false) to prevent the await foreach from
-    //             // trying to return to the UI thread, allowing the background
-    //             // operation to continue uninterrupted.
-    //             await foreach (var chunk in _llmService.SendPromptStreamingAsync(prompt).ConfigureAwait(false))
-    //             {
-    //                 sb.Append(chunk);
-    //
-    //                 // Update UI safely on the main thread
-    //                 MainThread.BeginInvokeOnMainThread(() =>
-    //                 {
-    //                     assistantMessage.Content += chunk;
-    //                 });
-    //             }
-    //
-    //             var finalResponse = sb.ToString();
-    //             // This is a good place to do final, non-UI-specific work.
-    //             await _conversationMemory.AddAsync(assistantMessage);
-    //
-    //             // You can also do a final UI update here if needed.
-    //             MainThread.BeginInvokeOnMainThread(() =>
-    //             {
-    //                 assistantMessage.Content = finalResponse;
-    //             });
-    //         });
-    //     }
-    //     finally
-    //     {
-    //         // This will be hit only after the entire Task.Run block is complete.
-    //         IsBusy = false;    
-    //     }
-    // }
+    
     [RelayCommand]
     public async Task SendPromptAsync()
     {
@@ -159,15 +66,26 @@ public partial class MainViewModel : ObservableObject
             if (string.IsNullOrEmpty(prompt)) return;
 
             // Create and store user message immediately
-            var userPrompt = new Message { Sender = "User", Content = prompt };
-            await _conversationMemory.AddAsync(userPrompt);
-            await _memoryService.SaveEntryAsync("User", userPrompt.Content, DateTime.UtcNow);
+            var userPrompt = new Message
+                             {
+                                 Sender    = Senders.User
+                               , Content   = prompt
+                               , Timestamp = DateTime.UtcNow
+                             };
+            
+            await RememberEntryAsync(userPrompt);
 
             Messages.Add(userPrompt);
             PromptText = string.Empty;
 
             // Create assistant placeholder for UI streaming
-            var assistantMessage = new Message { Sender = "AI", Content = string.Empty };
+            var assistantMessage = new Message
+                                   {
+                                       Sender    = Senders.Ai
+                                     , Content   = string.Empty
+                                     , Timestamp = DateTime.UtcNow
+                                   };
+            
             Messages.Add(assistantMessage);
 
             // Run the streaming logic in background
@@ -195,10 +113,15 @@ public partial class MainViewModel : ObservableObject
                 });
 
                 // Store *only* the polished AI response in memory
-                var finalAssistantMessage = new Message { Sender = "AI", Content = finalResponse };
-                await _conversationMemory.AddAsync(finalAssistantMessage);
-                await _memoryService.SaveEntryAsync("AI", finalAssistantMessage.Content, DateTime.UtcNow);
-
+                var finalAssistantMessage = new Message
+                                            {
+                                                Sender    = Senders.Ai
+                                              , Content   = finalResponse
+                                              , Timestamp = DateTime.UtcNow
+                                            };
+                
+                await RememberEntryAsync(finalAssistantMessage);
+                
             }));
         }
         finally
@@ -207,35 +130,17 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
-
-    [RelayCommand]
-    public async Task old_SendPromptAsync()
+    private async Task RememberEntryAsync(Message message)
     {
-        var prompt = PromptText?.Trim();
-        if (string.IsNullOrEmpty(prompt)) return;
-
-        Messages.Add(new Message { Sender = "User", Content = prompt });
-        PromptText = string.Empty;
-
-        var assistantMessage = new Message { Sender = "AI", Content = string.Empty };
-        Messages.Add(assistantMessage);
-
-        // Run the whole streaming read off the main thread
-        var chunks = await Task.Run(async () =>
+        await _conversationMemory.AddAsync(message);
+        await _memoryService.SaveEntryAsync(message.Sender, message.Content, DateTime.UtcNow);
+    }
+    
+    partial void OnSelectedModelChanged(string value)
+    {
+        if (value.HasValue())
         {
-            var results = new List<string>();
-            await foreach (var chunk in _llmService.SendPromptStreamingAsync(prompt).ConfigureAwait(false))
-            {
-                results.Add(chunk);
-            }
-            return results;
-        });
-
-        // Append chunks to UI-bound property on the main thread
-        foreach (var chunk in chunks)
-        {
-            assistantMessage.Content += chunk;
+            _ollamaConfigService.SetModel(value);
         }
     }
-
 }

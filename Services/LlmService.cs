@@ -1,60 +1,86 @@
 using System.Net;
+using System.Net.Http.Json;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading.Channels;
+using LocalAIAssistant.Data;
+using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Extensions;
 using LocalAIAssistant.Services.AiMemory;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
 using LocalAIAssistant.Services.Interfaces;
+using LocalAIAssistant.Services.Logging;
+using LocalAIAssistant.Services.Requests;
+using Microsoft.Extensions.Options;
 
 namespace LocalAIAssistant.Services;
 
 public class LlmService : ILlmService
 {
 
-    private readonly HttpClient             _httpClient;
-    private readonly IPersonalityService    _personalityService;
-    private readonly IMemoryService         _memoryService;
-    private readonly IRoleInjectionService  _roleInjection;
-    private readonly MemoryRetrievalOptions _memOpts = new();
-    private readonly int                    _timeoutSeconds;
-    private readonly int                    _maxRetries;
-    private readonly bool                   _enablePromptChunking;
-    private readonly int                    _chunkSize;
+    private readonly HttpClient            _httpClient;
+    private readonly IPersonalityService   _personalityService;
+    private readonly IMemoryService        _memoryService;
+    private readonly IRoleInjectionService _roleInjection;
+    private readonly ILoggingService       _loggingService;
+    private readonly OllamaConfigService   _configService;
 
-    // private const    string     BaseUrl = "http://10.0.2.2:11434/api/chat"; // Android emulator magic localhost
-    //private const    string     BaseUrl = "http://192.168.0.33:11434/api/chat"; // Android emulator magic localhost
-    //192.168.0.33
-    private readonly string _baseUrl = ApiConfig.OllamaBaseUrl + "api/chat";
+    private readonly IOptions<MemoryRetrievalOptions> _memOpts;
+    private readonly int                              _timeoutSeconds;
+    private readonly int                              _maxRetries;
+    private readonly bool                             _enablePromptChunking;
+    private readonly int                              _chunkSize;
 
-    public LlmService(IPersonalityService   personalityService
-                    , HttpClient            httpClient
-                    , IMemoryService        memoryService
-                    , IRoleInjectionService roleInjection
-                    , int                   timeoutSeconds       = 300
-                    , int                   maxRetries           = 3
-                    , bool                  enablePromptChunking = false
-                    , int                   chunkSize            = 8000)
+    private OllamaConfig _config;
+
+    public LlmService(IPersonalityService              personalityService
+                    , HttpClient                       httpClient
+                    , IMemoryService                   memoryService
+                    , IRoleInjectionService            roleInjection
+                    , ILoggingService                  loggingService
+                    , OllamaConfigService              configService
+                    , IOptions<MemoryRetrievalOptions> memOpts
+                    , int                              timeoutSeconds       = 300
+                    , int                              maxRetries           = 3
+                    , bool                             enablePromptChunking = false
+                    , int                              chunkSize            = 8000)
     {
         _personalityService   = personalityService;
         _memoryService        = memoryService;
         _roleInjection        = roleInjection;
+        _loggingService       = loggingService;
+        _configService        = configService;
+        _memOpts              = memOpts;
         _timeoutSeconds       = timeoutSeconds;
         _maxRetries           = maxRetries;
         _enablePromptChunking = enablePromptChunking;
         _chunkSize            = chunkSize;
 
-        _httpClient = new HttpClient
-                      {
-                          Timeout = TimeSpan.FromSeconds(_timeoutSeconds)
-                      };
+        _httpClient = httpClient;
+        _config     = _configService.GetConfig();
+
+        _configService.ConfigChanged += cfg => _config = cfg;
+    }
+
+    private static string BuildUrl(OllamaConfig config
+                                 , string       relativePath)
+    {
+        var host = config.Host?.Trim() ?? StringConsts.OllamaServerUrl;
+        
+        if (!host.EndsWith("/")) host += "/";
+        
+        return host + relativePath.TrimStart('/');
     }
 
     public async Task<bool> CheckApiHealthAsync()
     {
         try
         {
-            var response = await _httpClient.GetAsync(ApiConfig.OllamaBaseUrl);
+            var response = await _httpClient.GetAsync(BuildUrl(_config
+                                                             , ""));
             return response.IsSuccessStatusCode;
         }
         catch
@@ -62,309 +88,278 @@ public class LlmService : ILlmService
             return false;
         }
     }
-
-    public async IAsyncEnumerable<string> SendPromptStreamingAsync(string prompt)
+    public IAsyncEnumerable<string> SendPromptStreamingAsync(string prompt
+                                                           , [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        HttpResponseMessage response;
-        try
-        {
-            response = await Task.Run(() => SendPromptRequestAsync(prompt));
-        }
-        catch (Exception ex)
-        {
-            var s = $"[Error] {ex.Message}";
-            response = new HttpResponseMessage
-                       {
-                           Content = new StringContent(s
-                                                     , Encoding.UTF8
-                                                     , "application/json")
-                         , StatusCode   = HttpStatusCode.ExpectationFailed
-                         , ReasonPhrase = ex.ToString()
-                       };
-            //yield return $"[Error] Request failed: {ex.Message}";
-            // yield break;
-        }
+        var req = new LlmRequest
+                  {
+                      UserPrompt   = prompt,
+                      SystemPrompt = _personalityService.Current?.SystemPrompt ?? "You are a helpful AI.",
+                      Personality  = _personalityService.Current,
+                      OllamaConfig = _personalityService.Current?.OllamConfiguration
+                  };
 
-        if (response == null)
-        {
-            yield return "[Error] No response.";
-            yield break;
-        }
-
-        if (response.IsSuccessStatusCode.Not())
-        {
-            yield return $"[Error] {response.StatusCode}:  {response.ReasonPhrase}";
-            yield break;
-        }
-
-        await foreach (var chunk in ReadChunksAsyncSafe(response))
-        {
-            yield return chunk;
-        }
+        return SendPromptStreamingAsync(req, cancellationToken);
     }
 
-    private async IAsyncEnumerable<string> ReadChunksAsyncSafe(HttpResponseMessage response)
+    private async IAsyncEnumerable<string> ReadStreamAsync(HttpResponseMessage response)
     {
-        var chunkEnumerable = await Task.Run(() => ReadChunksAsync(response));
-        await foreach (var chunk in chunkEnumerable)
-        {
-            yield return chunk;
-        }
-    }
+        // Make a channel to buffer chunks
+        var channel = Channel.CreateUnbounded<string>();
 
-    private async Task<HttpResponseMessage> SendPromptRequestAsync(string            prompt
-                                                                 , CancellationToken cancellationToken = default)
-    {
-        _personalityService.SetCurrent("Roleplay");
-        var systemPrompt = _personalityService.Current.SystemPrompt;
-        var personaName = _personalityService.Current.Name;
-
-        var ctx = await _memoryService.GetContextForTurnAsync(prompt
-                                                            , _memOpts);
-        var injectedSystemPrompt = _roleInjection.BuildInjectedSystemPrompt(systemPrompt
-                                                                          , personaName
-                                                                          , ctx.Summary);
-
-        // Apply chunking if enabled
-        var finalPrompt = prompt;
-        if (_enablePromptChunking && prompt.Length > _chunkSize)
-        {
-            var chunks = ChunkPrompt(prompt);
-            finalPrompt = string.Join("\n"
-                                    , chunks);
-        }
-
-        var payload = new
-                      {
-                          model = "nollama/mythomax-l2-13b:Q5_K_S", messages = new[]
-                                                                               {
-                                                                                   new { role = "system", content = injectedSystemPrompt }
-                                                                                 , new { role = "user", content   = finalPrompt }
-                                                                               }
-                        , stream = true
-                      };
-
-        var json = JsonSerializer.Serialize(payload);
-        var content = new StringContent(json
-                                      , Encoding.UTF8
-                                      , "application/json");
-
-        for (int attempt = 1; attempt <= _maxRetries; attempt++)
+        // Start the background task to read from the stream and write to the channel
+        _ = Task.Run(async () =>
         {
             try
             {
-                var request = new HttpRequestMessage(HttpMethod.Post
-                                                   , _baseUrl)
-                              {
-                                  Content = content
-                              };
+                await using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+                using var       reader = new StreamReader(stream);
 
-                using var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(_timeoutSeconds));
-
-                var response = await _httpClient.SendAsync(
-                    request
-                  , HttpCompletionOption.ResponseHeadersRead
-                  , cancellationTokenSource.Token
-                ).ConfigureAwait(false);
-
-                response.EnsureSuccessStatusCode();
-                return response;
-            }
-            catch (HttpRequestException ex) when (ex.InnerException is SocketException socketEx && IsSocketClose(socketEx))
-            {
-                if (attempt == _maxRetries) throw;
-                await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2
-                                                             , attempt))
-                               , cancellationToken);
-            }
-            catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
-            {
-                if (attempt == _maxRetries)
-                    throw new TimeoutException("Streaming request timed out."
-                                             , ex);
-                await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2
-                                                             , attempt))
-                               , cancellationToken);
-            }
-        }
-
-        throw new Exception("Failed to send streaming prompt after retries.");
-    }
-    // private async Task<HttpResponseMessage> SendPromptRequestAsync(string prompt)
-    // {
-    //     _personalityService.SetCurrent("Roleplay");
-    //     var systemPrompt =  _personalityService.Current.SystemPrompt;
-    //     var personaName  = _personalityService.Current.Name;
-    //     
-    //     var ctx = await _memoryService.GetContextForTurnAsync(prompt, _memOpts);
-    //     var injectedSystemPrompt = _roleInjection.BuildInjectedSystemPrompt(systemPrompt, personaName, ctx.Summary);
-    //
-    //     var payload = new
-    //                   {
-    //                       model = "nollama/mythomax-l2-13b:Q5_K_S" //"mistral-openorca"
-    //                     , messages = new[]
-    //                                  {
-    //                                      new { role = "system", content = injectedSystemPrompt }
-    //                                    , new { role = "user", content   = prompt }
-    //                                  }
-    //                     , stream = true
-    //                   };
-    //
-    //     var json = JsonSerializer.Serialize(payload);
-    //     var content = new StringContent(json, Encoding.UTF8, "application/json");
-    //
-    //     // Offload to background thread to avoid NetworkOnMainThreadException
-    //     return await Task.Run(async () =>
-    //     {
-    //         
-    //          var request = new HttpRequestMessage(HttpMethod.Post, _baseUrl)
-    //                        {
-    //                            Content = content
-    //                        };
-    //         
-    //          var response = await _httpClient.SendAsync(request,
-    //                                                     HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
-    //         
-    //         response.EnsureSuccessStatusCode();
-    //         return response;
-    //     });
-    // }
-
-
-    private async IAsyncEnumerable<string> ReadChunksAsync(HttpResponseMessage response)
-    {
-        using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
-        using var reader = new StreamReader(stream);
-
-        while (!reader.EndOfStream)
-        {
-            var line = await reader.ReadLineAsync().ConfigureAwait(false);
-
-            if (string.IsNullOrWhiteSpace(line))
-                continue;
-            var chunk = string.Empty;
-
-            try
-            {
-                using var doc = JsonDocument.Parse(line);
-                if (doc.RootElement.TryGetProperty("message"
-                                                 , out var messageElement)
-                 && messageElement.TryGetProperty("content"
-                                                , out var contentElement))
+                string? line;
+                while ((line = await reader.ReadLineAsync().ConfigureAwait(false)) != null)
                 {
-                    chunk = contentElement.GetString();
-                    if (string.IsNullOrEmpty(chunk))
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+
+                    // Remove the "data: " prefix if present
+                    if (line.StartsWith("data:"))
                     {
-                        continue;
-                        //yield return chunk;
+                        line = line.Substring("data:".Length).Trim();
+                    }
+
+                    // Check for the "[DONE]" signal and break the loop
+                    if (line == "[DONE]")
+                    {
+                        break;
+                    }
+
+                    // Deserialize the JSON chunk and extract the content
+                    try
+                    {
+                        var jsonDoc = JsonDocument.Parse(line);
+                        if (jsonDoc.RootElement.TryGetProperty("message"
+                                                             , out var messageElement)
+                         && messageElement.TryGetProperty("content"
+                                                        , out var contentElement))
+                        {
+                            var content = contentElement.GetString();
+                            if (!string.IsNullOrEmpty(content))
+                            {
+                                await channel.Writer.WriteAsync(content);
+                            }
+                        }
+                    }
+                    catch (JsonException ex)
+                    {
+                        _loggingService.LogError(ex
+                                               , $"Failed to parse JSON line: {line}");
                     }
                 }
             }
-            catch (JsonException ex)
+            catch (Exception ex)
             {
-                var s = $"[Error] {ex.Message}";
-                //yield return $"[JSON Error] {ex.Message}";
+                // Propagate any exceptions to the consuming code
+                channel.Writer.TryComplete(ex);
             }
+            finally
+            {
+                // Always complete the channel writer when done
+                channel.Writer.Complete();
+            }
+        });
 
-            yield return chunk ?? string.Empty;
-        }
-    }
-
-    public async Task<string> SendPromptAsync(string            model
-                                            , string            prompt
-                                            , CancellationToken cancellationToken = default)
-    {
-        if (_enablePromptChunking && prompt.Length > _chunkSize)
+        // Yield values from the channel
+        await foreach (var chunk in channel.Reader.ReadAllAsync())
         {
-            var chunks = ChunkPrompt(prompt);
-            var sb = new StringBuilder();
-            foreach (var chunk in chunks)
-            {
-                var result = await SendSinglePromptAsync(model
-                                                       , chunk
-                                                       , cancellationToken);
-                sb.Append(result);
-            }
-
-            return sb.ToString();
-        }
-        else
-        {
-            return await SendSinglePromptAsync(model
-                                             , prompt
-                                             , cancellationToken);
+            yield return chunk;
         }
     }
 
-    private async Task<string> SendSinglePromptAsync(string            model
-                                                   , string            prompt
-                                                   , CancellationToken cancellationToken)
-    {
-        var payload = new
-                      {
-                          model = model, prompt = prompt, stream = false
-                      };
-
-        var content = new StringContent(JsonSerializer.Serialize(payload)
-                                      , Encoding.UTF8
-                                      , "application/json");
-
-        for (int attempt = 1; attempt <= _maxRetries; attempt++)
-        {
-            try
-            {
-                using var response = await _httpClient.PostAsync($"{_baseUrl}/api/generate"
-                                                               , content
-                                                               , cancellationToken);
-                response.EnsureSuccessStatusCode();
-
-                var json = await response.Content.ReadAsStringAsync(cancellationToken);
-                var result = JsonSerializer.Deserialize<OllamaResponse>(json);
-                return result?.Response ?? string.Empty;
-            }
-            catch (HttpRequestException ex) when (ex.InnerException is SocketException socketEx && IsSocketClose(socketEx))
-            {
-                if (attempt == _maxRetries) throw;
-                await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2
-                                                             , attempt))
-                               , cancellationToken);
-            }
-            catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
-            {
-                // Timeout handling
-                if (attempt == _maxRetries)
-                    throw new TimeoutException("Ollama request timed out."
-                                             , ex);
-                await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2
-                                                             , attempt))
-                               , cancellationToken);
-            }
-        }
-
-        return string.Empty;
-    }
-
-    private bool IsSocketClose(SocketException ex)
-    {
-        return ex.SocketErrorCode == SocketError.ConnectionReset || ex.SocketErrorCode == SocketError.Shutdown;
-    }
+    private static bool IsSocketClose(SocketException ex) =>
+        ex.SocketErrorCode is SocketError.ConnectionReset or SocketError.Shutdown;
 
     private IEnumerable<string> ChunkPrompt(string prompt)
     {
-        for (int i = 0; i < prompt.Length; i += _chunkSize)
+        for (var i = 0; i < prompt.Length; i += _chunkSize)
         {
-            yield return prompt.Substring(i
-                                        , Math.Min(_chunkSize
-                                                 , prompt.Length - i));
+            yield return prompt.Substring(i, Math.Min(_chunkSize
+                                                    , prompt.Length - i));
         }
     }
-
-    private class OllamaResponse
+    
+    public async Task<string> SendPromptStreamingAsync(Personality personality, string message)
     {
+        ArgumentNullException.ThrowIfNull(personality);
+        if (message.HasNoValue()) return string.Empty;
 
-        public string Response { get; set; }
+        // Build request that temporarily sets current persona for request only
+        var req = new LlmRequest
+                  {
+                      UserPrompt   = message,
+                      Personality  = personality,
+                      SystemPrompt = personality.SystemPrompt,
+                      OllamaConfig = personality.OllamConfiguration
+                  };
 
+        var sb = new StringBuilder();
+        await foreach (var chunk in SendPromptStreamingAsync(req).ConfigureAwait(false))
+        {
+            sb.Append(chunk);
+        }
+
+        return sb.ToString();
     }
 
+    // public async Task<string> SendPromptStreamingAsync(Personality personality
+    //                                                  , string      message)
+    // {
+    //     ArgumentNullException.ThrowIfNull(personality);
+    //     
+    //     if (message.HasNoValue()) return string.Empty;
+    //
+    //     // Temporarily switch to the given personality
+    //     var previous = _personalityService.Current;
+    //     _personalityService.SetCurrent(personality.Name);
+    //
+    //     try
+    //     {
+    //         var sb = new StringBuilder();
+    //         await foreach (var chunk in SendPromptStreamingAsync(message))
+    //         {
+    //             sb.Append(chunk);
+    //         }
+    //
+    //         return sb.ToString();
+    //     }
+    //     finally
+    //     {
+    //         // Restore previous personality
+    //         if (previous != null!)
+    //             _personalityService.SetCurrent(previous.Name);
+    //     }
+    // }
+    
+    //New
+    public async IAsyncEnumerable<string> SendPromptStreamingAsync(LlmRequest request
+                                                                 , [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        // Build final prompt using request (system/context/user) and/or personality
+        var finalPrompt = await BuildFinalPromptAsync(request, cancellationToken);
+        
+        // Determine which config to use (request override vs. service-level config)
+        var cfg = request.OllamaConfig ?? _configService.Current;
+        
+        // Stream from Ollama
+        await foreach (var chunk in StreamFromOllamaAsync(finalPrompt, cfg, cancellationToken))
+            yield return chunk;
+        
+    }
+
+
+    private async IAsyncEnumerable<string> StreamFromOllamaAsync(string                   finalPrompt
+                                                               , OllamaConfig             config
+                                                               , [EnumeratorCancellation] 
+                                                                 CancellationToken        cancellation = default)
+    {
+        _loggingService.LogInformation($"[LlmService] Sending prompt to Ollama (model={config.Model}):\n{Truncate(finalPrompt, 500)}");
+
+        // Example: using HttpClient to call Ollama's streaming endpoint
+        using var request = new HttpRequestMessage(HttpMethod.Post
+                                                 , GetGenerateEndpoint(config))
+                            {
+                                Content = JsonContent.Create(new
+                                                             {
+                                                                 model       = config.Model
+                                                               , prompt      = finalPrompt
+                                                               , stream      = true
+                                                               , temperature = config.Temperature
+                                                               , num_predict = config.NumPredict
+                                                                 // add any other Ollama parameters you support
+                                                             })
+                            };
+
+        using var response = await _httpClient.SendAsync(request
+                                                       , HttpCompletionOption.ResponseHeadersRead
+                                                       , cancellation);
+
+        response.EnsureSuccessStatusCode();
+
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellation);
+        using var reader = new StreamReader(stream);
+
+        while (reader.EndOfStream.Not() 
+            && cancellation.IsCancellationRequested.Not())
+        {
+            var line = await reader.ReadLineAsync();
+            
+            if (line.HasNoValue()) continue;
+
+            // Ollama streams JSON objects, one per line
+            var json = JsonSerializer.Deserialize<OllamaStreamChunk>(line);
+            if (json?.Response is not null)
+            {
+                yield return json.Response;
+            }
+
+            if (json?.Done == true)
+                yield break;
+        }
+    }
+    
+    private static string Truncate(string value, int maxLength) =>
+        string.IsNullOrEmpty(value) ? value : value[..Math.Min(value.Length, maxLength)];
+    
+    private static string GetGenerateEndpoint(OllamaConfig cfg)
+    {
+        return $"{cfg.Host?.TrimEnd('/') ?? StringConsts.OllamaServerUrl}/api/generate";
+        
+        // return $"{BuildUrl(cfg, StringConsts.OllamaChatEndpoint)}/api/generate";
+    }
+
+    // A model for the streaming response
+    private sealed class OllamaStreamChunk
+    {
+        [JsonPropertyName("response")]
+        public string? Response { get; set; }
+
+        [JsonPropertyName("done")]
+        public bool Done { get; set; }
+    }
+    
+    private async Task<string> BuildFinalPromptAsync(LlmRequest request, CancellationToken cancellationToken)
+    {
+        // Prefer personality fields from request if present, otherwise fallback to personality service
+        var persona      = request.Personality ?? _personalityService.Current;
+        var personaName  = persona?.Name ?? "Default";
+        var systemPrompt = request.SystemPrompt ?? persona?.SystemPrompt ?? "You are a helpful assistant.";
+
+        // Memory context (prefer request.Context if provided)
+        string? memorySummary;
+        if (!string.IsNullOrWhiteSpace(request.Context))
+        {
+            memorySummary = request.Context;
+        }
+        else
+        {
+            var memCtx = await _memoryService.GetContextForTurnAsync(request.UserPrompt, _memOpts, cancellationToken).ConfigureAwait(false);
+            memorySummary = memCtx?.Summary;
+        }
+
+        var injectedSystemPrompt = _roleInjection.BuildInjectedSystemPrompt(systemPrompt, personaName, memorySummary);
+
+        var userPrompt = request.UserPrompt ?? string.Empty;
+
+        if (!_enablePromptChunking || userPrompt.Length <= _chunkSize)
+        {
+            return $@"System: {injectedSystemPrompt}
+Conversation so far:
+User: {userPrompt}
+AI:";
+        }
+
+        var chunks = ChunkPrompt(userPrompt);
+        return $@"System: {injectedSystemPrompt}
+Conversation so far:
+User: {string.Join("\n", chunks)}
+AI:";
+    }
 }
