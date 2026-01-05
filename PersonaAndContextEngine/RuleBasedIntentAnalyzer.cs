@@ -3,7 +3,7 @@ using LocalAIAssistant.PersonaAndContextEngine.Enums;
 using LocalAIAssistant.PersonaAndContextEngine.Interfaces;
 using LocalAIAssistant.PersonaAndContextEngine.Models;
 
-namespace LocalAIAssistant.PersonaAndContextEngine.Services;
+namespace LocalAIAssistant.PersonaAndContextEngine;
 
 /// <summary>
 /// Rule-based implementation of IIntentAnalyzer.

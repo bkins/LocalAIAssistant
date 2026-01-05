@@ -1,14 +1,17 @@
-﻿using LocalAIAssistant.CognitivePlatform;
+﻿using System.Diagnostics;
+using LocalAIAssistant.CognitivePlatform;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Extensions;
+using LocalAIAssistant.Knowledge.Clients;
+using LocalAIAssistant.Knowledge.Journals.Clients;
+using LocalAIAssistant.Knowledge.Tasks.Clients;
 using LocalAIAssistant.Services;
-using LocalAIAssistant.Services.AiMemory;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Serilog;
 using Serilog.Formatting.Compact;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
 
 namespace LocalAIAssistant;
 
@@ -28,7 +31,7 @@ public static class MauiProgram
 		                                                  , shared: true)
 		                                      .WriteTo.Debug()
 		                                      .CreateLogger();
-		System.Diagnostics.Debug.WriteLine($"Configuring Serilog to log to: {logPath}");
+		Debug.WriteLine($"Configuring Serilog to log to: {logPath}");
 		try
 		{
 			// Log a message that will definitely be written to the file
@@ -40,21 +43,21 @@ public static class MauiProgram
 				var content = File.ReadAllText(logPath);
 				if (!string.IsNullOrEmpty(content))
 				{
-					System.Diagnostics.Debug.WriteLine($"Log file successfully written. Content length: {content.Length}");
+					Debug.WriteLine($"Log file successfully written. Content length: {content.Length}");
 				}
 				else
 				{
-					System.Diagnostics.Debug.WriteLine("Log file exists but is empty.");
+					Debug.WriteLine("Log file exists but is empty.");
 				}
 			}
 			else
 			{
-				System.Diagnostics.Debug.WriteLine("Log file does not exist after initial log call.");
+				Debug.WriteLine("Log file does not exist after initial log call.");
 			}
 		}
 		catch (Exception ex)
 		{
-			System.Diagnostics.Debug.WriteLine($"Error writing to log file: {ex.Message}");
+			Debug.WriteLine($"Error writing to log file: {ex.Message}");
 		}
 		
 		// // Log that Serilog is configured
@@ -70,15 +73,15 @@ public static class MauiProgram
 		if (File.Exists(logPath))
 		{
 			var lines = File.ReadAllLines(logPath);
-			System.Diagnostics.Debug.WriteLine($"MauiProgram: Serilog file has {lines.Length} lines");
+			Debug.WriteLine($"MauiProgram: Serilog file has {lines.Length} lines");
 			foreach (var line in lines)
 			{
-				System.Diagnostics.Debug.WriteLine($"MauiProgram: {line}");
+				Debug.WriteLine($"MauiProgram: {line}");
 			}
 		}
 		else
 		{
-			System.Diagnostics.Debug.WriteLine("MauiProgram: Serilog file does not exist");
+			Debug.WriteLine("MauiProgram: Serilog file does not exist");
 		}
 
 		var builder = MauiApp.CreateBuilder();
@@ -88,13 +91,38 @@ public static class MauiProgram
 			fonts.AddFont("JetBrainsMono-Regular.ttf"
 			            , "JetBrainsMono");
 		});
+
+		var cognitivePlatformApi = new HttpClient
+		                            {
+				                            BaseAddress = new Uri("http://192.168.0.33:5272")
+				                          , Timeout     = TimeSpan.FromSeconds(500)
+		                            };
+		
 		builder.Services.AddHttpClient<ICognitivePlatformClient, CognitivePlatformClient>(client =>
 		{
 			// Should this be the address to the CP API? - http://localhost:5272
-			client.BaseAddress = new Uri("http://192.168.0.33:5272"); // Physical Device //"http://10.0.2.2:5272/");  //"http://10.0.2.2:5200/"); // Android emulator
-			client.Timeout     = TimeSpan.FromSeconds(500);
+			client.BaseAddress = cognitivePlatformApi.BaseAddress; // Physical Device //"http://10.0.2.2:5272/");  //"http://10.0.2.2:5200/"); // Android emulator
+			client.Timeout     = cognitivePlatformApi.Timeout;     
+		});
+		
+		builder.Services.AddHttpClient<IKnowledgeApiClient, KnowledgeApiClient>(client =>
+		{
+			client.BaseAddress = cognitivePlatformApi.BaseAddress; 
+			client.Timeout     = cognitivePlatformApi.Timeout;     
 		});
 
+		builder.Services.AddHttpClient<IJournalApiClient, JournalApiClient>(client =>
+		{
+			client.BaseAddress = cognitivePlatformApi.BaseAddress; 
+			client.Timeout     = cognitivePlatformApi.Timeout;     
+		});
+		
+		builder.Services.AddHttpClient<ITaskApiClient, TaskApiClient>(client =>
+		{
+			client.BaseAddress = cognitivePlatformApi.BaseAddress; 
+			client.Timeout     = cognitivePlatformApi.Timeout;     
+		});
+		
 		// Bind Ollama config (with validation)
 		builder.Services
 		       .AddOptions<OllamaConfig>()
@@ -138,9 +166,7 @@ public static class MauiProgram
 		builder.Configuration.AddJsonFile(ollamaConfigFilePath, optional: false, reloadOnChange: true);
 
 		// Bind Ollama section (you can drop “Ollama” section wrapper if you just want flat file)
-		builder.Services.Configure<OllamaConfig>(
-			builder.Configuration.GetSection("Ollama")
-		);
+		builder.Services.Configure<OllamaConfig>(builder.Configuration.GetSection("Ollama"));
 
 		// Register config service wrapper
 		builder.Services.AddSingleton<OllamaConfigService>();

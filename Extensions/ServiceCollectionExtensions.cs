@@ -1,19 +1,22 @@
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
+using LocalAIAssistant.Knowledge.Inbox;
+using LocalAIAssistant.Knowledge.Journals.Views;
+using LocalAIAssistant.Knowledge.Tasks.ViewModels;
+using LocalAIAssistant.Knowledge.Tasks.Views;
 using LocalAIAssistant.PersonaAndContextEngine;
 using LocalAIAssistant.PersonaAndContextEngine.Interfaces;
-using LocalAIAssistant.PersonaAndContextEngine.Services;
 using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.AiMemory;
-using LocalAIAssistant.Services.AiMemory.Interfaces;
 using LocalAIAssistant.Services.Interfaces;
 using LocalAIAssistant.Services.Logging;
 using LocalAIAssistant.ViewModels;
 using LocalAIAssistant.Views;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Serilog;
 using IPersonaRepository = LocalAIAssistant.PersonaAndContextEngine.Interfaces.IPersonaRepository;
+using JournalDetailViewModel = LocalAIAssistant.Knowledge.Journals.ViewModels.JournalDetailViewModel;
+using KnowledgeInboxViewModel = LocalAIAssistant.Knowledge.Inbox.KnowledgeInboxViewModel;
 
 namespace LocalAIAssistant.Extensions;
 
@@ -38,11 +41,11 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IPersonalityService, PersonalityService>();
         services.AddSingleton<ApiHealthService>();
         services.AddSingleton<HttpClient>();
-        services.AddSingleton<Serilog.ILogger>(Log.Logger);
+        services.AddSingleton<ILogger>(Log.Logger);
 
         services.AddSingleton<ILoggingService, LoggingService>(s =>
         {
-            var logger = s.GetRequiredService<Serilog.ILogger>();
+            var logger = s.GetRequiredService<ILogger>();
             return new LoggingService(logger, logPath);
         });
         // services.AddSingleton<ILoggingService, LoggingService>(s =>
@@ -95,6 +98,10 @@ public static class ServiceCollectionExtensions
         services.AddTransient<AppShellViewModel>();
         services.AddTransient<AppShellMasterViewModel>();
         
+        // Knowledge and Knowledge Clients
+        services.AddTransient<KnowledgeInboxViewModel>();
+        services.AddTransient<JournalDetailViewModel>();
+        services.AddTransient<TaskDetailViewModel>();
         
         return services;
     }
@@ -106,6 +113,11 @@ public static class ServiceCollectionExtensions
         services.AddTransient<MemoryManagementPage>();
         services.AddTransient<AppShell>();
         services.AddSingleton<SettingsPage>();
+        
+        // Knowledge and Knowledge Clients
+        services.AddTransient<KnowledgeInboxPage>();
+        services.AddTransient<JournalDetailPage>();
+        services.AddTransient<TaskDetailPage>();
         
         return services;
     }

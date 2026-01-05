@@ -2,16 +2,21 @@
 
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:rendering="clr-namespace:LocalAIAssistant.CognitivePlatform.Rendering"
-             xmlns:controls="clr-namespace:LocalAIAssistant.Views.Controls"
              x:Class="LocalAIAssistant.Views.MainPage"
              BackgroundColor="{StaticResource SplashBackgroundColor}"
              Title="Local AI Assistant">
 
+    <ContentPage.ToolbarItems >
+        
+        <ToolbarItem Text="🧭"
+                     Command="{Binding OpenKnowledgeCommand}" />
+        
+    </ContentPage.ToolbarItems>
+    
     <Grid x:Name="Root"
           Opacity="0"
           BackgroundColor="Black">
-
+       
         <Grid RowDefinitions="Auto,*,Auto">
 
             <!-- Header -->
@@ -25,7 +30,7 @@
             <!--     ~1~        FontAttributes="Bold" @1@ -->
             <!--     ~1~        TextColor="{StaticResource PrimaryTextColor}" /> @1@ -->
             <!-- -->
-            <!--     ~1~ Streaming toggle @1@ -->
+            <!-- Streaming toggle -->
                 <HorizontalStackLayout Grid.Row="1"
                                        Spacing="40"
                                        VerticalOptions="Center">

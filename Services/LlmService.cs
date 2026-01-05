@@ -1,4 +1,3 @@
-using System.Net;
 using System.Net.Http.Json;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
@@ -11,9 +10,9 @@ using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Extensions;
 using LocalAIAssistant.Services.AiMemory;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
+using LocalAIAssistant.Services.Contracts;
 using LocalAIAssistant.Services.Interfaces;
 using LocalAIAssistant.Services.Logging;
-using LocalAIAssistant.Services.Requests;
 using Microsoft.Extensions.Options;
 
 namespace LocalAIAssistant.Services;

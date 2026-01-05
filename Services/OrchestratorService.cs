@@ -4,13 +4,14 @@ using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Extensions;
 using LocalAIAssistant.PersonaAndContextEngine.Interfaces;
-using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.AiMemory;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
+using LocalAIAssistant.Services.Contracts;
 using LocalAIAssistant.Services.Interfaces;
 using LocalAIAssistant.Services.Logging;
-using LocalAIAssistant.Services.Requests;
 using Microsoft.Extensions.Options;
+
+namespace LocalAIAssistant.Services;
 
 public class OrchestratorService : IOrchestratorService
 {
@@ -90,16 +91,16 @@ public class OrchestratorService : IOrchestratorService
         // 2) Build the LlmRequest that LlmService expects
         var req = new LlmRequest
                   {
-                      UserPrompt   = userInput
-                    , SystemPrompt = personality.SystemPrompt ?? "You are a helpful AI."
-                    , Context      = contextSummary
-                    , Personality  = personality
-                    , OllamaConfig = effectiveConfig
+                          UserPrompt   = userInput
+                        , SystemPrompt = personality.SystemPrompt ?? "You are a helpful AI."
+                        , Context      = contextSummary
+                        , Personality  = personality
+                        , OllamaConfig = effectiveConfig
                   };
 
         // 3) Stream via ILlmService (structured request overload)
         var sb = new StringBuilder();
-            await foreach (var chunk in _llm.SendPromptStreamingAsync(req
+        await foreach (var chunk in _llm.SendPromptStreamingAsync(req
                                                                 , ct).WithCancellation(ct).ConfigureAwait(false))
         {
             if (chunk.HasNoValue()) continue;
@@ -118,15 +119,15 @@ public class OrchestratorService : IOrchestratorService
                , $"Completed; tokens_out≈{assistantText.Length}");
     }
 
-    public async IAsyncEnumerable<string> HandleUserMessageStreamingAsync(string userInput
-                                                                        , Guid? forcedPersonaId = null
-                                                                        , [EnumeratorCancellation] CancellationToken ct = default)
+    public async IAsyncEnumerable<string> HandleUserMessageStreamingAsync(string                                     userInput
+                                                                        , Guid?                                      forcedPersonaId = null
+                                                                        , [EnumeratorCancellation] CancellationToken ct              = default)
     {
         var contextResult = await _contextEngine.ResolveContextAsync(userInput, forcedPersonaId, ct)
                                                 .ConfigureAwait(false);
 
         LogEvent(Guid.NewGuid().ToString("N")
-                , $"Streaming START: Persona={contextResult.Personality.Name}, Intent={contextResult.IntentAnalysisResult.Intent}");
+               , $"Streaming START: Persona={contextResult.Personality.Name}, Intent={contextResult.IntentAnalysisResult.Intent}");
 
         await foreach (var chunk in ProcessAsync(userInput, contextResult.Personality, ct))
             yield return chunk;
@@ -155,10 +156,10 @@ public class OrchestratorService : IOrchestratorService
         {
             _configService.UpdateConfig(new OllamaConfig
                                         {
-                                            Model       = ollamaConfig.Model
-                                          , Host        = ollamaConfig.Host
-                                          , NumPredict  = ollamaConfig.NumPredict
-                                          , Temperature = ollamaConfig.Temperature
+                                                Model       = ollamaConfig.Model
+                                              , Host        = ollamaConfig.Host
+                                              , NumPredict  = ollamaConfig.NumPredict
+                                              , Temperature = ollamaConfig.Temperature
                                         });
         }
         catch (Exception e)
@@ -181,9 +182,9 @@ public class OrchestratorService : IOrchestratorService
             // STM
             _conversationMemory?.AddAsync(new Message
                                           {
-                                              Sender    = Senders.Assistant
-                                            , Content   = assistantText
-                                            , Timestamp = DateTime.UtcNow
+                                                  Sender    = Senders.Assistant
+                                                , Content   = assistantText
+                                                , Timestamp = DateTime.UtcNow
                                           });
 
             // LTM (your MemoryService.SaveEntryAsync writes to LTM if configured)
@@ -205,9 +206,9 @@ public class OrchestratorService : IOrchestratorService
         {
             _conversationMemory?.AddAsync(new Message
                                           {
-                                              Sender    = Senders.User
-                                            , Content   = userInput
-                                            , Timestamp = DateTime.UtcNow
+                                                  Sender    = Senders.User
+                                                , Content   = userInput
+                                                , Timestamp = DateTime.UtcNow
                                           });
         }
         catch (Exception ex)

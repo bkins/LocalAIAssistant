@@ -5,6 +5,8 @@ using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Services.Interfaces;
 
+namespace LocalAIAssistant.ViewModels;
+
 public partial class ConversationViewModel : ObservableObject
 {
     private readonly IOrchestratorService _orchestrator;

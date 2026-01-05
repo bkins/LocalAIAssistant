@@ -1,4 +1,4 @@
-namespace LocalAIAssistant.Data.Models;
+namespace LocalAIAssistant.Knowledge.Inbox;
 
 public sealed class KnowledgeItem
 {

@@ -1,6 +1,6 @@
 using LocalAIAssistant.Data.Models;
 
-namespace LocalAIAssistant.Services.Requests;
+namespace LocalAIAssistant.Services.Contracts;
 /*
  * The orchestrator will build this and pass it to ILlmService.
  * LlmService can then use OllamaConfig from the request (if present) or fall back to its configured default.

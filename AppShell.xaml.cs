@@ -1,4 +1,7 @@
-﻿using LocalAIAssistant.Services;
+﻿using LocalAIAssistant.Knowledge.Inbox;
+using LocalAIAssistant.Knowledge.Journals.Views;
+using LocalAIAssistant.Knowledge.Tasks.Views;
+using LocalAIAssistant.Services;
 using LocalAIAssistant.ViewModels;
 using LocalAIAssistant.Views;
 
@@ -15,6 +18,15 @@ public partial class AppShell : Shell
 
 		Routing.RegisterRoute(nameof(LogDetailPage)
 		                    , typeof(LogDetailPage));
+		
+		Routing.RegisterRoute(nameof(KnowledgeInboxPage)
+		                    , typeof(KnowledgeInboxPage));
+
+		Routing.RegisterRoute(nameof(JournalDetailPage)
+		                    , typeof(JournalDetailPage));
+		
+		Routing.RegisterRoute(nameof(TaskDetailPage)
+		                    , typeof(TaskDetailPage));
 
 		BindingContext = masterViewModel;
 

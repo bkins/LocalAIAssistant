@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="LocalAIAssistant.Ui.Maui">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-01-02T02:42:54.089095200Z">
+        <DropdownSelection timestamp="2026-01-03T16:55:04.452586900Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=ZY22JF9FHP" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\benho\.android\avd\Pixel_9a.avd" />
             </handle>
           </Target>
         </DropdownSelection>

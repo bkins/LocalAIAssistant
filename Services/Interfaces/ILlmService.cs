@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 using LocalAIAssistant.Data.Models;
-using LocalAIAssistant.Services.Requests;
+using LocalAIAssistant.Services.Contracts;
 
 namespace LocalAIAssistant.Services.Interfaces;
 

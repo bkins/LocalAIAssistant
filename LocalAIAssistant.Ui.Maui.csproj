@@ -99,6 +99,12 @@
 	  <MauiXaml Update="Views\MainPage.xaml">
 	    <SubType>Designer</SubType>
 	  </MauiXaml>
+	  <MauiXaml Update="Knowledge\Inbox\KnowledgeInboxPage.xaml">
+	    <SubType>Designer</SubType>
+	  </MauiXaml>
+	  <MauiXaml Update="Knowledge\Journals\Views\JournalDetailPage.xaml">
+	    <SubType>Designer</SubType>
+	  </MauiXaml>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -106,9 +112,22 @@
 	    <DependentUpon>MainPage.xaml</DependentUpon>
 	    <SubType>Code</SubType>
 	  </Compile>
+	  <Compile Update="Knowledge\Inbox\KnowledgeInboxPage.xaml.cs">
+	    <DependentUpon>KnowledgeInboxPage.xaml</DependentUpon>
+	    <SubType>Code</SubType>
+	  </Compile>
+	  <Compile Update="Knowledge\Journals\Views\JournalDetailPage.xaml.cs">
+	    <DependentUpon>JournalDetailPage.xaml</DependentUpon>
+	    <SubType>Code</SubType>
+	  </Compile>
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Folder Include="Knowledge\_KnowledgeDomainFolderTemplate\Clients\" />
+	  <Folder Include="Knowledge\_KnowledgeDomainFolderTemplate\Interfaces\" />
+	  <Folder Include="Knowledge\_KnowledgeDomainFolderTemplate\Models\" />
+	  <Folder Include="Knowledge\_KnowledgeDomainFolderTemplate\ViewModels\" />
+	  <Folder Include="Knowledge\_KnowledgeDomainFolderTemplate\Views\" />
 	  <Folder Include="Services\Logging\Archived\" />
 	</ItemGroup>
 </Project>

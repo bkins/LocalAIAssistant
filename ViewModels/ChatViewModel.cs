@@ -8,11 +8,11 @@ using LocalAIAssistant.CognitivePlatform;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Extensions;
+using LocalAIAssistant.Knowledge.Inbox;
 using LocalAIAssistant.Services.AiMemory;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
 using LocalAIAssistant.Services.Interfaces;
 using LocalAIAssistant.Services.Logging;
-using LocalAIAssistant.Services.Requests;
 using Microsoft.Extensions.Options;
 
 namespace LocalAIAssistant.ViewModels;
@@ -50,7 +50,8 @@ public partial class ChatViewModel : ObservableObject
 
     public ICommand SendCommand             { get; }
     public ICommand SendForStreamingCommand { get; }
-
+    // public ICommand OpenKnowledgeCommand    { get; }
+    
     public ChatViewModel (ILlmService                      llmService
                         , IConversationMemory              conversationMemory
                         , IMemoryService                   memory
@@ -328,7 +329,12 @@ public partial class ChatViewModel : ObservableObject
         ScrollToBottomRequested?.Invoke();
     }
 
-    
+    [RelayCommand]
+    private async Task OpenKnowledge()
+    {
+        await Shell.Current.GoToAsync(nameof(KnowledgeInboxPage));
+
+    }
     [RelayCommand]
     private async Task SendPromptAsync_old()
     {

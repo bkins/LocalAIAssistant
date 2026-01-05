@@ -1,11 +1,10 @@
 #if DEBUG
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Services.AiMemory;
 using LocalAIAssistant.Services.Logging;
+
+namespace LocalAIAssistant.Debugging;
 
 public class TestHarness
 {
@@ -33,24 +32,24 @@ public class TestHarness
 
         var messages = new List<Message>
                        {
-                           new()
-                           {
-                               Sender    = Senders.Ai
-                             , Content   = "The sky is blue"
-                             , Timestamp = DateTime.Now.AddHours(-1)
-                           }
-                         , new()
-                           {
-                               Sender    = Senders.User
-                             , Content   = "Grass is green"
-                             , Timestamp = DateTime.Now.AddHours(-2)
-                           }
-                         , new()
-                           {
-                               Sender    = Senders.User
-                             , Content   = "Roses are red"
-                             , Timestamp = DateTime.Now
-                           }
+                               new()
+                               {
+                                       Sender    = Senders.Ai
+                                     , Content   = "The sky is blue"
+                                     , Timestamp = DateTime.Now.AddHours(-1)
+                               }
+                             , new()
+                               {
+                                       Sender    = Senders.User
+                                     , Content   = "Grass is green"
+                                     , Timestamp = DateTime.Now.AddHours(-2)
+                               }
+                             , new()
+                               {
+                                       Sender    = Senders.User
+                                     , Content   = "Roses are red"
+                                     , Timestamp = DateTime.Now
+                               }
                        };
 
         var recent = new List<Message> { new() { Content = "sky grass" } };
@@ -70,34 +69,34 @@ public class TestHarness
 
         var stm = new List<Message>
                   {
-                      new()
-                      {
-                          Sender = Senders.User
-                        , Content = "User said hello"
-                        , Timestamp  = DateTime.Now
-                      },
-                      new()
-                      {
-                          Sender = Senders.Ai
-                        , Content   = "AI replied hello"
-                        , Timestamp = DateTime.Now
-                      }
+                          new()
+                          {
+                                  Sender    = Senders.User
+                                , Content   = "User said hello"
+                                , Timestamp = DateTime.Now
+                          },
+                          new()
+                          {
+                                  Sender    = Senders.Ai
+                                , Content   = "AI replied hello"
+                                , Timestamp = DateTime.Now
+                          }
                   };
 
         var ltm = new List<Message>
                   {
-                      new()
-                      {
-                          Sender = Senders.Ai
-                        , Content   = "The sun rises in the east"
-                        , Timestamp = DateTime.Now.AddDays(-1)
-                      },
-                      new()
-                      {
-                          Sender = Senders.User
-                        , Content = "Water is wet"
-                        , Timestamp              = DateTime.Now.AddDays(-2)
-                      }
+                          new()
+                          {
+                                  Sender    = Senders.Ai
+                                , Content   = "The sun rises in the east"
+                                , Timestamp = DateTime.Now.AddDays(-1)
+                          },
+                          new()
+                          {
+                                  Sender    = Senders.User
+                                , Content   = "Water is wet"
+                                , Timestamp = DateTime.Now.AddDays(-2)
+                          }
                   };
 
         // Example query for scoring
@@ -144,52 +143,52 @@ public class TestHarness
         // Arrange: sample messages
         var stmMessages = new List<Message>
                           {
-                              new()
-                              {
-                                  Sender     = Senders.User
-                                , Content    = "Casual chit-chat about lunch."
-                                , Importance = 1
-                                , Timestamp  = DateTime.UtcNow.AddSeconds(1)
-                              }
-                            , new()
-                              {
-                                  Sender     = Senders.Assistant
-                                , Content    = "Responding casually about pizza."
-                                , Importance = 1
-                                , Timestamp  = DateTime.UtcNow.AddSeconds(2)
-                              }
-                            , new()
-                              {
-                                  Sender     = Senders.User
-                                , Content    = "Critical instruction: remember to log errors."
-                                , Importance = 5
-                                , Timestamp  = DateTime.UtcNow.AddSeconds(3)
-                              }
-                            , new()
-                              {
-                                  Sender     = Senders.Assistant
-                                , Content    = "Got it. I’ll always log errors clearly."
-                                , Importance = 5
-                                , Timestamp  = DateTime.UtcNow.AddSeconds(4)
-                              }
-                            , new()
-                              {
-                                  Sender     = Senders.User
-                                , Content    = "Another casual note about weather."
-                                , Importance = 1
-                                , Timestamp  = DateTime.UtcNow.AddSeconds(5)
-                              }
+                                  new()
+                                  {
+                                          Sender     = Senders.User
+                                        , Content    = "Casual chit-chat about lunch."
+                                        , Importance = 1
+                                        , Timestamp  = DateTime.UtcNow.AddSeconds(1)
+                                  }
+                                , new()
+                                  {
+                                          Sender     = Senders.Assistant
+                                        , Content    = "Responding casually about pizza."
+                                        , Importance = 1
+                                        , Timestamp  = DateTime.UtcNow.AddSeconds(2)
+                                  }
+                                , new()
+                                  {
+                                          Sender     = Senders.User
+                                        , Content    = "Critical instruction: remember to log errors."
+                                        , Importance = 5
+                                        , Timestamp  = DateTime.UtcNow.AddSeconds(3)
+                                  }
+                                , new()
+                                  {
+                                          Sender     = Senders.Assistant
+                                        , Content    = "Got it. I’ll always log errors clearly."
+                                        , Importance = 5
+                                        , Timestamp  = DateTime.UtcNow.AddSeconds(4)
+                                  }
+                                , new()
+                                  {
+                                          Sender     = Senders.User
+                                        , Content    = "Another casual note about weather."
+                                        , Importance = 1
+                                        , Timestamp  = DateTime.UtcNow.AddSeconds(5)
+                                  }
                           };
 
         var ltmMessages = new List<Message>
                           {
-                              new()
-                              {
-                                  Sender     = Senders.Ai
-                                , Content    = "Persisted fact with medium importance"
-                                , Importance = 3
-                                , Timestamp  = DateTime.UtcNow.AddDays(-1)
-                              }
+                                  new()
+                                  {
+                                          Sender     = Senders.Ai
+                                        , Content    = "Persisted fact with medium importance"
+                                        , Importance = 3
+                                        , Timestamp  = DateTime.UtcNow.AddDays(-1)
+                                  }
                           };
 
         // Act: score STM using ApplyScoring (importance-aware)
@@ -218,8 +217,8 @@ public class TestHarness
         bool promotionOk = summary.Contains("log errors");
         _logger.LogInformation($"ASSERT: Promotion works? {promotionOk}");
 
-        var topMessage = stmMessages.OrderByDescending(m => m.Score).First();
-        bool rankingOk = topMessage.Importance == 5;
+        var  topMessage = stmMessages.OrderByDescending(m => m.Score).First();
+        bool rankingOk  = topMessage.Importance == 5;
         _logger.LogInformation($"ASSERT: Ranking works? {rankingOk}");
 
         _logger.LogInformation("=========================================");
@@ -229,7 +228,7 @@ public class TestHarness
     private int OverlapScoreWrapper(Message message, string query, IEnumerable<Message> recent)
     {
         var queryText = query + " " + string.Join(" ", recent.Select(m => m.Content ?? ""));
-        var hashSet = MemoryService.Tokenize(queryText);
+        var hashSet   = MemoryService.Tokenize(queryText);
         return MemoryService.OverlapScore(hashSet, MemoryService.Tokenize(message.Content ?? ""));
     }
 }

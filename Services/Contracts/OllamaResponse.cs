@@ -1,4 +1,4 @@
-namespace LocalAIAssistant.Services.Requests;
+namespace LocalAIAssistant.Services.Contracts;
 
 public class OllamaResponse
 {
