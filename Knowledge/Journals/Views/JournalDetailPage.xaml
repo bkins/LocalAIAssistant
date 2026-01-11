@@ -17,7 +17,7 @@
             <Label Text="{Binding Text}"
                    FontSize="16"
                    LineBreakMode="WordWrap" />
-
+            <Label Text="{Binding Tags}"/>
             <ActivityIndicator IsRunning="{Binding IsLoading}"
                                IsVisible="{Binding IsLoading}" />
 

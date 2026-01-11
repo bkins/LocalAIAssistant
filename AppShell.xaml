@@ -34,6 +34,16 @@
                    FontAttributes="Bold"
                    TextColor="{StaticResource PrimaryTextColor}" />
             
+            <Label Text="{Binding EnvironmentName}"
+                   FontSize="10"
+                   TextColor="Orange"
+                   HorizontalOptions="End"
+                   Margin="8"/>
+            <!-- <Label Text="{Binding EnvironmentName}" -->
+            <!--        FontSize="10" -->
+            <!--        TextColor="Gray" -->
+            <!--        HorizontalOptions="End"/> -->
+            
             <!-- <BoxView WidthRequest="14" -->
             <!--          HeightRequest="14" -->
             <!--          CornerRadius="7" -->

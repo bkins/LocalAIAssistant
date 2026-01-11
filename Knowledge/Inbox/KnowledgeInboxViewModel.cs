@@ -14,7 +14,6 @@ public partial class KnowledgeInboxViewModel : ObservableObject
     public ObservableCollection<KnowledgeItem> Items => _items;
     private readonly ObservableCollection<KnowledgeItem> _items = new();
 
-
     [ObservableProperty] private bool           _isLoading;
     [ObservableProperty] private KnowledgeItem? _selectedItem;
     
@@ -39,7 +38,9 @@ public partial class KnowledgeInboxViewModel : ObservableObject
             var items = await _client.GetKnowledgeAsync();
             
             foreach (var item in items)
+            {
                 Items.Add(item);
+            }
         }
         finally
         {

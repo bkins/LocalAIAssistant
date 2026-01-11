@@ -134,5 +134,14 @@ public partial class MainPage : ContentPage
     
     public static Keyboard CreateKeyboard =>
         Keyboard.Create(KeyboardFlags.CapitalizeSentence | KeyboardFlags.Suggestions);
-    
+
+    private void OnEntryCompleted (object?   sender
+                                 , EventArgs e)
+    {
+        if (BindingContext is ChatViewModel vm 
+          && vm.SendCommand.CanExecute(null))
+        {
+            vm.SendCommand.Execute(null);
+        }
+    }
 }

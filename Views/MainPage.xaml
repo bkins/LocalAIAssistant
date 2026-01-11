@@ -24,13 +24,6 @@
                   Padding="16"
                   BackgroundColor="{StaticResource SurfaceAltColor}"
                   Row="0">
-            <!--      -->
-            <!--     ~1~ <Label Text="Cognitive Assistant" @1@ -->
-            <!--     ~1~        FontSize="24" @1@ -->
-            <!--     ~1~        FontAttributes="Bold" @1@ -->
-            <!--     ~1~        TextColor="{StaticResource PrimaryTextColor}" /> @1@ -->
-            <!-- -->
-            <!-- Streaming toggle -->
                 <HorizontalStackLayout Grid.Row="1"
                                        Spacing="40"
                                        VerticalOptions="Center">
@@ -46,97 +39,6 @@
             </HorizontalStackLayout>
             </Grid>
 
-            <!-- Messages -->
-            <!-- <CollectionView x:Name="MessagesView" -->
-            <!--                 Grid.Row="1" -->
-            <!--                 ItemsSource="{Binding Messages}" -->
-            <!--                 BackgroundColor="{StaticResource SurfaceAltColor}" -->
-            <!--                 Margin="12" -->
-            <!--                 VerticalOptions="FillAndExpand"> -->
-            <!-- -->
-            <!--     <CollectionView.ItemTemplate> -->
-            <!--         <DataTemplate> -->
-            <!--             <Frame -->
-            <!--                 Padding="12" -->
-            <!--                 Margin="0,6" -->
-            <!--                 BorderColor="#000000" -->
-            <!--                 HasShadow="False" -->
-            <!--                 CornerRadius="12" -->
-            <!--                 MaximumWidthRequest="320" -->
-            <!--                 HorizontalOptions="Start" -->
-            <!--                 BackgroundColor="{StaticResource SurfaceColor}" -->
-            <!--                 > -->
-            <!-- -->
-            <!--                 <Frame.Triggers> -->
-            <!-- -->
-            <!--                     ~1~ USER MESSAGE @1@ -->
-            <!--                     <DataTrigger -->
-            <!--                         TargetType="Frame" -->
-            <!--                         Binding="{Binding Sender}" -->
-            <!--                         Value="user"> -->
-            <!--                         <Setter Property="BackgroundColor" Value="#4CAF50" /> -->
-            <!--                         <Setter Property="HorizontalOptions" Value="End" /> -->
-            <!--                     </DataTrigger> -->
-            <!-- -->
-            <!--                     ~1~ ASSISTANT MESSAGE @1@ -->
-            <!--                     <DataTrigger -->
-            <!--                         TargetType="Frame" -->
-            <!--                         Binding="{Binding Sender}" -->
-            <!--                         Value="assistant"> -->
-            <!--                         <Setter Property="BackgroundColor" Value="#7C5CE6" /> -->
-            <!--                         <Setter Property="HorizontalOptions" Value="Start" /> -->
-            <!--                     </DataTrigger> -->
-            <!-- -->
-            <!--                     ~1~ SYSTEM MESSAGE (Errors and such) @1@ -->
-            <!--                     <DataTrigger -->
-            <!--                         TargetType="Frame" -->
-            <!--                         Binding="{Binding Sender}" -->
-            <!--                         Value="system"> -->
-            <!--                         <Setter Property="BackgroundColor" Value="Transparent" /> -->
-            <!--                         <Setter Property="HorizontalOptions" Value="Center" /> -->
-            <!--                     </DataTrigger> -->
-            <!-- -->
-            <!--                 </Frame.Triggers> -->
-            <!-- -->
-            <!--                 <Label Text="{Binding Content}" -->
-            <!--                        LineBreakMode="WordWrap" -->
-            <!--                        FontSize="14"> -->
-            <!-- -->
-            <!--                     <Label.Triggers> -->
-            <!-- -->
-            <!--                         ~1~ USER TEXT @1@ -->
-            <!--                         <DataTrigger TargetType="Label" -->
-            <!--                                      Binding="{Binding Sender}" -->
-            <!--                                      Value="user"> -->
-            <!--                             <Setter Property="TextColor" Value="White" /> -->
-            <!--                             <Setter Property="FontFamily" Value="Default" /> -->
-            <!--                         </DataTrigger> -->
-            <!-- -->
-            <!--                         ~1~ ASSISTANT TEXT @1@ -->
-            <!--                         <DataTrigger TargetType="Label" -->
-            <!--                                      Binding="{Binding Sender}" -->
-            <!--                                      Value="assistant"> -->
-            <!--                             <Setter Property="TextColor" Value="#0F172A" /> -->
-            <!--                             <Setter Property="FontFamily" Value="JetBrainsMono" /> -->
-            <!--                         </DataTrigger> -->
-            <!-- -->
-            <!--                         ~1~ SYSTEM TEXT @1@ -->
-            <!--                         <DataTrigger TargetType="Label" -->
-            <!--                                      Binding="{Binding Sender}" -->
-            <!--                                      Value="system"> -->
-            <!--                             <Setter Property="TextColor" Value="#64748B" /> -->
-            <!--                             <Setter Property="FontAttributes" Value="Italic" /> -->
-            <!--                             <Setter Property="HorizontalTextAlignment" Value="Center" /> -->
-            <!--                         </DataTrigger> -->
-            <!--                     </Label.Triggers> -->
-            <!--                 </Label> -->
-            <!--             </Frame> -->
-            <!--         </DataTemplate> -->
-            <!--     </CollectionView.ItemTemplate> -->
-            <!-- -->
-            <!-- </CollectionView> -->
-            <!-- Messages Background Layer -->
-            <!-- Messages Background Layer -->
             <Grid Grid.Row="1"
                   Margin="12">
 
@@ -160,15 +62,14 @@
 
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <Frame
-                                Padding="12"
-                                Margin="0,6"
-                                BorderColor="#000000"
-                                HasShadow="False"
-                                CornerRadius="12"
-                                MaximumWidthRequest="320"
-                                HorizontalOptions="Start"
-                                BackgroundColor="{StaticResource SurfaceColor}">
+                            <Frame Padding="12"
+                                   Margin="0,6"
+                                   BorderColor="#000000"
+                                   HasShadow="False"
+                                   CornerRadius="12"
+                                   MaximumWidthRequest="320"
+                                   HorizontalOptions="Start"
+                                   BackgroundColor="{StaticResource SurfaceColor}">
 
                                 <Frame.Triggers>
 
@@ -234,7 +135,6 @@
                             </Frame>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
-
                 </CollectionView>
             </Grid>
 
@@ -248,19 +148,24 @@
                 <Entry Grid.Column="0"
                        Text="{Binding PromptText}"
                        Placeholder="Type a message…"
+                       Keyboard="Chat"
+                       ReturnType="Send"
+                       Completed="OnEntryCompleted"
+                       ClearButtonVisibility="WhileEditing"
                        FontSize="16"
                        HeightRequest="44"
                        VerticalOptions="Center"
                        BackgroundColor="{StaticResource InputBackgroundColor}"
                        TextColor="White"
-
-                       Margin="0,0,8,0" />
-                <!-- Command="{Binding SendForStreamingCommand}" -->
+                       Margin="0,0,8,0"
+                       />
+               
                 <Button Grid.Column="1"
                         Text="Send"
                         Command="{Binding SendCommand}"
                         HeightRequest="44"
-                        Padding="16,0" />
+                        Padding="16,0" 
+                        BackgroundColor="#4CAF50"/>
             </Grid>
         </Grid>
     </Grid>

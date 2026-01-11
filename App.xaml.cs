@@ -13,11 +13,12 @@ public partial class App : Application
 	private readonly ILoggingService    _loggingService;
 	private readonly AppShellMasterViewModel _masterViewModel;
 
-	public App(ILlmService             ollamaApiService
-	         , ApiHealthService        apiHealthService
-	         , ApiHealthViewModel      apiHealthViewModel
-	         , ILoggingService         loggingService
-	         , AppShellMasterViewModel masterViewModel)
+	public App (ILlmService             ollamaApiService
+	          , ApiHealthService        apiHealthService
+	          , ApiHealthViewModel      apiHealthViewModel
+	          , ILoggingService         loggingService
+	          , AppShellMasterViewModel masterViewModel
+	          , ApiEnvironmentService   envService)
 	{
 		InitializeComponent();
 
@@ -27,6 +28,8 @@ public partial class App : Application
 		_loggingService     = loggingService;
 		_masterViewModel    = masterViewModel;
 
+		envService.InitializeAsync().Wait();
+		
 		AppDomain.CurrentDomain.UnhandledException += OnCurrentDomainOnUnhandledException;
 
 		//CheckApiAvailabilityAsync(_ollamaApiService);

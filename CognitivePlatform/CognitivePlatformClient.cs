@@ -1,6 +1,8 @@
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
+using CP.Client.Core.Avails;
 using LocalAIAssistant.CognitivePlatform.DTOs;
+using static CP.Client.Core.Intent.FastPathIntentDetector;
 
 namespace LocalAIAssistant.CognitivePlatform;
 
@@ -17,12 +19,9 @@ public class CognitivePlatformClient : ICognitivePlatformClient
                                                        , string conversationId
                                                        , string model)
     {
-        var request = new ConverseRequestDto
-                      {
-                              Input     = userMessage
-                            , SessionId = conversationId
-                            , Model     = model
-                      };
+        var request = BuildRequest(userMessage
+                                 , conversationId
+                                 , model);
 
         var response = await _http.PostAsJsonAsync("api/conversation/converse", request);
 
@@ -32,17 +31,38 @@ public class CognitivePlatformClient : ICognitivePlatformClient
             ?? new ConverseResponseDto { Message = "(empty response)" };
     }
 
+    private static ConverseRequestDto BuildRequest (string userMessage
+                                                  , string conversationId
+                                                  , string model)
+    {
+
+        var isFastPath = IsFastPathIntent(userMessage);
+
+        var request = new ConverseRequestDto
+                      {
+                              Input     = userMessage
+                            , SessionId = conversationId
+                            , Model     = model
+                            , FastPath  = isFastPath
+                            , Streaming = isFastPath.Not()
+                      };
+        return request;
+    }
+
     public async IAsyncEnumerable<string> ConverseStreamAsync (string            userMessage
                                                              , string            conversationId
                                                              , string            model
-                                    , [EnumeratorCancellation] CancellationToken ct = default)
+                                                             , [EnumeratorCancellation] CancellationToken ct = default)
     {
-        var requestDto = new ConverseRequestDto
-                         {
-                                 Input     = userMessage
-                               , SessionId = conversationId
-                               , Model     = model
-                         };
+        var requestDto = BuildRequest(userMessage
+                                    , conversationId
+                                    , model);
+        // var requestDto = new ConverseRequestDto
+        //                  {
+        //                          Input     = userMessage
+        //                        , SessionId = conversationId
+        //                        , Model     = model
+        //                  };
 
         using var request = new HttpRequestMessage(HttpMethod.Post
                                                  , "api/conversation/converse/stream")

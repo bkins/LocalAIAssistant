@@ -10,8 +10,10 @@ public sealed class KnowledgeItem
     public string  Title   { get; init; } = string.Empty;
     public string? Summary { get; init; }
 
-    public DateTimeOffset CreatedAt      { get; init; }
-    public DateTimeOffset LastModifiedAt { get; init; }
+    public DateTimeOffset CreatedAt           { get; init; }
+    public DateTime       CreatedAtLocal      => CreatedAt.ToLocalTime().DateTime;
+    public DateTimeOffset LastModifiedAt      { get; init; }
+    public DateTime       LastModifiedAtLocal => LastModifiedAt.ToLocalTime().DateTime;
 
     public IReadOnlyList<string> Tags { get; init; } = Array.Empty<string>();
 }

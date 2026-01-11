@@ -1,7 +1,9 @@
 
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LocalAIAssistant.Data.Models;
+using LocalAIAssistant.Extensions;
 using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.Interfaces;
 
@@ -9,34 +11,58 @@ namespace LocalAIAssistant.ViewModels;
 
 public partial class SettingsViewModel : ObservableObject
 {
-    private readonly OllamaConfigService _configService;
-    private readonly IPersonalityService _personalityService;
+    private readonly OllamaConfigService   _configService;
+    private readonly IPersonalityService   _personalityService;
+    private readonly ApiEnvironmentService _environment;
+    private readonly AppShellMasterViewModel _appShellMasterViewModel;
     
     [ObservableProperty] private string _model;
     [ObservableProperty] private string _endpoint;
     [ObservableProperty] private int    _numPredict;
     [ObservableProperty] private float  _temperature;
-
-    public SettingsViewModel(OllamaConfigService configService
-                          ,  IPersonalityService personalityService)
+    
+    public ObservableCollection<string> Environments { get; }
+    
+    private string _selectedEnvironment;
+    public string SelectedEnvironment
     {
+        get => _selectedEnvironment;
+        set
+        {
+            if (_selectedEnvironment == value)
+                return;
+
+            _selectedEnvironment = value;
+            OnPropertyChanged();
+
+            _ = ChangeEnvironmentAsync(value);
+        }
+    }
+
+    public SettingsViewModel (OllamaConfigService     configService
+                            , IPersonalityService     personalityService
+                            , ApiEnvironmentService   environment
+                            , AppShellMasterViewModel appShellMasterViewModel)
+    {
+        _environment = environment;
+
+        Environments = new ObservableCollection<string>(
+            Enum.GetNames(typeof(ApiEnvironment)));
+
+        _selectedEnvironment = _environment.Current.ToString();
+
         _configService      = configService;
         _personalityService = personalityService;
-        
-        // var current = _configService.Current;
-        //
-        // Model          = current.Model;
-        // NumPredict     = current.NumPredict;
-        // Temperature    = current.Temperature;
-        // _configService = configService;
 
         // Load the current config
         var cfg = _configService.GetConfig();
-        
+
         _model       = cfg.Model;
         _numPredict  = cfg.NumPredict;
         _temperature = cfg.Temperature;
         _endpoint    = cfg.Host;
+
+        _appShellMasterViewModel = appShellMasterViewModel;
     }
 
     [RelayCommand]
@@ -68,5 +94,13 @@ public partial class SettingsViewModel : ObservableObject
                         };
 
         _configService.UpdateConfig(newConfig);
+    }
+    
+    private async Task ChangeEnvironmentAsync(string value)
+    {
+        var env = Enum.Parse<ApiEnvironment>(value);
+        // _appShellMasterViewModel.EnvironmentName = value;
+        
+        await _environment.SetAsync(env);
     }
 }

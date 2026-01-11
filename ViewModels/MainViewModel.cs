@@ -24,9 +24,7 @@ public partial class MainViewModel : ObservableObject
 
     public ObservableCollection<string> Models { get; } = new(AvailableModels.Models);
 
-    [ObservableProperty]
-    private string selectedModel;
-    
+    [ObservableProperty] private string selectedModel;
     [ObservableProperty] private string _promptText = string.Empty;
 
     public string LastResponse { get; set; } = string.Empty;

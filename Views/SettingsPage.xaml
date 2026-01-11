@@ -7,7 +7,14 @@
        <ScrollView Padding="20">
     <VerticalStackLayout Padding="20" 
                          Spacing="15">
+        <Label Text="API Environment" FontAttributes="Bold"/>
 
+        <Picker x:Name="EnvPicker" 
+                Title="Select Environment"
+                ItemsSource="{Binding Environments}"
+                SelectedItem="{Binding SelectedEnvironment}" 
+            />
+        
         <Label Text="Model:" 
                FontAttributes="Bold" />
         <Entry Text="{Binding Model}" 

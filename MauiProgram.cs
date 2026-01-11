@@ -7,6 +7,8 @@ using LocalAIAssistant.Knowledge.Journals.Clients;
 using LocalAIAssistant.Knowledge.Tasks.Clients;
 using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
+using LocalAIAssistant.ViewModels;
+using LocalAIAssistant.Views;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -86,42 +88,34 @@ public static class MauiProgram
 
 		var builder = MauiApp.CreateBuilder();
 		
+		builder.Services.AddSingleton<ApiEnvironmentService>();
+
 		builder.ConfigureFonts(fonts =>
 		{
 			fonts.AddFont("JetBrainsMono-Regular.ttf"
 			            , "JetBrainsMono");
 		});
 
-		var cognitivePlatformApi = new HttpClient
-		                            {
-				                            BaseAddress = new Uri("http://192.168.0.33:5272")
-				                          , Timeout     = TimeSpan.FromSeconds(500)
-		                            };
-		
-		builder.Services.AddHttpClient<ICognitivePlatformClient, CognitivePlatformClient>(client =>
+		builder.Services.AddHttpClient<ICognitivePlatformClient, CognitivePlatformClient>((sp, client) =>
 		{
-			// Should this be the address to the CP API? - http://localhost:5272
-			client.BaseAddress = cognitivePlatformApi.BaseAddress; // Physical Device //"http://10.0.2.2:5272/");  //"http://10.0.2.2:5200/"); // Android emulator
-			client.Timeout     = cognitivePlatformApi.Timeout;     
-		});
-		
-		builder.Services.AddHttpClient<IKnowledgeApiClient, KnowledgeApiClient>(client =>
-		{
-			client.BaseAddress = cognitivePlatformApi.BaseAddress; 
-			client.Timeout     = cognitivePlatformApi.Timeout;     
+			SetHttpClientSettings(client, sp);
 		});
 
-		builder.Services.AddHttpClient<IJournalApiClient, JournalApiClient>(client =>
+		builder.Services.AddHttpClient<IKnowledgeApiClient, KnowledgeApiClient>((sp, client) =>
 		{
-			client.BaseAddress = cognitivePlatformApi.BaseAddress; 
-			client.Timeout     = cognitivePlatformApi.Timeout;     
+			SetHttpClientSettings(client, sp);
 		});
-		
-		builder.Services.AddHttpClient<ITaskApiClient, TaskApiClient>(client =>
+
+		builder.Services.AddHttpClient<IJournalApiClient, JournalApiClient>((sp, client) =>
 		{
-			client.BaseAddress = cognitivePlatformApi.BaseAddress; 
-			client.Timeout     = cognitivePlatformApi.Timeout;     
+			SetHttpClientSettings(client, sp);
 		});
+
+		builder.Services.AddHttpClient<ITaskApiClient, TaskApiClient>((sp, client) =>
+		{
+			SetHttpClientSettings(client, sp);
+		});
+
 		
 		// Bind Ollama config (with validation)
 		builder.Services
@@ -194,5 +188,13 @@ public static class MauiProgram
 		cm.InitializeAsync().GetAwaiter().GetResult();
 
 		return app;
+	}
+
+	private static void SetHttpClientSettings (HttpClient            client
+	                                         , IServiceProvider      sp)
+	{
+		var env = sp.GetRequiredService<ApiEnvironmentService>();
+		 client.BaseAddress = new Uri(env.BaseUrl);
+		 client.Timeout     = TimeSpan.FromSeconds(500);
 	}
 }
