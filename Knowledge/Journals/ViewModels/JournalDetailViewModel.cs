@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LocalAIAssistant.Knowledge.Journals.Clients;
+using LocalAIAssistant.Knowledge.Journals.Models;
 
 namespace LocalAIAssistant.Knowledge.Journals.ViewModels;
 
@@ -8,10 +9,14 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
 {
     private readonly IJournalApiClient _client;
 
-    [ObservableProperty] private bool           _isLoading;
-    [ObservableProperty] private string         _text = string.Empty;
-    [ObservableProperty] private DateTimeOffset _createdAt;
+    [ObservableProperty] private bool                  _isLoading;
+    [ObservableProperty] private string                _text = string.Empty;
+    [ObservableProperty] private DateTimeOffset        _createdAt;
+    [ObservableProperty] private IReadOnlyList<string> _tags = Array.Empty<string>();
+    [ObservableProperty] private string?               _mood;
+    [ObservableProperty] private JournalEntryState     _state;
 
+    
     private Guid _journalId;
 
     public JournalDetailViewModel(IJournalApiClient client)
@@ -42,6 +47,9 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
             {
                 Text      = entry.Text;
                 CreatedAt = entry.CreatedAt;
+                Tags      = entry.Tags;
+                Mood      = entry.Mood;
+                State     = entry.State;
             }
         }
         finally

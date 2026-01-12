@@ -3,24 +3,58 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="LocalAIAssistant.Knowledge.Journals.Views.JournalDetailPage"
+             xmlns:converters="clr-namespace:LocalAIAssistant.Knowledge"
              Title="Journal"
              >
-    
-    <ScrollView>
-        <VerticalStackLayout Padding="16" 
-                             Spacing="12">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:TagsToTextConverter x:Key="TagsToText" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
 
-            <Label Text="{Binding CreatedAt, StringFormat='{0:MMMM d, yyyy · h:mm tt}'}"
-                   FontSize="12"
-                   TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" />
+    <VerticalStackLayout Padding="16" Spacing="8">
 
-            <Label Text="{Binding Text}"
-                   FontSize="16"
-                   LineBreakMode="WordWrap" />
-            <Label Text="{Binding Tags}"/>
-            <ActivityIndicator IsRunning="{Binding IsLoading}"
-                               IsVisible="{Binding IsLoading}" />
+        <!-- CreatedAt -->
+        <Label Text="{Binding CreatedAt}"
+               FontSize="12"
+               Opacity="0.7" />
 
-        </VerticalStackLayout>
-    </ScrollView>
+        <!-- Tags -->
+        <Label Text="{Binding Tags, Converter={StaticResource TagsToText}}"
+               FontSize="12"
+               Opacity="0.8" />
+
+        <!-- Mood -->
+        <Label Text="{Binding Mood}"
+               FontSize="14"/>
+               <!-- IsVisible="{Binding Mood, Converter={StaticResource StringNotNullOrEmptyConverter}}"  -->
+
+        <!-- State -->
+        <Label Text="{Binding State}"
+               FontSize="12"
+               Opacity="0.7" />
+
+        <!-- Text -->
+        <Label Text="{Binding Text}"
+               FontSize="16" />
+
+    </VerticalStackLayout>
+       
+    <!-- <ScrollView> -->
+    <!--     <VerticalStackLayout Padding="16"  -->
+    <!--                          Spacing="12"> -->
+    <!-- -->
+    <!--         <Label Text="{Binding CreatedAt, StringFormat='{0:MMMM d, yyyy · h:mm tt}'}" -->
+    <!--                FontSize="12" -->
+    <!--                TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" /> -->
+    <!-- -->
+    <!--         <Label Text="{Binding Text}" -->
+    <!--                FontSize="16" -->
+    <!--                LineBreakMode="WordWrap" /> -->
+    <!--         <Label Text="{Binding Tags}"/> -->
+    <!--         <ActivityIndicator IsRunning="{Binding IsLoading}" -->
+    <!--                            IsVisible="{Binding IsLoading}" /> -->
+    <!-- -->
+    <!--     </VerticalStackLayout> -->
+    <!-- </ScrollView> -->
 </ContentPage>
