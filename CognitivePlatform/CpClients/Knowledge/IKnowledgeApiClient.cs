@@ -1,6 +1,6 @@
 using LocalAIAssistant.Knowledge.Inbox;
 
-namespace LocalAIAssistant.Knowledge.Clients;
+namespace LocalAIAssistant.CognitivePlatform.CpClients.Knowledge;
 
 public interface IKnowledgeApiClient
 {

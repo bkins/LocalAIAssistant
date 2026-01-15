@@ -1,4 +1,5 @@
-﻿using LocalAIAssistant.Services;
+﻿using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
+using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.Interfaces;
 using LocalAIAssistant.Services.Logging;
 using LocalAIAssistant.ViewModels;
@@ -7,18 +8,17 @@ namespace LocalAIAssistant;
 
 public partial class App : Application
 {
-	private readonly ILlmService        _ollamaApiService;
-	private readonly ApiHealthService   _apiHealthService;
-	private readonly ApiHealthViewModel _apiHealthViewModel;
-	private readonly ILoggingService    _loggingService;
-	private readonly AppShellMasterViewModel _masterViewModel;
+	private readonly ILlmService                     _ollamaApiService;
+	private readonly ApiHealthService                _apiHealthService;
+	private readonly ApiHealthViewModel              _apiHealthViewModel;
+	private readonly ILoggingService                 _loggingService;
+	private readonly AppShellMasterViewModel         _masterViewModel;
 
 	public App (ILlmService             ollamaApiService
 	          , ApiHealthService        apiHealthService
 	          , ApiHealthViewModel      apiHealthViewModel
 	          , ILoggingService         loggingService
-	          , AppShellMasterViewModel masterViewModel
-	          , ApiEnvironmentService   envService)
+	          , AppShellMasterViewModel masterViewModel)
 	{
 		InitializeComponent();
 
@@ -27,8 +27,8 @@ public partial class App : Application
 		_apiHealthViewModel = apiHealthViewModel;
 		_loggingService     = loggingService;
 		_masterViewModel    = masterViewModel;
-
-		envService.InitializeAsync().Wait();
+		
+		// envService.InitializeAsync(ApiEnvironment.Qa).Wait();
 		
 		AppDomain.CurrentDomain.UnhandledException += OnCurrentDomainOnUnhandledException;
 
@@ -66,5 +66,6 @@ public partial class App : Application
 	{
 		var apiHealthService = Handler?.MauiContext?.Services.GetRequiredService<ApiHealthService>();
 		if (apiHealthService != null) await apiHealthService.InitializeAsync().ConfigureAwait(false);
+		
 	}
 }

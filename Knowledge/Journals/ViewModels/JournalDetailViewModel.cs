@@ -1,13 +1,13 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using LocalAIAssistant.Knowledge.Journals.Clients;
+using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
 using LocalAIAssistant.Knowledge.Journals.Models;
 
 namespace LocalAIAssistant.Knowledge.Journals.ViewModels;
 
 public partial class JournalDetailViewModel : ObservableObject, IQueryAttributable
 {
-    private readonly IJournalApiClient _client;
+    private readonly IJournalApiClientFactory _clientFactory;
 
     [ObservableProperty] private bool                  _isLoading;
     [ObservableProperty] private string                _text = string.Empty;
@@ -19,9 +19,9 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
     
     private Guid _journalId;
 
-    public JournalDetailViewModel(IJournalApiClient client)
+    public JournalDetailViewModel(IJournalApiClientFactory clientFactory)
     {
-        _client = client;
+        _clientFactory = clientFactory;
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -42,7 +42,9 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
         IsLoading = true;
         try
         {
-            var entry = await _client.GetByIdAsync(_journalId);
+            var client = _clientFactory.Create();
+            var entry = await client.GetByIdAsync(_journalId);
+            
             if (entry is not null)
             {
                 Text      = entry.Text;

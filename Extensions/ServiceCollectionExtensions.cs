@@ -40,7 +40,6 @@ public static class ServiceCollectionExtensions
         });
         services.AddSingleton<IPersonalityService, PersonalityService>();
         services.AddSingleton<ApiHealthService>();
-        services.AddSingleton<HttpClient>();
         services.AddSingleton<ILogger>(Log.Logger);
 
         services.AddSingleton<ILoggingService, LoggingService>(s =>
@@ -96,7 +95,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<MainViewModel>();
         
         services.AddTransient<AppShellViewModel>();
-        services.AddTransient<AppShellMasterViewModel>();
+        services.AddSingleton<AppShellMasterViewModel>();
         
         // Knowledge and Knowledge Clients
         services.AddTransient<KnowledgeInboxViewModel>();

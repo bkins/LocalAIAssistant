@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using LocalAIAssistant.Knowledge.Clients;
+using LocalAIAssistant.CognitivePlatform.CpClients.Knowledge;
 using LocalAIAssistant.Knowledge.Journals.Views;
 using LocalAIAssistant.Knowledge.Tasks.Views;
 
@@ -9,7 +9,7 @@ namespace LocalAIAssistant.Knowledge.Inbox;
 
 public partial class KnowledgeInboxViewModel : ObservableObject
 {
-    private readonly IKnowledgeApiClient _client;
+    private readonly IKnowledgeClientFactory _clientFactory;
 
     public ObservableCollection<KnowledgeItem> Items => _items;
     private readonly ObservableCollection<KnowledgeItem> _items = new();
@@ -20,9 +20,9 @@ public partial class KnowledgeInboxViewModel : ObservableObject
     //TODO: Implement later
     // public string KindDisplay => Kind.ToString();
 
-    public KnowledgeInboxViewModel(IKnowledgeApiClient client)
+    public KnowledgeInboxViewModel(IKnowledgeClientFactory clientFactory)
     {
-        _client = client;
+        _clientFactory = clientFactory;
     }
 
     [RelayCommand]
@@ -34,8 +34,8 @@ public partial class KnowledgeInboxViewModel : ObservableObject
         try
         {
             Items.Clear();
-            
-            var items = await _client.GetKnowledgeAsync();
+            var client = _clientFactory.Create();
+            var items  = await client.GetKnowledgeAsync();
             
             foreach (var item in items)
             {
@@ -64,8 +64,8 @@ public partial class KnowledgeInboxViewModel : ObservableObject
     {
         if (item is null)
             return;
-
-        await _client.ArchiveAsync(item.Id);
+        var client = _clientFactory.Create();
+        await client.ArchiveAsync(item.Id);
 
         // Optimistic UI update
         Items.Remove(item);

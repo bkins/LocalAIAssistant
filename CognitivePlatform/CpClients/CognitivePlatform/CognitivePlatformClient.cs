@@ -1,34 +1,55 @@
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using CP.Client.Core.Avails;
+using CP.Client.Core.Common.ConectivityToApi;
 using LocalAIAssistant.CognitivePlatform.DTOs;
 using static CP.Client.Core.Intent.FastPathIntentDetector;
 
-namespace LocalAIAssistant.CognitivePlatform;
+namespace LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 
 public class CognitivePlatformClient : ICognitivePlatformClient
 {
-    private readonly HttpClient _http;
+    private readonly HttpClient            _httpClient;
+    
+    public  IConnectivityReporter Connectivity {get; private set;}
 
-    public CognitivePlatformClient(HttpClient http)
+    public CognitivePlatformClient (HttpClient            httpClient
+                                  , IConnectivityReporter connectivity)
     {
-        _http = http;
+        _httpClient   = httpClient;
+        Connectivity = connectivity;
+
     }
 
-    public async Task<ConverseResponseDto> ConverseAsync(string userMessage
-                                                       , string conversationId
-                                                       , string model)
+    public override async Task<ConverseResponseDto> ConverseAsync(string userMessage
+                                                                , string conversationId
+                                                                , string model)
     {
-        var request = BuildRequest(userMessage
-                                 , conversationId
-                                 , model);
+        try
+        {
+            var request = BuildRequest(userMessage
+                                     , conversationId
+                                     , model);
 
-        var response = await _http.PostAsJsonAsync("api/conversation/converse", request);
+            var response = await _httpClient.PostAsJsonAsync("api/conversation/converse", request);
 
-        response.EnsureSuccessStatusCode();
-
-        return await response.Content.ReadFromJsonAsync<ConverseResponseDto>()
-            ?? new ConverseResponseDto { Message = "(empty response)" };
+            response.EnsureSuccessStatusCode();
+            
+            Connectivity.ReportOnline();
+            
+            return await response.Content.ReadFromJsonAsync<ConverseResponseDto>()
+                ?? new ConverseResponseDto { Message = "(empty response)" };
+        }
+        catch (HttpRequestException ex)
+        {
+            Connectivity.ReportOffline(ex);
+            throw;
+        }
+        catch (TaskCanceledException ex)
+        {
+            Connectivity.ReportOffline(ex);
+            throw;
+        }
     }
 
     private static ConverseRequestDto BuildRequest (string userMessage
@@ -49,33 +70,29 @@ public class CognitivePlatformClient : ICognitivePlatformClient
         return request;
     }
 
-    public async IAsyncEnumerable<string> ConverseStreamAsync (string            userMessage
-                                                             , string            conversationId
-                                                             , string            model
-                                                             , [EnumeratorCancellation] CancellationToken ct = default)
+    public override async IAsyncEnumerable<string> ConverseStreamAsync (string            userMessage
+                                                                      , string            conversationId
+                                                                      , string            model
+                                                                      , [EnumeratorCancellation] CancellationToken ct = default)
     {
         var requestDto = BuildRequest(userMessage
                                     , conversationId
                                     , model);
-        // var requestDto = new ConverseRequestDto
-        //                  {
-        //                          Input     = userMessage
-        //                        , SessionId = conversationId
-        //                        , Model     = model
-        //                  };
-
+       
         using var request = new HttpRequestMessage(HttpMethod.Post
                                                  , "api/conversation/converse/stream")
                             {
                                     Content = JsonContent.Create(requestDto)
                             };
 
-        using var response = await _http.SendAsync(request
+        using var response = await _httpClient.SendAsync(request
                                                  , HttpCompletionOption.ResponseHeadersRead
                                                  , ct);
 
         response.EnsureSuccessStatusCode();
 
+        Connectivity.ReportOnline();
+        
         await using var stream = await response.Content.ReadAsStreamAsync(ct);
         using var       reader = new StreamReader(stream);
 
@@ -99,4 +116,20 @@ public class CognitivePlatformClient : ICognitivePlatformClient
         }
     }
 
+    public override async Task Ping()
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"api/health/ping");
+
+            response.EnsureSuccessStatusCode();
+
+            Connectivity.ReportOnline();
+        }
+        catch (Exception e)
+        {
+            Connectivity.ReportOffline(e);
+
+        }
+    }
 }

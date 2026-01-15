@@ -4,14 +4,17 @@ namespace LocalAIAssistant.Services;
 
 public enum ApiEnvironment
 {
-    Qa,
-    Dev
+    QaAndroid
+  , QaLocal
+  , Qa
+  , Dev
 }
 
 public partial class ApiEnvironmentService : ObservableObject
 {
     const string StorageKey = "ApiEnvironment";
 
+    [ObservableProperty] private bool           _isInitialized = false;
     [ObservableProperty] private ApiEnvironment current;
 
     public string BaseUrl => ResolveUrl();
@@ -19,20 +22,30 @@ public partial class ApiEnvironmentService : ObservableObject
     string ResolveUrl() =>
             Current switch
             {
-                    ApiEnvironment.Dev => "http://192.168.0.33:5273", _ => "http://192.168.0.33:5272"
+                    ApiEnvironment.Qa        => "http://192.168.0.33:5000"
+                  , ApiEnvironment.QaAndroid => "http://10.0.2.2:5000"
+                  , ApiEnvironment.QaLocal   => "http://localhost:5000"
+                  , ApiEnvironment.Dev       => "http://192.168.0.33:5273"
+                  , _                        => throw new ArgumentOutOfRangeException()
             };
 
-    public async Task InitializeAsync()
+    public Task InitializeAsync(ApiEnvironment defaultEnvironment, bool forceDefault =  false)
     {
-        var saved = Preferences.Get(StorageKey
-                                  , ApiEnvironment.Qa.ToString());
+        if (IsInitialized) return Task.CompletedTask;
 
-        if (!Enum.TryParse(saved
-                         , out ApiEnvironment env))
-            env = ApiEnvironment.Qa;
-
+        if (forceDefault) Preferences.Set(StorageKey, defaultEnvironment.ToString());
+    
+        var saved = Preferences.Get(StorageKey, defaultEnvironment.ToString());
+    
+        if (!Enum.TryParse(saved, out ApiEnvironment env))
+            env = defaultEnvironment;
+    
         Current = env;
+        IsInitialized = true;
+    
+        return Task.CompletedTask;
     }
+
 
     public async Task SetAsync (ApiEnvironment env)
     {

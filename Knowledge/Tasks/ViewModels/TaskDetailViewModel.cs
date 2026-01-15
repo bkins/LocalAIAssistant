@@ -1,12 +1,12 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using LocalAIAssistant.Knowledge.Tasks.Clients;
+using LocalAIAssistant.CognitivePlatform.CpClients.Tasks;
 
 namespace LocalAIAssistant.Knowledge.Tasks.ViewModels;
 
 public partial class TaskDetailViewModel : ObservableObject, IQueryAttributable
 {
-    private readonly ITaskApiClient _client;
+    private readonly ITaskApiClientFactory _clientFactory;
     
     [ObservableProperty] private bool           _isLoading;
     [ObservableProperty] private string         _text = string.Empty;
@@ -14,9 +14,9 @@ public partial class TaskDetailViewModel : ObservableObject, IQueryAttributable
 
     private Guid _id;
 
-    public TaskDetailViewModel(ITaskApiClient client)
+    public TaskDetailViewModel(ITaskApiClientFactory clientFactory)
     {
-        _client = client;
+        _clientFactory = clientFactory;
     }
     
     public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -37,7 +37,9 @@ public partial class TaskDetailViewModel : ObservableObject, IQueryAttributable
         IsLoading = true;
         try
         {
-            var item = await _client.GetByIdAsync(_id);
+            var client = _clientFactory.Create();
+            var item = await client.GetByIdAsync(_id);
+            
             if (item is not null)
             {
                 Text      = item.Text;

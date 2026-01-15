@@ -1,10 +1,12 @@
 ﻿using System.Diagnostics;
+using CP.Client.Core.Common.ConectivityToApi;
 using LocalAIAssistant.CognitivePlatform;
+using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
+using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
+using LocalAIAssistant.CognitivePlatform.CpClients.Knowledge;
+using LocalAIAssistant.CognitivePlatform.CpClients.Tasks;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Extensions;
-using LocalAIAssistant.Knowledge.Clients;
-using LocalAIAssistant.Knowledge.Journals.Clients;
-using LocalAIAssistant.Knowledge.Tasks.Clients;
 using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
 using LocalAIAssistant.ViewModels;
@@ -96,27 +98,17 @@ public static class MauiProgram
 			            , "JetBrainsMono");
 		});
 
-		builder.Services.AddHttpClient<ICognitivePlatformClient, CognitivePlatformClient>((sp, client) =>
-		{
-			SetHttpClientSettings(client, sp);
-		});
+		builder.Services.AddTransient<EnvironmentGuardHandler>();
 
-		builder.Services.AddHttpClient<IKnowledgeApiClient, KnowledgeApiClient>((sp, client) =>
-		{
-			SetHttpClientSettings(client, sp);
-		});
-
-		builder.Services.AddHttpClient<IJournalApiClient, JournalApiClient>((sp, client) =>
-		{
-			SetHttpClientSettings(client, sp);
-		});
-
-		builder.Services.AddHttpClient<ITaskApiClient, TaskApiClient>((sp, client) =>
-		{
-			SetHttpClientSettings(client, sp);
-		});
-
+		builder.Services
+		       .AddHttpClient(HttpClientNames.CpApi)
+		       .AddHttpMessageHandler<EnvironmentGuardHandler>();
 		
+		builder.Services.AddSingleton<ICognitivePlatformClientFactory, CognitivePlatformClientFactory>();
+		builder.Services.AddSingleton<IKnowledgeClientFactory, KnowledgeClientFactory>();
+		builder.Services.AddSingleton<IJournalApiClientFactory, JournalApiClientFactory>();
+		builder.Services.AddSingleton<ITaskApiClientFactory, TaskApiClientFactory>();
+
 		// Bind Ollama config (with validation)
 		builder.Services
 		       .AddOptions<OllamaConfig>()
@@ -132,7 +124,6 @@ public static class MauiProgram
 
 		// Add Serilog to logging
 		builder.Logging.AddSerilog();
-		
 		
 		// Paths
 		var appDir = FileSystem.AppDataDirectory;
@@ -177,24 +168,34 @@ public static class MauiProgram
 		builder.Services.AddViewModels();
 		builder.Services.AddViews();
 		
+		// CP.Client.Core:
+		builder.Services.AddSingleton<ConnectivityState>();
+		builder.Services.AddSingleton<IConnectivityState>(sp => sp.GetRequiredService<ConnectivityState>());
+		builder.Services.AddSingleton<IConnectivityReporter>(sp => sp.GetRequiredService<ConnectivityState>());
+
 #if DEBUG
 		builder.Logging.AddDebug();
 #endif
 
 		var app = builder.Build();
 
+		// Initialize API environment selection early so all downstream clients are consistent.
+		// Default only applies on first run (when no preference is saved yet).
+		var apiEnvService = app.Services.GetService<ApiEnvironmentService>();
+		var forceDefault = false;
+
+#if DEBUG
+		forceDefault = true;
+#endif
+		
+		apiEnvService?.InitializeAsync(ApiEnvironment.QaAndroid, forceDefault: forceDefault)
+		             .GetAwaiter()
+		             .GetResult();
+		
 		// Ensure STM is loaded into session on startup (synchronous ok for now)
 		var cm = app.Services.GetRequiredService<IConversationMemory>();
 		cm.InitializeAsync().GetAwaiter().GetResult();
 
 		return app;
-	}
-
-	private static void SetHttpClientSettings (HttpClient            client
-	                                         , IServiceProvider      sp)
-	{
-		var env = sp.GetRequiredService<ApiEnvironmentService>();
-		 client.BaseAddress = new Uri(env.BaseUrl);
-		 client.Timeout     = TimeSpan.FromSeconds(500);
 	}
 }

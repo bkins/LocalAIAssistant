@@ -1,6 +1,6 @@
 using LocalAIAssistant.Knowledge.Journals.Models;
 
-namespace LocalAIAssistant.Knowledge.Journals.Clients;
+namespace LocalAIAssistant.CognitivePlatform.CpClients.Journal;
 
 public interface IJournalApiClient
 {

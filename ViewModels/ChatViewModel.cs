@@ -3,8 +3,10 @@ using System.Text;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CP.Client.Core.Common.ConectivityToApi;
 using LocalAIAssistant.Avails.ThinkingAnimation;
 using LocalAIAssistant.CognitivePlatform;
+using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Extensions;
@@ -28,12 +30,15 @@ public partial class ChatViewModel : ObservableObject
     private readonly ILoggingService                  _log;
     private readonly IOptions<MemoryRetrievalOptions> _memoryRetrievalOptions;
     private readonly IOrchestratorService             _orchestrator;
-    private readonly ICognitivePlatformClient         _cp;
+    private readonly ICognitivePlatformClientFactory  _cpFactory;
+    private readonly IConnectivityState               _apiState;
 
+    public  bool    IsOffline => _apiState.IsOffline;
+    
     private Thinker thinking;
     public  string  SuggestedModelToUse { get; set; } = "phi-3:mini";
 
-    [ObservableProperty] private bool   _useStreaming = true;
+    [ObservableProperty] private bool   _useStreaming = false;
     [ObservableProperty] private string _promptText   = string.Empty;
     [ObservableProperty] private bool   _isBusy;
     [ObservableProperty] private bool   _isTyping;
@@ -51,7 +56,7 @@ public partial class ChatViewModel : ObservableObject
     public ICommand SendCommand             { get; }
     public ICommand SendForStreamingCommand { get; }
     // public ICommand OpenKnowledgeCommand    { get; }
-    
+
     public ChatViewModel (ILlmService                      llmService
                         , IConversationMemory              conversationMemory
                         , IMemoryService                   memory
@@ -59,7 +64,8 @@ public partial class ChatViewModel : ObservableObject
                         , ILoggingService                  log
                         , IOptions<MemoryRetrievalOptions> memoryOptions
                         , IOrchestratorService             orchestrator
-                        , ICognitivePlatformClient         cp)
+                        , ICognitivePlatformClientFactory  cpFactory
+                        , IConnectivityState               apiState)
     {
         _llmService             = llmService;
         _conversationMemory     = conversationMemory;
@@ -68,11 +74,21 @@ public partial class ChatViewModel : ObservableObject
         _log                    = log;
         _memoryRetrievalOptions = memoryOptions;
         _orchestrator           = orchestrator;
-        _cp                     = cp;
-        
+        _cpFactory              = cpFactory;
+        _apiState               = apiState;
+
+        _apiState.ConnectivityChanged += (_
+                                        , _) =>
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                OnPropertyChanged(nameof(IsOffline));
+            });
+        };
+
         SendCommand             = new AsyncRelayCommand(SendAsync);
         SendForStreamingCommand = new AsyncRelayCommand(SendPromptForStreamingAsync);
-        
+
     }
 
     private async Task SendAsync()
@@ -176,27 +192,29 @@ public partial class ChatViewModel : ObservableObject
 
             if (!UseStreaming)
             {
-                var response = await _cp.ConverseAsync(text
-                                                     , ConversationId
-                                                     , modelToUse)
-                                        .ConfigureAwait(false);
+                var cp = _cpFactory.Create();
+                var response = await cp.ConverseAsync(text
+                                                    , ConversationId
+                                                    , modelToUse)
+                                       .ConfigureAwait(false);
                 
                 assistantMsg.Content = response.Message;
             }
             else
             {
-                await foreach (var chunk in _cp.ConverseStreamAsync(text
+                var cp = _cpFactory.Create();
+                await foreach (var chunk in cp.ConverseStreamAsync(text
                                                                     , ConversationId
                                                                   , modelToUse))
                 {
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
-                        if ( ! hasReceivedFirstOutput)
+                        if (hasReceivedFirstOutput.Not())
                         {
                             assistantMsg.Content   = string.Empty;
                             hasReceivedFirstOutput = true;
                         }
-                        
+
                         assistantMsg.Content += chunk;
                         ScrollToBottomRequested?.Invoke();
                     });
@@ -300,9 +318,10 @@ public partial class ChatViewModel : ObservableObject
 
             Messages.Add(assistantMsg);
 
-            await foreach (var chunk in _cp.ConverseStreamAsync(text
-                                                              , ConversationId
-                                                              , "llama3")) //"phi-3:mini"); //TODO: make `model` param defined by user)
+            var cp = _cpFactory.Create();
+            await foreach (var chunk in cp.ConverseStreamAsync(text
+                                                             , ConversationId
+                                                             , "llama3")) //"phi-3:mini"); //TODO: make `model` param defined by user)
             {
                 MainThread.BeginInvokeOnMainThread(() =>
                 {

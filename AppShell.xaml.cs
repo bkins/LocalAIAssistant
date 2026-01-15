@@ -9,9 +9,9 @@ namespace LocalAIAssistant;
 
 public partial class AppShell : Shell
 {
-
-	private readonly ApiHealthService _apiHealthService;
-
+	private readonly ApiHealthService        _apiHealthService;
+	private readonly AppShellMasterViewModel _viewModel;
+	
 	public AppShell(AppShellMasterViewModel masterViewModel)
 	{
 		InitializeComponent();
@@ -29,9 +29,15 @@ public partial class AppShell : Shell
 		                    , typeof(TaskDetailPage));
 
 		BindingContext = masterViewModel;
-
+		_viewModel     = masterViewModel;
+		
 		// Trigger the initial API status check via the master view model's property
-		_ = masterViewModel.ApiHealthViewModel.CheckApiStatusAsync();
+		_ = _viewModel.ApiHealthViewModel.CheckApiStatusAsync();
+	}
+	protected override async void OnAppearing()
+	{
+		base.OnAppearing();
+		await _viewModel.InitializeAsync();
 	}
 
 }

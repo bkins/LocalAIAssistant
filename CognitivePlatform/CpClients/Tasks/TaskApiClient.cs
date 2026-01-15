@@ -1,24 +1,25 @@
 using System.Net;
 using System.Net.Http.Json;
-using LocalAIAssistant.Knowledge.Journals.Models;
+using LocalAIAssistant.Knowledge.Tasks.Models;
 
-namespace LocalAIAssistant.Knowledge.Journals.Clients;
+namespace LocalAIAssistant.CognitivePlatform.CpClients.Tasks;
 
-public sealed class JournalApiClient : IJournalApiClient
+public class TaskApiClient : ITaskApiClient
 {
+    
     private readonly HttpClient _httpClient;
 
-    public JournalApiClient (HttpClient httpClient)
+    public TaskApiClient (HttpClient httpClient)
     {
         _httpClient = httpClient;
     }
 
-    public async Task<JournalEntryDto?> GetByIdAsync (Guid              id
+    public async Task<TasksDto?> GetByIdAsync (Guid              id
                                                     , CancellationToken ct = default)
     {
         try
         {
-            var response = await _httpClient.GetAsync($"api/journals/{id}"
+            var response = await _httpClient.GetAsync($"api/tasks/{id}"
                                                     , ct);
 
             if (response.StatusCode == HttpStatusCode.NotFound)
@@ -27,7 +28,7 @@ public sealed class JournalApiClient : IJournalApiClient
             response.EnsureSuccessStatusCode();
 
             return await response.Content
-                                 .ReadFromJsonAsync<JournalEntryDto>(cancellationToken: ct);
+                                 .ReadFromJsonAsync<TasksDto>(cancellationToken: ct);
         }
         catch (OperationCanceledException)
         {

@@ -1,6 +1,6 @@
 using LocalAIAssistant.Knowledge.Tasks.Models;
 
-namespace LocalAIAssistant.Knowledge.Tasks.Clients;
+namespace LocalAIAssistant.CognitivePlatform.CpClients.Tasks;
 
 public interface ITaskApiClient
 {

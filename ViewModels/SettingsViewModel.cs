@@ -46,13 +46,11 @@ public partial class SettingsViewModel : ObservableObject
     {
         _environment = environment;
 
-        Environments = new ObservableCollection<string>(
-            Enum.GetNames(typeof(ApiEnvironment)));
+        Environments = new ObservableCollection<string>(Enum.GetNames(typeof(ApiEnvironment)));
 
         _selectedEnvironment = _environment.Current.ToString();
-
-        _configService      = configService;
-        _personalityService = personalityService;
+        _configService       = configService;
+        _personalityService  = personalityService;
 
         // Load the current config
         var cfg = _configService.GetConfig();
