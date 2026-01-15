@@ -186,15 +186,18 @@ public static class MauiProgram
 
 #if DEBUG
 		forceDefault = true;
+#else
+		forceDefault = false;
 #endif
 		
+		//TODO: revisited in a later “Startup Hygiene” pass.
 		apiEnvService?.InitializeAsync(ApiEnvironment.QaAndroid, forceDefault: forceDefault)
 		             .GetAwaiter()
 		             .GetResult();
 		
 		// Ensure STM is loaded into session on startup (synchronous ok for now)
-		var cm = app.Services.GetRequiredService<IConversationMemory>();
-		cm.InitializeAsync().GetAwaiter().GetResult();
+		// var cm = app.Services.GetRequiredService<IConversationMemory>();
+		// cm.InitializeAsync().GetAwaiter().GetResult();
 
 		return app;
 	}

@@ -14,6 +14,7 @@ public class ConversationMemory : IConversationMemory
     private readonly MemoryRetrievalOptions _policy;
 
     private readonly List<Message> _currentConversationMemory = new();
+    private          bool          _initialized;
 
     public ConversationMemory(IShortTermMemoryStore            shortTemMemoryStore
                             , ILongTermMemoryStore             longTermMemoryStore
@@ -34,6 +35,7 @@ public class ConversationMemory : IConversationMemory
         _currentConversationMemory.Clear();
         _currentConversationMemory.AddRange(persistedMessages);
     }
+    
     private static int EvaluateImportance(Message message)
     {
         var score = 1; // baseline
@@ -60,6 +62,8 @@ public class ConversationMemory : IConversationMemory
     
     public async Task AddAsync(Message message)
     {
+        await EnsureInitializedAsync();
+        
         ArgumentNullException.ThrowIfNull(message);
 
         if (message.Importance <= 0) message.Importance = EvaluateImportance(message);
@@ -71,6 +75,7 @@ public class ConversationMemory : IConversationMemory
 
         await TryPromoteAndTrimAsync();
     }
+    
     private async Task TryPromoteAndTrimAsync()
     {
         if (_currentConversationMemory.Count <= _policy.MaxStmMessages) return;
@@ -130,10 +135,13 @@ public class ConversationMemory : IConversationMemory
     //     await _longTermMemoryStore.SaveMessagesAsync(new[] { message });
     // }
 
-    public IEnumerable<Message> GetRecentEntries(int count)
+    public async Task<IEnumerable<Message>> GetRecentEntries(int count)
     {
-        if (count <= 0) return Enumerable.Empty<Message>();
-        return _currentConversationMemory.TakeLast(count);
+        await EnsureInitializedAsync();
+         
+        return count <= 0
+                       ? Enumerable.Empty<Message>()
+                       : _currentConversationMemory.TakeLast(count);
     }
 
     public async Task<IEnumerable<Message>> GetEntriesSince(DateTime since)
@@ -144,24 +152,47 @@ public class ConversationMemory : IConversationMemory
 
     public async Task SaveAsync()
     {
+        await EnsureInitializedAsync();
         await _shortTermMemoryStore.SaveMessagesAsync(_currentConversationMemory);
         await _longTermMemoryStore.SaveMessagesAsync(_currentConversationMemory);
     }
 
-    public Task ClearAsync()
+    public async Task ClearAsync()
     {
         // Just clears in-memory session history
         _currentConversationMemory.Clear();
-        return Task.CompletedTask;
+        
+        await EnsureInitializedAsync();
+        await  Task.CompletedTask;
     }
 
     public Task<IEnumerable<Message>> LoadShortTermAsync() => _shortTermMemoryStore.LoadMessagesAsync();
 
-    public Task<IEnumerable<Message>> LoadLongTermAsync() => _longTermMemoryStore.LoadMessagesAsync();
+    public async Task<IEnumerable<Message>> LoadLongTermAsync()
+    {
+        await EnsureInitializedAsync();
+        return await  _longTermMemoryStore.LoadMessagesAsync();
+    }
 
-    public Task ClearLongTermAsync() => _longTermMemoryStore.ClearMemoryAsync();
+    public async Task ClearLongTermAsync()
+    {
+        await EnsureInitializedAsync();
+        await _longTermMemoryStore.ClearMemoryAsync();
+    }
 
 
-    public Task ClearShortTermAsync() => _shortTermMemoryStore.ClearMemoryAsync();
+    public async Task ClearShortTermAsync()
+    {
+        await EnsureInitializedAsync();
+        await _shortTermMemoryStore.ClearMemoryAsync();
+    }
+
+    public async Task EnsureInitializedAsync()
+    {
+        if (_initialized) return;
+
+        await InitializeAsync();
+        _initialized = true;
+    }
 
 }

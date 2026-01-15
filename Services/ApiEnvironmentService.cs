@@ -14,20 +14,29 @@ public partial class ApiEnvironmentService : ObservableObject
 {
     const string StorageKey = "ApiEnvironment";
 
-    [ObservableProperty] private bool           _isInitialized = false;
     [ObservableProperty] private ApiEnvironment current;
 
     public string BaseUrl => ResolveUrl();
-
+    
+    //TODO: Test 'ApiEnvironment.Qa' and 'ApiEnvironment.Local'.  Are they needed?
     string ResolveUrl() =>
             Current switch
             {
-                    ApiEnvironment.Qa        => "http://192.168.0.33:5000"
-                  , ApiEnvironment.QaAndroid => "http://10.0.2.2:5000"
-                  , ApiEnvironment.QaLocal   => "http://localhost:5000"
-                  , ApiEnvironment.Dev       => "http://192.168.0.33:5273"
-                  , _                        => throw new ArgumentOutOfRangeException()
+                    ApiEnvironment.Dev       => "http://192.168.0.33:5273",
+                    ApiEnvironment.Qa        => "http://192.168.0.33:5272",
+                    ApiEnvironment.QaAndroid => "http://192.168.0.33:5272",
+                    ApiEnvironment.QaLocal   => "http://localhost:5272",
+                    _                        => throw new ArgumentOutOfRangeException()
             };
+    // string ResolveUrl() =>
+    //         Current switch
+    //         {
+    //                 ApiEnvironment.Qa        => "http://192.168.0.33:5000"
+    //               , ApiEnvironment.QaAndroid => "http://localhost:5273"//"http://10.0.2.2:5000"
+    //               , ApiEnvironment.QaLocal   => "http://localhost:5000"
+    //               , ApiEnvironment.Dev       => "http://192.168.0.33:5273"
+    //               , _                        => throw new ArgumentOutOfRangeException()
+    //         };
 
     public Task InitializeAsync(ApiEnvironment defaultEnvironment, bool forceDefault =  false)
     {

@@ -15,6 +15,6 @@ public interface IConversationMemory
 
     Task ClearShortTermAsync();
 
-    IEnumerable<Message> GetRecentEntries(int optsMaxStmMessages);
+    Task<IEnumerable<Message>> GetRecentEntries (int optsMaxStmMessages);
 
 }

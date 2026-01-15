@@ -64,7 +64,9 @@ public class MemoryService : IMemoryService
         
         // --- 1) Short-Term Memory (STM, grouped into turns) ---
         //BUG: If the assistant never replies, then this approach may not work as intended
+        //TODO: Revisit `.Result` usage!
         var recent = _conversationMemory.GetRecentEntries(memoryOptions.Value.MaxStmMessages * 2)
+                                        .Result
                                         .OrderBy(message => message.Timestamp)
                                         .ToList();
 
