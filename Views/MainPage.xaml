@@ -145,20 +145,33 @@
                   ColumnDefinitions="*,Auto"
                   BackgroundColor="{StaticResource SurfaceColor}">
 
-                <Entry Grid.Column="0"
-                       Text="{Binding PromptText}"
-                       Placeholder="Type a message…"
-                       Keyboard="Chat"
-                       ReturnType="Send"
-                       Completed="OnEntryCompleted"
-                       ClearButtonVisibility="WhileEditing"
-                       FontSize="16"
-                       HeightRequest="44"
-                       VerticalOptions="Center"
-                       BackgroundColor="{StaticResource InputBackgroundColor}"
-                       TextColor="White"
-                       Margin="0,0,8,0"
-                       />
+                <Editor Grid.Column="0"
+                        Text="{Binding PromptText}"
+                        Placeholder="Type a message…"
+                        AutoSize="TextChanges"
+                        Keyboard="Text"
+                        FontSize="16"
+                        MinimumHeightRequest="44"
+                        VerticalOptions="Center"
+                        BackgroundColor="{StaticResource InputBackgroundColor}"
+                        TextColor="White"
+                        Margin="0,0,8,0"
+                />
+
+                <!-- <Editor Grid.Column="0" -->
+                <!--        Text="{Binding PromptText}" -->
+                <!--        Placeholder="Type a message…" -->
+                <!--        Keyboard="Chat" -->
+                <!--        ReturnType="Send" -->
+                <!--        Completed="OnEntryCompleted" -->
+                <!--        ClearButtonVisibility="WhileEditing" -->
+                <!--        FontSize="16" -->
+                <!--        HeightRequest="44" -->
+                <!--        VerticalOptions="Center" -->
+                <!--        BackgroundColor="{StaticResource InputBackgroundColor}" -->
+                <!--        TextColor="White" -->
+                <!--        Margin="0,0,8,0" -->
+                <!--        /> -->
                
                 <Button Grid.Column="1"
                         Text="Send"

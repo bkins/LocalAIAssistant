@@ -55,6 +55,8 @@ public partial class ApiEnvironmentService : ObservableObject
         return Task.CompletedTask;
     }
 
+    public bool IsInitialized { get; set; }
+
 
     public async Task SetAsync (ApiEnvironment env)
     {

@@ -191,7 +191,7 @@ public static class MauiProgram
 #endif
 		
 		//TODO: revisited in a later “Startup Hygiene” pass.
-		apiEnvService?.InitializeAsync(ApiEnvironment.QaAndroid, forceDefault: forceDefault)
+		apiEnvService?.InitializeAsync(ApiEnvironment.Dev, forceDefault: forceDefault)
 		             .GetAwaiter()
 		             .GetResult();
 		
