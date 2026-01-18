@@ -39,4 +39,31 @@ public sealed class JournalApiClient : IJournalApiClient
             return null;
         }
     }
+
+    public async Task<IReadOnlyList<JournalRevisionDto>?> GetRevisionsAsync (Guid              journalId
+                                                                           , CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"api/journals/{journalId}/revisions"
+                                                    , ct);
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+                return null;
+
+            response.EnsureSuccessStatusCode();
+
+            return await response.Content
+                                 .ReadFromJsonAsync<IReadOnlyList<JournalRevisionDto>>(cancellationToken: ct);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (HttpRequestException)
+        {
+            // Offline, DNS failure, server unreachable, etc.
+            return null;
+        }
+    }
 }

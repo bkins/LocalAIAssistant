@@ -12,33 +12,53 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <VerticalStackLayout Padding="16" Spacing="8">
+       <VerticalStackLayout Padding="16" Spacing="10">
 
-        <!-- CreatedAt -->
-        <Label Text="{Binding CreatedAt}"
-               FontSize="12"
-               Opacity="0.7" />
+              <!-- Header -->
+              <Label
+                     Text="{Binding CreatedAt, StringFormat='{0:MMMM d, yyyy · h:mm tt}'}"
+                     FontSize="12"
+                     TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" />
 
-        <!-- Tags -->
-        <Label Text="{Binding Tags, Converter={StaticResource TagsToText}}"
-               FontSize="12"
-               Opacity="0.8" />
+              <Label
+                     Text="Edited"
+                     FontSize="12"
+                     TextColor="#CC8844"
+                     IsVisible="{Binding IsEdited}" />
 
-        <!-- Mood -->
-        <Label Text="{Binding Mood}"
-               FontSize="14"/>
-               <!-- IsVisible="{Binding Mood, Converter={StaticResource StringNotNullOrEmptyConverter}}"  -->
+              <!-- Body -->
+              <Label
+                     Text="{Binding Text}"
+                     FontSize="16"
+                     LineBreakMode="WordWrap" />
 
-        <!-- State -->
-        <Label Text="{Binding State}"
-               FontSize="12"
-               Opacity="0.7" />
+              <!-- Metadata -->
+              <VerticalStackLayout Spacing="4">
 
-        <!-- Text -->
-        <Label Text="{Binding Text}"
-               FontSize="16" />
+                     <Label
+                            Text="{Binding Tags, Converter={StaticResource TagsToText}}"
+                            FontSize="12"
+                            TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                            IsVisible="{Binding Tags.Count}" />
 
-    </VerticalStackLayout>
+                     <Label
+                            Text="{Binding Mood}"
+                            FontSize="12"
+                            TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                            IsVisible="{Binding Mood}" />
+                     <Label
+                            Text="{Binding MoodScore}"
+                            FontSize="12"
+                            TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                            IsVisible="{Binding MoodScore}" />
+              </VerticalStackLayout>
+
+              <ActivityIndicator
+                     IsRunning="{Binding IsLoading}"
+                     IsVisible="{Binding IsLoading}" />
+
+       </VerticalStackLayout>
+
        
     <!-- <ScrollView> -->
     <!--     <VerticalStackLayout Padding="16"  -->

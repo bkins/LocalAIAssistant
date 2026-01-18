@@ -4,5 +4,7 @@ namespace LocalAIAssistant.CognitivePlatform.CpClients.Journal;
 
 public interface IJournalApiClient
 {
-    Task<JournalEntryDto?> GetByIdAsync(Guid id, CancellationToken ct = default);
+    Task<JournalEntryDto?>                   GetByIdAsync(Guid      id,        CancellationToken ct = default);
+    Task<IReadOnlyList<JournalRevisionDto>?> GetRevisionsAsync(Guid journalId, CancellationToken ct = default);
+
 }

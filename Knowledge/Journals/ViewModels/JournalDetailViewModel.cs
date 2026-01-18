@@ -14,11 +14,13 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
     [ObservableProperty] private DateTimeOffset        _createdAt;
     [ObservableProperty] private IReadOnlyList<string> _tags = Array.Empty<string>();
     [ObservableProperty] private string?               _mood;
+    [ObservableProperty] private int?                  _moodScore;
     [ObservableProperty] private JournalEntryState     _state;
 
-    
     private Guid _journalId;
 
+    public  bool IsEdited => State == JournalEntryState.Edited;
+    
     public JournalDetailViewModel(IJournalApiClientFactory clientFactory)
     {
         _clientFactory = clientFactory;
@@ -47,11 +49,12 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
             
             if (entry is not null)
             {
-                Text      = entry.Text;
-                CreatedAt = entry.CreatedAt;
-                Tags      = entry.Tags;
-                Mood      = entry.Mood;
-                State     = entry.State;
+                Text               = entry.Text;
+                CreatedAt          = entry.CreatedAt;
+                Tags               = entry.Tags;
+                Mood               = entry.Mood;
+                State              = entry.State;
+                MoodScore          = entry.MoodScore;
             }
         }
         finally

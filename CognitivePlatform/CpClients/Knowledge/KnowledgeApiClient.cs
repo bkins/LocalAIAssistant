@@ -12,11 +12,9 @@ public sealed class KnowledgeApiClient : IKnowledgeApiClient
         _httpClient = httpClient;
     }
 
-    public async Task<IReadOnlyList<KnowledgeItem>> GetKnowledgeAsync(
-        CancellationToken ct = default)
+    public async Task<IReadOnlyList<KnowledgeItem>> GetKnowledgeAsync(CancellationToken ct = default)
     {
-        var result = await _httpClient
-                             .GetFromJsonAsync<List<KnowledgeItem>>("api/knowledge", ct);
+        var result = await _httpClient.GetFromJsonAsync<List<KnowledgeItem>>("api/knowledge", ct);
 
         return result ?? (IReadOnlyList<KnowledgeItem>)Array.Empty<KnowledgeItem>();
     }

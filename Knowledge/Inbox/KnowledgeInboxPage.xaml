@@ -21,155 +21,65 @@
         <!--                    IsVisible="{Binding IsLoading}" -->
         <!--                    Margin="12" /> -->
 
-       <CollectionView ItemsSource="{Binding Items}"
-                SelectionMode="Single"
-                SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
+      <CollectionView
+    ItemsSource="{Binding Items}"
+    SelectionMode="Single"
+    SelectedItem="{Binding SelectedItem}">
 
     <CollectionView.ItemTemplate>
         <DataTemplate>
-
-            <!-- RESTORE: Swipe container -->
             <SwipeView>
 
-                <!-- KEEP: your existing SwipeItems (left/right) -->
                 <SwipeView.RightItems>
-                    <SwipeItems Mode="Reveal">
-                        <SwipeItem Text="Delete"
-                                   BackgroundColor="Red"
-                                   Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}},
-                                                     Path=BindingContext.DeleteCommand}"
-                                   CommandParameter="{Binding .}" />
+                    <SwipeItems>
+                        <SwipeItem
+                            Text="Archive"
+                            BackgroundColor="#883333"
+                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}},
+                                              Path=BindingContext.ArchiveCommand}"
+                            CommandParameter="{Binding .}" />
                     </SwipeItems>
                 </SwipeView.RightItems>
 
-                <SwipeView.Content>
+                <Border
+                    Padding="12"
+                    Margin="6"
+                    Stroke="#333"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 8">
 
-                    <!-- RESTORE: Card frame -->
-                    <Frame Padding="12"
-                           Margin="8,4"
-                           CornerRadius="12"
-                           HasShadow="True">
+                    <VerticalStackLayout Spacing="6">
 
-                        <!-- ENRICHED CONTENT -->
-                        <Grid RowDefinitions="Auto,Auto"
-                              ColumnDefinitions="*,Auto"
-                              RowSpacing="4">
+                        <!-- Main text -->
+                        <Label
+                            Text="{Binding Title}"
+                            FontSize="16"
+                            LineBreakMode="WordWrap" />
 
-                            <!-- Title -->
-                            <Label Grid.Row="0"
-                                   Grid.Column="0"
-                                   Text="{Binding Title}"
-                                   FontAttributes="Bold"
-                                   LineBreakMode="TailTruncation" />
+                        <!-- Metadata row -->
+                        <HorizontalStackLayout Spacing="12">
 
-                            <!-- Status indicator (only if Status != Active) -->
-                            <Frame Grid.Row="0"
-                                   Grid.Column="1"
-                                   Padding="6,2"
-                                   CornerRadius="10"
-                                   HasShadow="False"
-                                   BorderColor="Gray"
-                                   BackgroundColor="Transparent"
-                                   IsVisible="False">
+                            <Label
+                                Text="{Binding Tags, Converter={StaticResource TagsToTextConverter}}"
+                                FontSize="12"
+                                TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                                IsVisible="{Binding Tags.Count, Converter={StaticResource StatusToTextConverter}}" />
 
-                                <Label Text="{Binding Status,
-                                                     Converter={StaticResource StatusToTextConverter}}"
-                                       FontSize="11" />
+                            <Label
+                                Text="Edited"
+                                FontSize="12"
+                                TextColor="#CC8844"
+                                IsVisible="{Binding IsEdited}" />
 
-                                <Frame.Triggers>
-                                    <DataTrigger TargetType="Frame"
-                                                 Binding="{Binding Status}"
-                                                 Value="Active">
-                                        <Setter Property="IsVisible" Value="False" />
-                                    </DataTrigger>
-                                    <DataTrigger TargetType="Frame"
-                                                 Binding="{Binding Status}"
-                                                 Value="Archived">
-                                        <Setter Property="IsVisible" Value="True" />
-                                    </DataTrigger>
-                                    <DataTrigger TargetType="Frame"
-                                                 Binding="{Binding Status}"
-                                                 Value="Deleted">
-                                        <Setter Property="IsVisible" Value="True" />
-                                    </DataTrigger>
-                                </Frame.Triggers>
-                            </Frame>
+                        </HorizontalStackLayout>
 
-                            <!-- Tags -->
-                            <Label Grid.Row="1"
-                                   Grid.Column="0"
-                                   Grid.ColumnSpan="2"
-                                   Text="{Binding Tags,
-                                                  Converter={StaticResource TagsToTextConverter}}"
-                                   FontSize="12"
-                                   Opacity="0.75" />
-                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
 
-                    </Frame>
-                </SwipeView.Content>
             </SwipeView>
-
         </DataTemplate>
     </CollectionView.ItemTemplate>
 </CollectionView>
-
-        
-        <!-- Knowledge list -->
-        <!-- <CollectionView -->
-        <!--     ItemsSource="{Binding Items}" -->
-        <!--     SelectionMode="None"> -->
-        <!-- -->
-        <!--     <CollectionView.ItemTemplate> -->
-        <!--         <DataTemplate> -->
-        <!-- -->
-        <!--             <SwipeView> -->
-        <!-- -->
-        <!--                 ~1~ Swipe actions @1@ -->
-        <!--                 <SwipeView.RightItems> -->
-        <!--                     <SwipeItems Mode="Reveal"> -->
-        <!--                         <SwipeItem -->
-        <!--                             Text="Archive" -->
-        <!--                             BackgroundColor="Red" -->
-        <!--                             Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, -->
-        <!--                                       Path=BindingContext.ArchiveCommand}" -->
-        <!--                             CommandParameter="{Binding .}" /> -->
-        <!--                     </SwipeItems> -->
-        <!--                 </SwipeView.RightItems> -->
-        <!-- -->
-        <!--                 ~1~ Visual root of the item @1@ -->
-        <!--                 <Border Stroke="Gray" -->
-        <!--                         StrokeThickness="1" -->
-        <!--                         Padding="12" -->
-        <!--                         Margin="8" -->
-        <!--                         BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}"> -->
-        <!-- -->
-        <!--                     ~1~ Existing layout @1@ -->
-        <!--                     <VerticalStackLayout Spacing="4"> -->
-        <!-- -->
-        <!--                         <Label Text="{Binding CreatedAtLocal, -->
-        <!--                                    StringFormat='{0:MMM d, yyyy h:mm tt}'}" -->
-        <!--                                FontSize="12" -->
-        <!--                                TextColor="Gray" /> -->
-        <!--                         <Label Text="{Binding Kind}"/> -->
-        <!--                         <Label Text="{Binding Title}" -->
-        <!--                                FontAttributes="Bold" -->
-        <!--                                LineBreakMode="TailTruncation" /> -->
-        <!-- -->
-        <!-- -->
-        <!--                     </VerticalStackLayout> -->
-        <!--                     <Border.GestureRecognizers> -->
-        <!--                         <TapGestureRecognizer -->
-        <!--                             Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}} -->
-        <!--                                     , Path=BindingContext.OpenCommand}" -->
-        <!--                             CommandParameter="{Binding .}" /> -->
-        <!--                     </Border.GestureRecognizers> -->
-        <!--                 </Border> -->
-        <!-- -->
-        <!--             </SwipeView> -->
-        <!-- -->
-        <!--         </DataTemplate> -->
-        <!--     </CollectionView.ItemTemplate> -->
-        <!-- </CollectionView> -->
 
     </Grid>
 </ContentPage>
