@@ -354,86 +354,88 @@ public partial class ChatViewModel : ObservableObject
         await Shell.Current.GoToAsync(nameof(KnowledgeInboxPage));
 
     }
-    [RelayCommand]
-    private async Task SendPromptAsync_old()
-    {
-        var prompt = PromptText?.Trim();
-        if (string.IsNullOrWhiteSpace(prompt))
-            return;
-
-        try
-        {
-            IsBusy = true;
-
-            // Ensure the currently selected personality is active
-            if (SelectedPersonality != null)
-                _personalityService.SetCurrent(SelectedPersonality.Name);
-
-            // --- Create user message ---
-            var userMsg = new Message
-                          {
-                              Sender         = Senders.User
-                            , Content        = prompt
-                            , Timestamp      = DateTime.UtcNow
-                            , ConversationId = ConversationId
-                          };
-
-            Messages.Add(userMsg);
-            await RememberEntryAsync(userMsg);
-           
-            PromptText = string.Empty;
-
-            // --- Prepare assistant placeholder message ---
-            var assistantMsg = new Message
-                               {
-                                       Sender         = Senders.Assistant
-                                     , Content        = string.Empty
-                                     , Timestamp      = DateTime.UtcNow
-                                     , ConversationId = ConversationId
-                               };
-            Messages.Add(assistantMsg);
-
-            var sb = new StringBuilder();
-
-            // --- Stream AI response safely ---
-            // The await foreach loop handles the background task implicitly.
-            // No Task.Run() is needed here.
-            await foreach (var chunk in _orchestrator.ProcessAsync(userMsg.Content, SelectedPersonality)
-                                                     .ConfigureAwait(false))
-            {
-                sb.Append(chunk);
-
-                MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    assistantMsg.Content += chunk;
-                    ScrollToBottomRequested?.Invoke();
-                });
-            }
-
-            // --- Save final AI response to memory ---
-            await RememberEntryAsync(assistantMsg);
-        }
-        catch (Exception ex)
-        {
-            _log.LogError(ex
-                        , "Error in SendPromptAsync");
-            // It's good practice to show the user the error
-            MainThread.BeginInvokeOnMainThread(() =>
-            {
-                Messages.Add(new Message
-                             {
-                                 Sender         = Senders.Assistant
-                               , Content        = $"[Error] An unexpected error occurred: {ex.Message}"
-                               , Timestamp      = DateTime.UtcNow
-                               , ConversationId = ConversationId
-                             });
-            });
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
+    
+    //
+    // [RelayCommand]
+    // private async Task SendPromptAsync_old()
+    // {
+    //     var prompt = PromptText?.Trim();
+    //     if (string.IsNullOrWhiteSpace(prompt))
+    //         return;
+    //
+    //     try
+    //     {
+    //         IsBusy = true;
+    //
+    //         // Ensure the currently selected personality is active
+    //         if (SelectedPersonality != null)
+    //             _personalityService.SetCurrent(SelectedPersonality.Name);
+    //
+    //         // --- Create user message ---
+    //         var userMsg = new Message
+    //                       {
+    //                           Sender         = Senders.User
+    //                         , Content        = prompt
+    //                         , Timestamp      = DateTime.UtcNow
+    //                         , ConversationId = ConversationId
+    //                       };
+    //
+    //         Messages.Add(userMsg);
+    //         await RememberEntryAsync(userMsg);
+    //        
+    //         PromptText = string.Empty;
+    //
+    //         // --- Prepare assistant placeholder message ---
+    //         var assistantMsg = new Message
+    //                            {
+    //                                    Sender         = Senders.Assistant
+    //                                  , Content        = string.Empty
+    //                                  , Timestamp      = DateTime.UtcNow
+    //                                  , ConversationId = ConversationId
+    //                            };
+    //         Messages.Add(assistantMsg);
+    //
+    //         var sb = new StringBuilder();
+    //
+    //         // --- Stream AI response safely ---
+    //         // The await foreach loop handles the background task implicitly.
+    //         // No Task.Run() is needed here.
+    //         await foreach (var chunk in _orchestrator.ProcessAsync(userMsg.Content, SelectedPersonality)
+    //                                                  .ConfigureAwait(false))
+    //         {
+    //             sb.Append(chunk);
+    //
+    //             MainThread.BeginInvokeOnMainThread(() =>
+    //             {
+    //                 assistantMsg.Content += chunk;
+    //                 ScrollToBottomRequested?.Invoke();
+    //             });
+    //         }
+    //
+    //         // --- Save final AI response to memory ---
+    //         await RememberEntryAsync(assistantMsg);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         _log.LogError(ex
+    //                     , "Error in SendPromptAsync");
+    //         // It's good practice to show the user the error
+    //         MainThread.BeginInvokeOnMainThread(() =>
+    //         {
+    //             Messages.Add(new Message
+    //                          {
+    //                              Sender         = Senders.Assistant
+    //                            , Content        = $"[Error] An unexpected error occurred: {ex.Message}"
+    //                            , Timestamp      = DateTime.UtcNow
+    //                            , ConversationId = ConversationId
+    //                          });
+    //         });
+    //     }
+    //     finally
+    //     {
+    //         IsBusy = false;
+    //     }
+    // }
     
     [RelayCommand]
     public async Task NewChatAsync()

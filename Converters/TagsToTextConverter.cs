@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace LocalAIAssistant.Knowledge;
+namespace LocalAIAssistant.Converters;
 
 public sealed class TagsToTextConverter : IValueConverter
 {

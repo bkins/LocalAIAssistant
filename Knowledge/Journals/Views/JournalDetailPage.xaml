@@ -4,77 +4,61 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="LocalAIAssistant.Knowledge.Journals.Views.JournalDetailPage"
              xmlns:converters="clr-namespace:LocalAIAssistant.Knowledge"
+             xmlns:converters1="clr-namespace:LocalAIAssistant.Converters"
              Title="Journal"
              >
     <ContentPage.Resources>
         <ResourceDictionary>
-            <converters:TagsToTextConverter x:Key="TagsToText" />
+            <converters1:TagsToTextConverter x:Key="TagsToText" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
        <VerticalStackLayout Padding="16" Spacing="10">
 
               <!-- Header -->
-              <Label
-                     Text="{Binding CreatedAt, StringFormat='{0:MMMM d, yyyy · h:mm tt}'}"
+              <Label Text="{Binding CreatedAt, StringFormat='{0:MMMM d, yyyy · h:mm tt}'}"
                      FontSize="12"
                      TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" />
+              
+              <Button Text="View revision history"
+                      FontSize="12"
+                      Padding="6,4"
+                      HorizontalOptions="Start"
+                      BackgroundColor="Transparent"
+                      TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                      Command="{Binding ViewRevisionHistoryCommand}" />
 
-              <Label
-                     Text="Edited"
+              <Label Text="Edited"
                      FontSize="12"
                      TextColor="#CC8844"
                      IsVisible="{Binding IsEdited}" />
 
               <!-- Body -->
-              <Label
-                     Text="{Binding Text}"
+              <Label Text="{Binding Text}"
                      FontSize="16"
                      LineBreakMode="WordWrap" />
 
               <!-- Metadata -->
               <VerticalStackLayout Spacing="4">
 
-                     <Label
-                            Text="{Binding Tags, Converter={StaticResource TagsToText}}"
+                     <Label Text="{Binding Tags, Converter={StaticResource TagsToText}}"
                             FontSize="12"
                             TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
                             IsVisible="{Binding Tags.Count}" />
 
-                     <Label
-                            Text="{Binding Mood}"
+                     <Label Text="{Binding Mood}"
                             FontSize="12"
                             TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
                             IsVisible="{Binding Mood}" />
-                     <Label
-                            Text="{Binding MoodScore}"
+                     
+                     <Label Text="{Binding MoodScore}"
                             FontSize="12"
                             TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
                             IsVisible="{Binding MoodScore}" />
               </VerticalStackLayout>
 
-              <ActivityIndicator
-                     IsRunning="{Binding IsLoading}"
-                     IsVisible="{Binding IsLoading}" />
+              <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                 IsVisible="{Binding IsLoading}" />
 
        </VerticalStackLayout>
-
-       
-    <!-- <ScrollView> -->
-    <!--     <VerticalStackLayout Padding="16"  -->
-    <!--                          Spacing="12"> -->
-    <!-- -->
-    <!--         <Label Text="{Binding CreatedAt, StringFormat='{0:MMMM d, yyyy · h:mm tt}'}" -->
-    <!--                FontSize="12" -->
-    <!--                TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" /> -->
-    <!-- -->
-    <!--         <Label Text="{Binding Text}" -->
-    <!--                FontSize="16" -->
-    <!--                LineBreakMode="WordWrap" /> -->
-    <!--         <Label Text="{Binding Tags}"/> -->
-    <!--         <ActivityIndicator IsRunning="{Binding IsLoading}" -->
-    <!--                            IsVisible="{Binding IsLoading}" /> -->
-    <!-- -->
-    <!--     </VerticalStackLayout> -->
-    <!-- </ScrollView> -->
 </ContentPage>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="LocalAIAssistant.Knowledge.Journals.Views.JournalRevisionHistoryPage"
+             Title="Revision History">
+    
+    <Grid RowDefinitions="Auto,Auto,Auto"
+          Padding="12">
+
+        <!-- Honesty Banner -->
+        <Border Grid.Row="0"
+                Padding="10"
+                BackgroundColor="{AppThemeBinding Light=#FFF4E5, Dark=#3A2A18}"
+                Stroke="#CC8844"
+                StrokeThickness="1"
+                StrokeShape="RoundRectangle 8">
+
+            <Label Text="You are viewing past versions of this journal entry. These are read-only."
+                   FontSize="12"
+                   TextColor="{AppThemeBinding Light=#664400, Dark=#FFD9AA}" />
+        </Border>
+
+        <!-- Revision List -->
+        <CollectionView Grid.Row="1"
+                        Margin="0,12,0,0"
+                        ItemsSource="{Binding Revisions}"
+                        IsVisible="{Binding HasRevisions}">
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Padding="12"
+                            Margin="0,0,0,12"
+                            Stroke="#333"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 8">
+
+                        <VerticalStackLayout Spacing="8">
+
+                            <!-- Timestamp -->
+                            <Label Text="{Binding CreatedAt, StringFormat='{0:MMMM d, yyyy · h:mm tt}'}"
+                                   FontSize="12"
+                                   TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" />
+
+                            <!-- Text snapshot -->
+                            <Label Text="{Binding Text}"
+                                   FontSize="16"
+                                   LineBreakMode="WordWrap" />
+
+                            <!-- Metadata snapshot -->
+                            <HorizontalStackLayout Spacing="12">
+
+                                <Label Text="{Binding Tags, Converter={StaticResource TagsToTextConverter}}"
+                                       FontSize="12"
+                                       TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                                       IsVisible="{Binding Tags.Count}" />
+
+                                <Label Text="{Binding Mood}"
+                                       FontSize="12"
+                                       TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                                       IsVisible="{Binding Mood}" />
+
+                                <Label Text="{Binding MoodScore, StringFormat='Mood: {0}/5'}"
+                                       FontSize="12"
+                                       TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                                       IsVisible="{Binding MoodScore}" />
+
+                            </HorizontalStackLayout>
+
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Empty State -->
+        <Border Grid.Row="2"
+                Padding="8"
+                Margin="0,8,0,8"
+                BackgroundColor="{AppThemeBinding Light=#EEF3F8, Dark=#1F2A35}"
+                Stroke="#8899AA"
+                StrokeThickness="1"
+                StrokeShape="RoundRectangle 6"
+                IsVisible="{Binding HasNeverBeenEdited}">
+
+            <Label Text="This entry has not been edited yet."
+                   FontSize="12"
+                   TextColor="{AppThemeBinding Light=#445566, Dark=#CCD6E0}" />
+        </Border>
+
+
+        <!-- Loading Indicator -->
+        <ActivityIndicator Grid.Row="2"
+                           IsRunning="{Binding IsLoading}"
+                           IsVisible="{Binding IsLoading}" />
+
+    </Grid>
+    
+</ContentPage>

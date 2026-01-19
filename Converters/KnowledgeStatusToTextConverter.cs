@@ -1,7 +1,7 @@
 using System.Globalization;
 using LocalAIAssistant.Knowledge.Inbox;
 
-namespace LocalAIAssistant.Knowledge;
+namespace LocalAIAssistant.Converters;
 
 public sealed class KnowledgeStatusToTextConverter : IValueConverter
 {

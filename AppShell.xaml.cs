@@ -19,12 +19,17 @@ public partial class AppShell : Shell
 		Routing.RegisterRoute(nameof(LogDetailPage)
 		                    , typeof(LogDetailPage));
 		
+// Knowledge Inbox		
 		Routing.RegisterRoute(nameof(KnowledgeInboxPage)
 		                    , typeof(KnowledgeInboxPage));
-
+    // Jounrals
 		Routing.RegisterRoute(nameof(JournalDetailPage)
 		                    , typeof(JournalDetailPage));
 		
+		Routing.RegisterRoute(nameof(JournalRevisionHistoryPage)
+		                      , typeof(JournalRevisionHistoryPage));
+		
+	// Tasks	
 		Routing.RegisterRoute(nameof(TaskDetailPage)
 		                    , typeof(TaskDetailPage));
 

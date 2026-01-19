@@ -10,6 +10,8 @@
             <converters:SenderToColorConverter x:Key="NullToBoolConverter"/>
             <converters:BoolToColorConverter   x:Key="BoolToColorConverter" />
             <converters:ApiStatusTextConverter x:Key="ApiStatusTextConverter" />
+            <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
+            <converters:TagsToTextConverter x:Key="TagsToTextConverter"/>
             
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />

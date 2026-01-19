@@ -1,6 +1,8 @@
+using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Knowledge.Inbox;
+using LocalAIAssistant.Knowledge.Journals.ViewModels;
 using LocalAIAssistant.Knowledge.Journals.Views;
 using LocalAIAssistant.Knowledge.Tasks.ViewModels;
 using LocalAIAssistant.Knowledge.Tasks.Views;
@@ -67,6 +69,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IPersonaAndContextEngine, PersonaAndContextEngine.PersonaAndContextEngine>();
         services.AddSingleton<IPersonaRepository, InMemoryPersonaRepository>();
         
+        services.AddSingleton<IJournalApiClient, JournalApiClient>();
+        
         services.AddSingleton<IIntentAnalyzer, RuleBasedIntentAnalyzer>();
         services.Decorate<IIntentAnalyzer, HybridIntentAnalyzer>();
         /*
@@ -100,6 +104,7 @@ public static class ServiceCollectionExtensions
         // Knowledge and Knowledge Clients
         services.AddTransient<KnowledgeInboxViewModel>();
         services.AddTransient<JournalDetailViewModel>();
+        services.AddTransient<JournalRevisionHistoryViewModel>();
         services.AddTransient<TaskDetailViewModel>();
         
         return services;

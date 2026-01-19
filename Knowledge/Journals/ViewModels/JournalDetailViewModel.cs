@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
 using LocalAIAssistant.Knowledge.Journals.Models;
+using LocalAIAssistant.Knowledge.Journals.Views;
 
 namespace LocalAIAssistant.Knowledge.Journals.ViewModels;
 
@@ -62,4 +63,11 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
             IsLoading = false;
         }
     }
+    
+    [RelayCommand]
+    private async Task ViewRevisionHistoryAsync()
+    {
+        await Shell.Current.GoToAsync($"{nameof(JournalRevisionHistoryPage)}?id={_journalId}");
+    }
+
 }

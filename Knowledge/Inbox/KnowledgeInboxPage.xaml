@@ -4,12 +4,13 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:converters="clr-namespace:LocalAIAssistant.Knowledge"
+    xmlns:converters1="clr-namespace:LocalAIAssistant.Converters"
     Title="Knowledge">
 
     <ContentPage.Resources>
         <ResourceDictionary>
-            <converters:TagsToTextConverter x:Key="TagsToTextConverter" />
-            <converters:KnowledgeStatusToTextConverter x:Key="StatusToTextConverter" />
+            <converters1:TagsToTextConverter x:Key="TagsToTextConverter" />
+            <converters1:KnowledgeStatusToTextConverter x:Key="StatusToTextConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
