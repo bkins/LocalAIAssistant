@@ -28,6 +28,9 @@ public partial class AppShell : Shell
 		
 		Routing.RegisterRoute(nameof(JournalRevisionHistoryPage)
 		                      , typeof(JournalRevisionHistoryPage));
+
+		Routing.RegisterRoute(nameof(EditJournalEntryPage)
+		                    , typeof(EditJournalEntryPage));
 		
 	// Tasks	
 		Routing.RegisterRoute(nameof(TaskDetailPage)

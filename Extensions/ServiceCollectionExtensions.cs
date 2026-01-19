@@ -29,7 +29,6 @@ public static class ServiceCollectionExtensions
                                                   , string memoryFilePath)
     {
         services.AddSingleton<ILongTermMemoryStore>(_ => new JsonlAiMemoryStore(memoryFilePath));
-        //services.AddSingleton<IConversationMemory, ConversationMemory>();
         services.AddSingleton<IRoleInjectionService, RoleInjectionService>();
         
         services.AddTransient<ILlmService, LlmService>();
@@ -49,11 +48,6 @@ public static class ServiceCollectionExtensions
             var logger = s.GetRequiredService<ILogger>();
             return new LoggingService(logger, logPath);
         });
-        // services.AddSingleton<ILoggingService, LoggingService>(s =>
-        // {
-        //     var loggerService = s.GetRequiredService<ILogger<LoggingService>>();
-        //     return new LoggingService(loggerService, logPath);
-        // });
         
         services.Configure<MemoryRetrievalOptions>(opts =>
         {
@@ -69,7 +63,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IPersonaAndContextEngine, PersonaAndContextEngine.PersonaAndContextEngine>();
         services.AddSingleton<IPersonaRepository, InMemoryPersonaRepository>();
         
-        services.AddSingleton<IJournalApiClient, JournalApiClient>();
+        // services.AddSingleton<IJournalApiClient, JournalApiClient>();
         
         services.AddSingleton<IIntentAnalyzer, RuleBasedIntentAnalyzer>();
         services.Decorate<IIntentAnalyzer, HybridIntentAnalyzer>();
@@ -103,8 +97,11 @@ public static class ServiceCollectionExtensions
         
         // Knowledge and Knowledge Clients
         services.AddTransient<KnowledgeInboxViewModel>();
+        
         services.AddTransient<JournalDetailViewModel>();
+        services.AddTransient<EditJournalEntryViewModel>();
         services.AddTransient<JournalRevisionHistoryViewModel>();
+        
         services.AddTransient<TaskDetailViewModel>();
         
         return services;
@@ -120,7 +117,11 @@ public static class ServiceCollectionExtensions
         
         // Knowledge and Knowledge Clients
         services.AddTransient<KnowledgeInboxPage>();
+        
         services.AddTransient<JournalDetailPage>();
+        services.AddTransient<EditJournalEntryPage>();
+        services.AddTransient<JournalRevisionHistoryPage>();
+        
         services.AddTransient<TaskDetailPage>();
         
         return services;

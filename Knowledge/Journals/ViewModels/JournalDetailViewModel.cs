@@ -69,5 +69,11 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
     {
         await Shell.Current.GoToAsync($"{nameof(JournalRevisionHistoryPage)}?id={_journalId}");
     }
+    
+    [RelayCommand]
+    private async Task EditEntryAsync()
+    {
+        await Shell.Current.GoToAsync($"{nameof(EditJournalEntryPage)}?id={_journalId}");
+    }
 
 }

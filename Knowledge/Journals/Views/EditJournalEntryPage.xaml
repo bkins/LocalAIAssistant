@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="LocalAIAssistant.Knowledge.Journals.Views.EditJournalEntryPage"
+             Title="Edit Entry"
+             >
+    <ScrollView>
+        <VerticalStackLayout Padding="12" Spacing="12">
+
+            <Editor Text="{Binding Text}"
+                    AutoSize="TextChanges"
+                    Placeholder="Journal text" />
+
+            <Entry Text="{Binding Tags}"
+                   Placeholder="Tags (comma-separated)" />
+
+            <Entry Text="{Binding Mood}"
+                   Placeholder="Mood" />
+
+            <Entry Text="{Binding MoodScore}"
+                   Keyboard="Numeric"
+                   Placeholder="Mood score (1–5)" />
+
+            <HorizontalStackLayout Spacing="12">
+
+                <Button Text="Cancel"
+                        Command="{Binding CancelCommand}"
+                        HorizontalOptions="Start" />
+
+                <Button Text="Save changes"
+                        Command="{Binding SaveCommand}"
+                        HorizontalOptions="EndAndExpand" />
+
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

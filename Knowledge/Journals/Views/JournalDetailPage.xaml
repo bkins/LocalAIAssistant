@@ -55,8 +55,15 @@
                             FontSize="12"
                             TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
                             IsVisible="{Binding MoodScore}" />
-              </VerticalStackLayout>
+                     
+                     <Button Text="Edit entry"
+                             FontSize="12"
+                             BackgroundColor="Transparent"
+                             Command="{Binding EditEntryCommand}" />
 
+              </VerticalStackLayout>
+              
+              
               <ActivityIndicator IsRunning="{Binding IsLoading}"
                                  IsVisible="{Binding IsLoading}" />
 
