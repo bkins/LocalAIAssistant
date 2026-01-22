@@ -16,9 +16,9 @@ public partial class MainPage : ContentPage
     public ChatViewModel ChatViewModel { get; }
 
 
-    public MainPage(MainViewModel mainViewModel,
-                    ILoggingService logger
-                  , ChatViewModel chatViewModel)
+    public MainPage(MainViewModel    mainViewModel
+                   , ILoggingService logger
+                  , ChatViewModel    chatViewModel)
     {
         InitializeComponent();
 

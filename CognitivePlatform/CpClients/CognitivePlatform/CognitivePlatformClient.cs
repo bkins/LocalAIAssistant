@@ -120,7 +120,7 @@ public class CognitivePlatformClient : ICognitivePlatformClient
     {
         try
         {
-            var response = await _httpClient.GetAsync($"api/health/ping");
+            var response = await _httpClient.GetAsync($"api/health/ready");
 
             response.EnsureSuccessStatusCode();
 
@@ -129,7 +129,6 @@ public class CognitivePlatformClient : ICognitivePlatformClient
         catch (Exception e)
         {
             Connectivity.ReportOffline(e);
-
         }
     }
 }

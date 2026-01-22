@@ -42,8 +42,7 @@ public partial class ChatViewModel : ObservableObject
     [ObservableProperty] private string _promptText   = string.Empty;
     [ObservableProperty] private bool   _isBusy;
     [ObservableProperty] private bool   _isTyping;
-
-
+    
     public ObservableCollection<Message>     Messages       { get; } = new();
     public ObservableCollection<Personality> Personalities  { get; } = new();
 
@@ -88,7 +87,6 @@ public partial class ChatViewModel : ObservableObject
 
         SendCommand             = new AsyncRelayCommand(SendAsync);
         SendForStreamingCommand = new AsyncRelayCommand(SendPromptForStreamingAsync);
-
     }
 
     private async Task SendAsync()
@@ -238,56 +236,6 @@ public partial class ChatViewModel : ObservableObject
         
         ScrollToBottomRequested?.Invoke();
     }
-
-    //
-    // [RelayCommand]
-    // public async Task SendPromptAsync()
-    // {
-    //     var text = PromptText;
-    //     if (string.IsNullOrWhiteSpace(text)) return;
-    //
-    //     // Add user message to UI
-    //     Messages.Add(new Message
-    //                  {
-    //                          Sender = "user"
-    //                        , Content = text
-    //                        , Timestamp = DateTime.Now
-    //                  });
-    //
-    //     PromptText = "";
-    //     ScrollToBottomRequested?.Invoke();
-    //
-    //     IsTyping = true;
-    //     
-    //     try
-    //     {
-    //         var response = await _cp.ConverseAsync(text
-    //                                              , "default"
-    //                                              , "llama3"); //"phi-3:mini"); //TODO: make `model` param defined by user
-    //
-    //         Messages.Add(new Message
-    //                      {
-    //                              Sender    = "assistant",
-    //                              Content   = response.Message,
-    //                              Timestamp = DateTime.Now
-    //                      });
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         Messages.Add(new Message
-    //                      {
-    //                              Sender    = "system",
-    //                              Content   = $"Error contacting CognitivePlatform:\n{ex.Message}",
-    //                              Timestamp = DateTime.Now
-    //                      });
-    //     }
-    //     finally
-    //     {
-    //         IsTyping = false;
-    //     }
-    //     ScrollToBottomRequested?.Invoke();
-    // }
-
     
     [RelayCommand]
     public async Task SendPromptForStreamingAsync()
@@ -355,88 +303,6 @@ public partial class ChatViewModel : ObservableObject
 
     }
     
-    //
-    // [RelayCommand]
-    // private async Task SendPromptAsync_old()
-    // {
-    //     var prompt = PromptText?.Trim();
-    //     if (string.IsNullOrWhiteSpace(prompt))
-    //         return;
-    //
-    //     try
-    //     {
-    //         IsBusy = true;
-    //
-    //         // Ensure the currently selected personality is active
-    //         if (SelectedPersonality != null)
-    //             _personalityService.SetCurrent(SelectedPersonality.Name);
-    //
-    //         // --- Create user message ---
-    //         var userMsg = new Message
-    //                       {
-    //                           Sender         = Senders.User
-    //                         , Content        = prompt
-    //                         , Timestamp      = DateTime.UtcNow
-    //                         , ConversationId = ConversationId
-    //                       };
-    //
-    //         Messages.Add(userMsg);
-    //         await RememberEntryAsync(userMsg);
-    //        
-    //         PromptText = string.Empty;
-    //
-    //         // --- Prepare assistant placeholder message ---
-    //         var assistantMsg = new Message
-    //                            {
-    //                                    Sender         = Senders.Assistant
-    //                                  , Content        = string.Empty
-    //                                  , Timestamp      = DateTime.UtcNow
-    //                                  , ConversationId = ConversationId
-    //                            };
-    //         Messages.Add(assistantMsg);
-    //
-    //         var sb = new StringBuilder();
-    //
-    //         // --- Stream AI response safely ---
-    //         // The await foreach loop handles the background task implicitly.
-    //         // No Task.Run() is needed here.
-    //         await foreach (var chunk in _orchestrator.ProcessAsync(userMsg.Content, SelectedPersonality)
-    //                                                  .ConfigureAwait(false))
-    //         {
-    //             sb.Append(chunk);
-    //
-    //             MainThread.BeginInvokeOnMainThread(() =>
-    //             {
-    //                 assistantMsg.Content += chunk;
-    //                 ScrollToBottomRequested?.Invoke();
-    //             });
-    //         }
-    //
-    //         // --- Save final AI response to memory ---
-    //         await RememberEntryAsync(assistantMsg);
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         _log.LogError(ex
-    //                     , "Error in SendPromptAsync");
-    //         // It's good practice to show the user the error
-    //         MainThread.BeginInvokeOnMainThread(() =>
-    //         {
-    //             Messages.Add(new Message
-    //                          {
-    //                              Sender         = Senders.Assistant
-    //                            , Content        = $"[Error] An unexpected error occurred: {ex.Message}"
-    //                            , Timestamp      = DateTime.UtcNow
-    //                            , ConversationId = ConversationId
-    //                          });
-    //         });
-    //     }
-    //     finally
-    //     {
-    //         IsBusy = false;
-    //     }
-    // }
-    
     [RelayCommand]
     public async Task NewChatAsync()
     {
@@ -459,15 +325,22 @@ public partial class ChatViewModel : ObservableObject
 
     private static readonly string[] ThinkingFrames =
     {
-            "thinking",
-            "Thinking",
-            "tHinking",
-            "thInking",
-            "thiNking",
-            "thinKing",
-            "thinkIng",
-            "thinkiNg",
-            "thinkinG",
+          //   "thinking"
+          // , 
+            "thinking"
+          , "THinking"
+          , "ThInking"
+          , "ThiNking"
+          , "ThinKing"
+          , "ThinkIng"
+          , "ThinkiNg"
+          , "ThinkinG"
+          , "ThinkiNg"
+          , "ThinkIng"
+          , "ThinKing"
+          , "ThiNking"
+          , "ThInking"
+          , "THinking"
     };
 
     private CancellationTokenSource? _thinkingCts;
