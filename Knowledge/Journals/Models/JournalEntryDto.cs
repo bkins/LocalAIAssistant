@@ -17,8 +17,8 @@ public sealed class JournalEntryDto
             _createAt = value;
         }
     }
-    public  DateTimeOffset        CreatedAtLocalTime { get;   init; }
-    public  IReadOnlyList<string> Tags               { get;   init; } = Array.Empty<string>();
+    public DateTimeOffset        CreatedAtLocalTime { get; init; }
+    public IReadOnlyList<string> Tags               { get; init; } = Array.Empty<string>();
     
     public string?           Mood      { get; init; }
     public JournalEntryState State     { get; init; }

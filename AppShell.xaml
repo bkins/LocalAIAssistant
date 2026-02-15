@@ -5,6 +5,7 @@
     xmlns:views="clr-namespace:LocalAIAssistant.Views"
     xmlns:viewModels="clr-namespace:LocalAIAssistant.ViewModels"
     xmlns:inbox="clr-namespace:LocalAIAssistant.Knowledge.Inbox"
+    xmlns:local="clr-namespace:LocalAIAssistant.Core.Environment"
     x:DataType="viewModels:AppShellMasterViewModel"
     Title="LocalAIAssistant"
     x:Name="AppShellRoot"
@@ -23,9 +24,10 @@
                                VerticalOptions="Center">
         
             <Label Text="Cognitive Assistant"
-                   FontSize="21"
+                   FontSize="20"
                    FontAttributes="Bold"
-                   TextColor="{StaticResource PrimaryTextColor}" />
+                   TextColor="{x:Static local:EnvironmentTheme.PrimaryColor}"
+                   VerticalOptions="Center" />
         
             <Label Text="{Binding EnvironmentName}"
                    FontSize="10"

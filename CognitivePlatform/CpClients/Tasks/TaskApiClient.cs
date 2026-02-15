@@ -15,7 +15,7 @@ public class TaskApiClient : ITaskApiClient
     }
 
     public async Task<TasksDto?> GetByIdAsync (Guid              id
-                                                    , CancellationToken ct = default)
+                                             , CancellationToken ct = default)
     {
         try
         {

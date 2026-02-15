@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 using LocalAIAssistant.Data;
 
 namespace LocalAIAssistant.Services;
@@ -8,6 +9,7 @@ public class ApiHealthService : INotifyPropertyChanged, IDisposable
     private          bool       _isApiAvailable;
     private          Timer      _timer;
     private readonly HttpClient _httpClient;
+    private readonly ICognitivePlatformClientFactory _cognitivePlatformClientFactory;
     
     public bool IsApiAvailable
     {
@@ -22,9 +24,10 @@ public class ApiHealthService : INotifyPropertyChanged, IDisposable
         }
     }
 
-    public ApiHealthService(HttpClient httpClient)
+    public ApiHealthService(HttpClient httpClient,  ICognitivePlatformClientFactory cognitivePlatformClientFactory)
     {
         _httpClient = httpClient;
+        _cognitivePlatformClientFactory = cognitivePlatformClientFactory;
     }
     
     public async Task InitializeAsync()
@@ -46,10 +49,12 @@ public class ApiHealthService : INotifyPropertyChanged, IDisposable
     {
         try
         {
-            var response = await _httpClient.GetAsync(StringConsts.OllamaServerUrl);
+            var cpClient = _cognitivePlatformClientFactory.Create();
+            var response = await cpClient.Ready(); // await _httpClient.GetAsync(StringConsts.OllamaServerUrl);
+
             IsApiAvailable = response.IsSuccessStatusCode;
         }
-        catch
+        catch(Exception ex)
         {
             IsApiAvailable = false;
         }

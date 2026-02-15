@@ -1,11 +1,9 @@
 using System.Collections.ObjectModel;
-using System.Text;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CP.Client.Core.Common.ConectivityToApi;
 using LocalAIAssistant.Avails.ThinkingAnimation;
-using LocalAIAssistant.CognitivePlatform;
 using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;

@@ -1,4 +1,3 @@
-using LocalAIAssistant.Data.Models;
 using Microsoft.Extensions.Options;
 
 namespace LocalAIAssistant.Services.AiMemory.Interfaces;

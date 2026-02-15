@@ -6,7 +6,6 @@ using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Extensions;
 using LocalAIAssistant.Services;
-using LocalAIAssistant.Services.AiMemory;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
 using LocalAIAssistant.Services.Interfaces;
 using LocalAIAssistant.Services.Logging;
@@ -16,11 +15,13 @@ namespace LocalAIAssistant.ViewModels;
 public partial class MainViewModel : ObservableObject
 {
 
-    private readonly ILlmService         _llmService;
-    private readonly ILoggingService     _logger;
-    private readonly IConversationMemory _conversationMemory;
-    private readonly IMemoryService      _memoryService;
-    private readonly OllamaConfigService _ollamaConfigService;
+    private readonly ILlmService              _llmService;
+    private readonly ILoggingService          _logger;
+    private readonly IConversationMemory      _conversationMemory;
+    private readonly IMemoryService           _memoryService;
+    private readonly OllamaConfigService      _ollamaConfigService;
+
+    public ApiEnvironmentDescriptor ApiEnvironmentDescriptor { get; }
 
     public ObservableCollection<string> Models { get; } = new(AvailableModels.Models);
 
@@ -38,21 +39,23 @@ public partial class MainViewModel : ObservableObject
         set => SetProperty(ref _isBusy, value);
     }
 
-    public MainViewModel(ILlmService         llmService
-                       , ILoggingService     logger
-                       , IConversationMemory conversationMemory
-                       , IMemoryService      memoryService
-                       , OllamaConfigService configService)
+    public MainViewModel (ILlmService              llmService
+                        , ILoggingService          logger
+                        , IConversationMemory      conversationMemory
+                        , IMemoryService           memoryService
+                        , OllamaConfigService      configService
+                        , ApiEnvironmentDescriptor apiEnvironmentDescriptor)
     {
         _logger = logger;
         _logger.LogInformation("Initializing main view model");
 
-        _llmService          = llmService;
-        _conversationMemory  = conversationMemory;
-        _memoryService       = memoryService;
-        _ollamaConfigService = configService;
+        _llmService              = llmService;
+        _conversationMemory      = conversationMemory;
+        _memoryService           = memoryService;
+        _ollamaConfigService     = configService;
+        ApiEnvironmentDescriptor = apiEnvironmentDescriptor;
     }
-    
+
     [RelayCommand]
     public async Task SendPromptAsync()
     {

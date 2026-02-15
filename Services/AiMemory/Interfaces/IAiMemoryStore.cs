@@ -5,7 +5,7 @@ namespace LocalAIAssistant.Services.AiMemory.Interfaces;
 public interface IAiMemoryStore
 {
     Task SaveMessagesAsync(IEnumerable<Message> messages);
-    Task SaveMessageAsync(Message message);
+    Task SaveMessageAsync(Message               message);
     Task ClearMemoryAsync();
     
     Task<IEnumerable<Message>> LoadMessagesAsync();

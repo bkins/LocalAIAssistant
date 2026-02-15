@@ -3,7 +3,6 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LocalAIAssistant.Data.Models;
-using LocalAIAssistant.Extensions;
 using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.Interfaces;
 
@@ -11,17 +10,16 @@ namespace LocalAIAssistant.ViewModels;
 
 public partial class SettingsViewModel : ObservableObject
 {
-    private readonly OllamaConfigService   _configService;
-    private readonly IPersonalityService   _personalityService;
-    private readonly ApiEnvironmentService _environment;
-    private readonly AppShellMasterViewModel _appShellMasterViewModel;
+    private readonly OllamaConfigService      _configService;
+    private readonly IPersonalityService      _personalityService;
+    private readonly ApiEnvironmentDescriptor _apiEnvironment;
+    private readonly AppShellMasterViewModel  _appShellMasterViewModel;
     
     [ObservableProperty] private string _model;
     [ObservableProperty] private string _endpoint;
     [ObservableProperty] private int    _numPredict;
     [ObservableProperty] private float  _temperature;
-    
-    public ObservableCollection<string> Environments { get; }
+    [ObservableProperty] private string _environment;
     
     private string _selectedEnvironment;
     public string SelectedEnvironment
@@ -35,20 +33,20 @@ public partial class SettingsViewModel : ObservableObject
             _selectedEnvironment = value;
             OnPropertyChanged();
 
-            _ = ChangeEnvironmentAsync(value);
+            // _ = ChangeEnvironmentAsync(value);
         }
     }
 
-    public SettingsViewModel (OllamaConfigService     configService
-                            , IPersonalityService     personalityService
-                            , ApiEnvironmentService   environment
-                            , AppShellMasterViewModel appShellMasterViewModel)
+    public SettingsViewModel (OllamaConfigService      configService
+                            , IPersonalityService      personalityService
+                            , ApiEnvironmentDescriptor apiEnvironment
+                            , AppShellMasterViewModel  appShellMasterViewModel)
     {
-        _environment = environment;
+        _apiEnvironment = apiEnvironment;
 
-        Environments = new ObservableCollection<string>(Enum.GetNames(typeof(ApiEnvironment)));
+        Environment = BuildEnvironment.Name;
 
-        _selectedEnvironment = _environment.Current.ToString();
+        _selectedEnvironment = _apiEnvironment.Name;
         _configService       = configService;
         _personalityService  = personalityService;
 
@@ -92,13 +90,5 @@ public partial class SettingsViewModel : ObservableObject
                         };
 
         _configService.UpdateConfig(newConfig);
-    }
-    
-    private async Task ChangeEnvironmentAsync(string value)
-    {
-        var env = Enum.Parse<ApiEnvironment>(value);
-        // _appShellMasterViewModel.EnvironmentName = value;
-        
-        await _environment.SetAsync(env);
     }
 }

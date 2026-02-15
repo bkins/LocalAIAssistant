@@ -5,11 +5,11 @@ namespace LocalAIAssistant.CognitivePlatform.CpClients.Knowledge;
 
 public class KnowledgeClientFactory : BaseHttpClient, IKnowledgeClientFactory
 {
-    private readonly IHttpClientFactory    _httpFactory;
-    private readonly ApiEnvironmentService _env;
+    private readonly IHttpClientFactory       _httpFactory;
+    private readonly ApiEnvironmentDescriptor _env;
 
-    public KnowledgeClientFactory(IHttpClientFactory    httpFactory
-                                , ApiEnvironmentService env)
+    public KnowledgeClientFactory(IHttpClientFactory       httpFactory
+                                , ApiEnvironmentDescriptor env)
     {
         _httpFactory  = httpFactory;
         _env          = env;

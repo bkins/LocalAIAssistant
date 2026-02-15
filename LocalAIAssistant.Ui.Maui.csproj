@@ -23,9 +23,6 @@
 		<!-- Display name -->
 		<ApplicationTitle>LocalAIAssistant</ApplicationTitle>
 
-		<!-- App Identifier -->
-		<ApplicationId>com.companyname.localaiassistant</ApplicationId>
-
 		<!-- Versions -->
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
 		<ApplicationVersion>1</ApplicationVersion>
@@ -42,14 +39,69 @@
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
 	</PropertyGroup>
+	
+	<PropertyGroup Condition="'$(AppEnvironment)' == 'DEV'">
+		<ApplicationTitle>Local AI Assistant (DEV)</ApplicationTitle>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(AppEnvironment)' == 'QA'">
+		<ApplicationTitle>Local AI Assistant (QA)</ApplicationTitle>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(AppEnvironment)' == 'PROD'">
+		<ApplicationTitle>Local AI Assistant (PROD)</ApplicationTitle>
+	</PropertyGroup>
+	
+<!-- GenerateBuildEnvironment -->
+	<PropertyGroup>
+		<!-- Defaults for local dev only -->
+		<ApiEnvironmentName Condition="'$(ApiEnvironmentName)' == ''">Dev</ApiEnvironmentName>
+		<ApiBaseUrl Condition="'$(ApiBaseUrl)' == ''">http://192.168.0.33:5273</ApiBaseUrl>
+		<ApplicationId>com.snikpoh.localaiassistant.dev</ApplicationId>
+		
+		<OllamaBaseUrl Condition="'$(OllamaBaseUrl)' == ''">http://192.168.0.33:11434</OllamaBaseUrl>
+
+		<!-- App identity -->
+		<ApplicationTitle Condition="'$(ApplicationTitle)' == ''">Local AI Assistant ($(AppEnvironment))</ApplicationTitle>
+		<ApplicationIdSuffix>.$(AppEnvironment.ToLower())</ApplicationIdSuffix>
+
+		<!-- Android packaging -->
+		<AndroidPackageFormat>apk</AndroidPackageFormat>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<_BuildEnvironmentLines Include="namespace LocalAIAssistant" />
+		<_BuildEnvironmentLines Include="{" />
+		<_BuildEnvironmentLines Include="    public static class BuildEnvironment" />
+		<_BuildEnvironmentLines Include="    {" />
+		<_BuildEnvironmentLines Include="        public const string Name = &quot;$(ApiEnvironmentName)&quot;%3B" />
+		<_BuildEnvironmentLines Include="        public const string ApiBaseUrl = &quot;$(ApiBaseUrl)&quot;%3B" />
+		<_BuildEnvironmentLines Include="        public const string OllamaBaseUrl = &quot;$(OllamaBaseUrl)&quot;%3B" />
+		<_BuildEnvironmentLines Include="    }" />
+		<_BuildEnvironmentLines Include="}" />
+	</ItemGroup>
+	
+	<Target Name="GenerateBuildEnvironment" BeforeTargets="BeforeCompile">
+		<WriteLinesToFile
+				File="$(IntermediateOutputPath)BuildEnvironment.g.cs"
+				Lines="@(_BuildEnvironmentLines)"
+				Overwrite="true" />
+	</Target>
+
+	<ItemGroup>
+		<Compile Include="$(IntermediateOutputPath)BuildEnvironment.g.cs" />
+	</ItemGroup>
+<!-- /GenerateBuildEnvironment -->
 
 	<ItemGroup>
 		<!-- App Icon -->
-<!--		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />-->
 		<MauiIcon Include="Resources\AppIcon\appicon.png" 
 				  ForegroundFile="Resources\AppIcon\appicon.png" 
 				  Color="#000000"
 				  Alias="appicon"/>
+		
+		<!--Clean the SVG up: Make it smaller (so it fits in app icon area in the launcher)
+		  and make thte lines clean-->
+<!--		<MauiIcon Include="Resources\AppIcon\appicon.svg" />-->
+		
 		<MauiSplashScreen Include="Resources\Images\appicon_background.png">
 		  <Color>Black</Color>
 		  <BaseSize>512,512</BaseSize>
@@ -76,7 +128,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-		<PackageReference Include="CP.Client.Core" Version="0.1.10" />
+		<PackageReference Include="CP.Client.Core" Version="0.1.12" />
 		<PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.8" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.11" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.11" />

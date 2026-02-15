@@ -1,6 +1,5 @@
 using LocalAIAssistant.Data.Models;
-using LocalAIAssistant.PersonaAndContextEngine.Models;
-
+        
 namespace LocalAIAssistant.PersonaAndContextEngine.Interfaces;
 
 /// <summary>

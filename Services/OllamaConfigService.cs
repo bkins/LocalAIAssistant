@@ -2,8 +2,6 @@ using System.Text.Json;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Services.Logging;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace LocalAIAssistant.Services;
 

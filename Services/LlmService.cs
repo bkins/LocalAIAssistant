@@ -87,7 +87,7 @@ public class LlmService : ILlmService
             return false;
         }
     }
-    public IAsyncEnumerable<string> SendPromptStreamingAsync(string prompt
+    public IAsyncEnumerable<string> SendPromptStreamingAsync(string                                     prompt
                                                            , [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var req = new LlmRequest

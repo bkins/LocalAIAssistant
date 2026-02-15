@@ -4,32 +4,46 @@ namespace LocalAIAssistant.Services;
 
 public sealed class EnvironmentGuardHandler : DelegatingHandler
 {
-    private readonly ApiEnvironmentService _env;
+    private readonly string _expectedAuthority;
+    private readonly string _envName;
+    private readonly string _ollamaBaseUrl;
 
-    public EnvironmentGuardHandler(ApiEnvironmentService env)
+    public EnvironmentGuardHandler(ApiEnvironmentDescriptor env)
     {
-        _env = env;
+        _envName           = env.Name;
+        _expectedAuthority = new Uri(env.BaseUrl).GetLeftPart(UriPartial.Authority);
+        _ollamaBaseUrl     = new Uri(env.OllamaUrl).GetLeftPart(UriPartial.Authority);
     }
 
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request
-                                                          , CancellationToken cancellationToken)
+                                                         , CancellationToken  cancellationToken)
     {
-        if (_env.IsInitialized.Not())
-        {
-            throw new InvalidOperationException("API environment is not initialized. Request blocked.");
-        }
+        var actualAuthority = request.RequestUri
+                                     ?.GetLeftPart(UriPartial.Authority);
 
-        var expectedBase = _env.BaseUrl.TrimEnd('/');
-        var actual       = request.RequestUri?.GetLeftPart(UriPartial.Authority);
-
-        if (actual is null 
-         || actual.StartsWith(expectedBase, StringComparison.OrdinalIgnoreCase)
-                  .Not())
+        if (actualAuthority is null
+         || HasMismatch(actualAuthority))
         {
             throw new InvalidOperationException($"Environment mismatch detected. "
-                                              + $"Expected base '{expectedBase}', but request was '{request.RequestUri}'.");
+                                              + $"App='{_envName}', Expected='{_expectedAuthority}', "
+                                              + $"Actual='{request.RequestUri}'.");
         }
 
         return base.SendAsync(request, cancellationToken);
+    }
+
+    private bool HasMismatch(string actualAuthority)
+    {
+        var authorityDoesNotMatchExpected = string.Equals(actualAuthority
+                                                        , _expectedAuthority
+                                                        , StringComparison.OrdinalIgnoreCase)
+                                                  .Not();
+        var authorityIsNotOllama = string.Equals(actualAuthority
+                                            , _ollamaBaseUrl
+                                            , StringComparison.OrdinalIgnoreCase)
+                                         .Not();
+        
+        return authorityDoesNotMatchExpected 
+            && authorityIsNotOllama;
     }
 }

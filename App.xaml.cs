@@ -1,4 +1,4 @@
-﻿using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
+﻿using LocalAIAssistant.Core.Environment;
 using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.Interfaces;
 using LocalAIAssistant.Services.Logging;
@@ -64,8 +64,12 @@ public partial class App : Application
 	}
 	protected override async void OnStart()
 	{
+		var somethingStupid = "dummy";
+
 		var apiHealthService = Handler?.MauiContext?.Services.GetRequiredService<ApiHealthService>();
 		if (apiHealthService != null) await apiHealthService.InitializeAsync().ConfigureAwait(false);
 		
+		var handshake = Handler?.MauiContext?.Services.GetRequiredService<StartupHandshakeService>();
+		await handshake?.RunAsync(BuildEnvironment.Name)!;
 	}
 }

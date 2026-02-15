@@ -1,16 +1,13 @@
 ﻿using System.Diagnostics;
 using CP.Client.Core.Common.ConectivityToApi;
-using LocalAIAssistant.CognitivePlatform;
 using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
 using LocalAIAssistant.CognitivePlatform.CpClients.Knowledge;
 using LocalAIAssistant.CognitivePlatform.CpClients.Tasks;
+using LocalAIAssistant.Core.Environment;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Extensions;
 using LocalAIAssistant.Services;
-using LocalAIAssistant.Services.AiMemory.Interfaces;
-using LocalAIAssistant.ViewModels;
-using LocalAIAssistant.Views;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -90,7 +87,7 @@ public static class MauiProgram
 
 		var builder = MauiApp.CreateBuilder();
 		
-		builder.Services.AddSingleton<ApiEnvironmentService>();
+		builder.Services.AddSingleton<ApiEnvironmentDescriptor>();
 
 		builder.ConfigureFonts(fonts =>
 		{
@@ -100,9 +97,17 @@ public static class MauiProgram
 
 		builder.Services.AddTransient<EnvironmentGuardHandler>();
 
-		builder.Services
-		       .AddHttpClient(HttpClientNames.CpApi)
-		       .AddHttpMessageHandler<EnvironmentGuardHandler>();
+		builder.Services.AddHttpClient(HttpClientNames.CpApi
+		                             , client =>
+		                               {
+			                               client.BaseAddress = new Uri(BuildEnvironment.ApiBaseUrl);
+		                               }).AddHttpMessageHandler<EnvironmentGuardHandler>();
+		
+		builder.Services.AddHttpClient(HttpClientNames.Ollama
+		                             , client =>
+		                               {
+			                               client.BaseAddress = new Uri(BuildEnvironment.OllamaBaseUrl);
+		                               }).AddHttpMessageHandler<EnvironmentGuardHandler>();
 		
 		builder.Services.AddSingleton<ICognitivePlatformClientFactory, CognitivePlatformClientFactory>();
 		builder.Services.AddSingleton<IKnowledgeClientFactory, KnowledgeClientFactory>();
@@ -124,7 +129,18 @@ public static class MauiProgram
 
 		// Add Serilog to logging
 		builder.Logging.AddSerilog();
+
+		// Environment Info and enforcement
+		builder.Services.AddSingleton(new ApiEnvironmentDescriptor(BuildEnvironment.Name
+		                                                         , BuildEnvironment.ApiBaseUrl
+		                                                         , BuildEnvironment.OllamaBaseUrl));
 		
+		builder.Services.AddSingleton<EnvironmentHandshakeState>();
+		builder.Services.AddSingleton<StartupHandshakeService>();
+		builder.Services.AddSingleton<WriteGuard>();
+
+
+
 		// Paths
 		var appDir = FileSystem.AppDataDirectory;
 		
@@ -142,8 +158,7 @@ public static class MauiProgram
 		       .BindConfiguration("")
 		       .ValidateDataAnnotations();
 		
-		builder.Services.AddSingleton<IOptionsChangeTokenSource<OllamaConfig>>(
-			new FileOptionsSource<OllamaConfig>(ollamaConfigFilePath));
+		builder.Services.AddSingleton<IOptionsChangeTokenSource<OllamaConfig>>(new FileOptionsSource<OllamaConfig>(ollamaConfigFilePath));
 		
 		// Your SQLite connection string for STM
 		var sqliteConnStr  = "TODO: your SQLite connection string";
@@ -178,22 +193,6 @@ public static class MauiProgram
 #endif
 
 		var app = builder.Build();
-
-		// Initialize API environment selection early so all downstream clients are consistent.
-		// Default only applies on first run (when no preference is saved yet).
-		var apiEnvService = app.Services.GetService<ApiEnvironmentService>();
-		var forceDefault = false;
-
-#if DEBUG
-		forceDefault = true;
-#else
-		forceDefault = false;
-#endif
-		
-		//TODO: revisited in a later “Startup Hygiene” pass.
-		apiEnvService?.InitializeAsync(ApiEnvironment.Dev, forceDefault: forceDefault)
-		             .GetAwaiter()
-		             .GetResult();
 		
 		// Ensure STM is loaded into session on startup (synchronous ok for now)
 		// var cm = app.Services.GetRequiredService<IConversationMemory>();

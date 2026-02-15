@@ -1,37 +1,38 @@
-using CP.Client.Core.Avails;
 using CP.Client.Core.Common.ConectivityToApi;
 using LocalAIAssistant.Services;
+using LocalAIAssistant.Services.Logging;
 
 namespace LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 
 public class CognitivePlatformClientFactory : BaseHttpClient, ICognitivePlatformClientFactory
 {
-    private readonly IHttpClientFactory    _httpFactory;
-    private readonly ApiEnvironmentService _env;
-    private readonly IConnectivityReporter _connectivity;
+    private readonly IHttpClientFactory       _httpFactory;
+    private readonly ApiEnvironmentDescriptor _env;
+    private readonly IConnectivityReporter    _connectivity;
+    private readonly ILoggingService          _logger;
 
-    public CognitivePlatformClientFactory(IHttpClientFactory     httpFactory
-                                         , ApiEnvironmentService env
-                                         , IConnectivityReporter connectivity)
+    public CognitivePlatformClientFactory (IHttpClientFactory       httpFactory
+                                         , ApiEnvironmentDescriptor env
+                                         , IConnectivityReporter    connectivity
+                                         , ILoggingService          logger)
     {
         _httpFactory  = httpFactory;
         _env          = env;
         _connectivity = connectivity;
+        _logger       = logger;
     }
 
     public ICognitivePlatformClient Create()
     {
-        if (_env.IsInitialized
-                .Not())
-        {
-            throw new InvalidOperationException("API environment has not been selected yet.");
-        }
-        
         var client = _httpFactory.CreateClient(HttpClientNames.CpApi);
 
         client.BaseAddress = new Uri(_env.BaseUrl);
         client.Timeout     = TimeSpan.FromSeconds(Timeout);
-
-        return new CognitivePlatformClient(client, _connectivity);
+        
+        var cpClient = new CognitivePlatformClient(client, _connectivity, _logger);
+        
+        _logger.LogInformation($"CP Client created: {cpClient}");
+        
+        return cpClient;
     }
 }

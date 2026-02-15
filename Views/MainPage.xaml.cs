@@ -1,5 +1,4 @@
-﻿using System.Collections.Specialized;
-using LocalAIAssistant.Services.Logging;
+﻿using LocalAIAssistant.Services.Logging;
 using LocalAIAssistant.ViewModels;
 
 namespace LocalAIAssistant.Views;
@@ -29,6 +28,9 @@ public partial class MainPage : ContentPage
         BindingContext = ChatViewModel;
         
         _logger = logger;
+        //                       Application startup. Verifying log file write.
+        _logger.LogWarning($"{_mainViewModel.ApiEnvironmentDescriptor.Name}{Environment.NewLine}{_mainViewModel.ApiEnvironmentDescriptor.BaseUrl}"
+                             , Category.MainPage);
         
 #if DEBUG && false
         //logger.LogError(new Exception("TEST"), "Error" );
@@ -65,7 +67,6 @@ public partial class MainPage : ContentPage
                 MessagesView.ScrollTo(lastItem, position: ScrollToPosition.End, animate: true);
             });
         };
-
     }
     
     protected override void OnDisappearing()

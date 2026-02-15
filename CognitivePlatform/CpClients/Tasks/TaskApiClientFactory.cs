@@ -6,11 +6,11 @@ namespace LocalAIAssistant.CognitivePlatform.CpClients.Tasks;
 
 public class TaskApiClientFactory : BaseHttpClient, ITaskApiClientFactory
 {
-    private readonly IHttpClientFactory    _httpFactory;
-    private readonly ApiEnvironmentService _env;
+    private readonly IHttpClientFactory       _httpFactory;
+    private readonly ApiEnvironmentDescriptor _env;
 
-    public TaskApiClientFactory(IHttpClientFactory    httpFactory
-                                , ApiEnvironmentService env)
+    public TaskApiClientFactory(IHttpClientFactory         httpFactory
+                                , ApiEnvironmentDescriptor env)
     {
         _httpFactory  = httpFactory;
         _env          = env;

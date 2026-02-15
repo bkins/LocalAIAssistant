@@ -196,6 +196,8 @@ public enum Category
   , App
   , HybridIntentAnalyzer
   , LoggingService
+  , CognitivePlatformClient
+   , MainPage
 }
 
 public class LogEntry

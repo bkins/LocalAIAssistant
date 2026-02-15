@@ -4,11 +4,11 @@ namespace LocalAIAssistant.CognitivePlatform.CpClients.Journal;
 
 public class JournalApiClientFactory : BaseHttpClient, IJournalApiClientFactory
 {
-    private readonly IHttpClientFactory    _httpFactory;
-    private readonly ApiEnvironmentService _env;
+    private readonly IHttpClientFactory       _httpFactory;
+    private readonly ApiEnvironmentDescriptor _env;
 
-    public JournalApiClientFactory(IHttpClientFactory    httpFactory
-                                , ApiEnvironmentService env)
+    public JournalApiClientFactory(IHttpClientFactory      httpFactory
+                                , ApiEnvironmentDescriptor env)
     {
         _httpFactory  = httpFactory;
         _env          = env;

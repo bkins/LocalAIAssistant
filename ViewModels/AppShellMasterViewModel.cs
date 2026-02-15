@@ -1,16 +1,19 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CP.Client.Core.Common.ConectivityToApi;
-using LocalAIAssistant.CognitivePlatform;
 using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
+using LocalAIAssistant.Core.Environment;
+using LocalAIAssistant.Core.Environment.Models;
 using LocalAIAssistant.Services;
 
 namespace LocalAIAssistant.ViewModels;
 
 public partial class AppShellMasterViewModel : ObservableObject
 {
-    private ApiEnvironmentService _environment;
-
-    private readonly IConnectivityState       _connectivity;
+    private ApiEnvironmentDescriptor  _environment;
+    
+    private readonly EnvironmentHandshakeState _handshakeState;
+    
+    private readonly IConnectivityState              _connectivity;
     private readonly ICognitivePlatformClientFactory _cpClientFactory;
 
     public bool IsOffline => _connectivity.IsOffline;
@@ -19,9 +22,11 @@ public partial class AppShellMasterViewModel : ObservableObject
     public ApiHealthViewModel ApiHealthViewModel { get; }
     public AppShellViewModel  AppShellViewModel  { get; }
 
-    public string EnvironmentName => _environment.Current.ToString();
+    public string EnvironmentName => _environment.Name;
 
-    private Color _statusColor;
+    private          Color                      _statusColor;
+    private readonly EnvironmentHandshakeResult _currentEnv;
+
     public Color StatusColor
     {
         get => _statusColor;
@@ -30,7 +35,8 @@ public partial class AppShellMasterViewModel : ObservableObject
 
     public AppShellMasterViewModel (ApiHealthViewModel              apiHealthViewModel
                                   , AppShellViewModel               appShellViewModel
-                                  , ApiEnvironmentService           environment
+                                  , ApiEnvironmentDescriptor        environment
+                                    , EnvironmentHandshakeState  handshakeState
                                   , IConnectivityState              connectivity
                                   , ICognitivePlatformClientFactory cpClientFactory)
     {
@@ -40,13 +46,16 @@ public partial class AppShellMasterViewModel : ObservableObject
         _cpClientFactory = cpClientFactory;
 
         _environment = environment;
-        _environment.PropertyChanged += (_
-                                       , __) =>
+        _environment.PropertyChanged += (_, __) =>
         {
             OnPropertyChanged(nameof(EnvironmentName));
             UpdateStatusColor();
         };
-
+        
+        _handshakeState = handshakeState;
+        
+        _currentEnv = _handshakeState.Current;
+        
         _connectivity = connectivity;
         _connectivity.ConnectivityChanged += (_, _) =>
         {
@@ -58,6 +67,7 @@ public partial class AppShellMasterViewModel : ObservableObject
         };
 
         UpdateStatusColor();
+        DisplayEnvMismatchMessage();
     }
 
     public async Task InitializeAsync()
@@ -81,5 +91,14 @@ public partial class AppShellMasterViewModel : ObservableObject
         StatusColor = IsOffline
                               ? Colors.Red
                               : Colors.Green;
+    }
+
+    private void DisplayEnvMismatchMessage()
+    {
+        if (_currentEnv.HasMismatch)
+        {
+            var messageToUser = _currentEnv.UserMessage;
+            // TODO: Determine way to display message
+        }
     }
 }

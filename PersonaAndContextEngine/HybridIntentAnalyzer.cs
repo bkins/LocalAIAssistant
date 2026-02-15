@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using System.Text;
 using LocalAIAssistant.Extensions;
 using LocalAIAssistant.PersonaAndContextEngine.Enums;

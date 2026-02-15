@@ -5,7 +5,7 @@ namespace LocalAIAssistant.Services.AiMemory.Interfaces;
 public interface IConversationMemory
 {
     Task                       InitializeAsync();
-    Task                       AddAsync(Message message);
+    Task                       AddAsync(Message         message);
     Task<IEnumerable<Message>> GetEntriesSince(DateTime since);
     Task                       ClearAsync();
     Task<IEnumerable<Message>> LoadShortTermAsync();

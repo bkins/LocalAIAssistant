@@ -3,6 +3,9 @@ using System.Runtime.CompilerServices;
 using CP.Client.Core.Avails;
 using CP.Client.Core.Common.ConectivityToApi;
 using LocalAIAssistant.CognitivePlatform.DTOs;
+using LocalAIAssistant.Core.Environment.Models;
+using LocalAIAssistant.Data;
+using LocalAIAssistant.Services.Logging;
 using static CP.Client.Core.Intent.FastPathIntentDetector;
 
 namespace LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
@@ -10,15 +13,17 @@ namespace LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 public class CognitivePlatformClient : ICognitivePlatformClient
 {
     private readonly HttpClient            _httpClient;
-    
-    public  IConnectivityReporter Connectivity {get; private set;}
+    private readonly ILoggingService       _loggingService;
+
+    public IConnectivityReporter Connectivity { get; private set; }
 
     public CognitivePlatformClient (HttpClient            httpClient
-                                  , IConnectivityReporter connectivity)
+                                  , IConnectivityReporter connectivity
+                                  , ILoggingService       loggingService)
     {
-        _httpClient   = httpClient;
-        Connectivity = connectivity;
-
+        _httpClient     = httpClient;
+        Connectivity    = connectivity;
+        _loggingService = loggingService;
     }
 
     public override async Task<ConverseResponseDto> ConverseAsync(string userMessage
@@ -70,9 +75,9 @@ public class CognitivePlatformClient : ICognitivePlatformClient
         return request;
     }
 
-    public override async IAsyncEnumerable<string> ConverseStreamAsync (string            userMessage
-                                                                      , string            conversationId
-                                                                      , string            model
+    public override async IAsyncEnumerable<string> ConverseStreamAsync (string                                     userMessage
+                                                                      , string                                     conversationId
+                                                                      , string                                     model
                                                                       , [EnumeratorCancellation] CancellationToken ct = default)
     {
         var requestDto = BuildRequest(userMessage
@@ -116,11 +121,18 @@ public class CognitivePlatformClient : ICognitivePlatformClient
         }
     }
 
+    public override async Task<SystemEnvironmentInfo> SystemEnvironmentAsync(CancellationToken ct = default)
+    {
+        return await _httpClient.GetFromJsonAsync<SystemEnvironmentInfo>("system/environment"
+                                                                       , cancellationToken: ct) ?? new SystemEnvironmentInfo();
+    }
+
     public override async Task Ping()
     {
+        var endpoint = $"health/ready";
         try
         {
-            var response = await _httpClient.GetAsync($"api/health/ready");
+            var response = await _httpClient.GetAsync(endpoint);
 
             response.EnsureSuccessStatusCode();
 
@@ -128,7 +140,18 @@ public class CognitivePlatformClient : ICognitivePlatformClient
         }
         catch (Exception e)
         {
+            _loggingService.LogWarning($"Ping ({endpoint}) failed: {e.Message}", Category.CognitivePlatformClient);
             Connectivity.ReportOffline(e);
         }
+    }
+
+    public override async Task<HttpResponseMessage> Ready()
+    {
+        return await _httpClient.GetAsync(StringConsts.OllamaServerUrl);
+    }
+
+    public override string ToString()
+    {
+        return $"{nameof(CognitivePlatformClient)} :: HttpClient -> {_httpClient.BaseAddress}";
     }
 }

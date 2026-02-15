@@ -1,4 +1,3 @@
-using LocalAIAssistant.Services.Logging;
 using LocalAIAssistant.ViewModels;
 
 namespace LocalAIAssistant.Views;
