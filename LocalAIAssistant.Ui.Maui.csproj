@@ -38,6 +38,8 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
+
+		<ApplicationTitle>Local AI Assistant (DEBUG)</ApplicationTitle>
 	</PropertyGroup>
 	
 	<PropertyGroup Condition="'$(AppEnvironment)' == 'DEV'">
@@ -53,14 +55,14 @@
 <!-- GenerateBuildEnvironment -->
 	<PropertyGroup>
 		<!-- Defaults for local dev only -->
-		<ApiEnvironmentName Condition="'$(ApiEnvironmentName)' == ''">Dev</ApiEnvironmentName>
+		<ApiEnvironmentName Condition="'$(ApiEnvironmentName)' == ''">Debug</ApiEnvironmentName>
 		<ApiBaseUrl Condition="'$(ApiBaseUrl)' == ''">http://192.168.0.33:5273</ApiBaseUrl>
-		<ApplicationId>com.snikpoh.localaiassistant.dev</ApplicationId>
+		<ApplicationId>com.snikpoh.localaiassistant.debug</ApplicationId>
 		
 		<OllamaBaseUrl Condition="'$(OllamaBaseUrl)' == ''">http://192.168.0.33:11434</OllamaBaseUrl>
 
 		<!-- App identity -->
-		<ApplicationTitle Condition="'$(ApplicationTitle)' == ''">Local AI Assistant ($(AppEnvironment))</ApplicationTitle>
+		<ApplicationTitle Condition="'$(ApplicationTitle)' == ''">Local AI Assistant (DEBUG)</ApplicationTitle>
 		<ApplicationIdSuffix>.$(AppEnvironment.ToLower())</ApplicationIdSuffix>
 
 		<!-- Android packaging -->
@@ -128,8 +130,10 @@
 
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-		<PackageReference Include="CP.Client.Core" Version="0.1.12" />
+		<PackageReference Include="CP.Client.Core" Version="0.1.44" />
 		<PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.8" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.13" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="9.0.13" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.11" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.11" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.8" />

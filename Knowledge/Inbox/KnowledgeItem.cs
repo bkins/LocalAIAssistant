@@ -16,6 +16,8 @@ public sealed class KnowledgeItem
     public DateTime       LastModifiedAtLocal => LastModifiedAt.ToLocalTime().DateTime;
 
     public IReadOnlyList<string> Tags { get; init; } = Array.Empty<string>();
+    
+    public bool IsEdited { get; set; }
 }
 
 public enum KnowledgeKind

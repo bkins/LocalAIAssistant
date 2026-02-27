@@ -3,69 +3,68 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="LocalAIAssistant.Knowledge.Journals.Views.JournalDetailPage"
-             xmlns:converters="clr-namespace:LocalAIAssistant.Knowledge"
              xmlns:converters1="clr-namespace:LocalAIAssistant.Converters"
-             Title="Journal"
-             >
+             Title="Journal">
     <ContentPage.Resources>
         <ResourceDictionary>
             <converters1:TagsToTextConverter x:Key="TagsToText" />
         </ResourceDictionary>
     </ContentPage.Resources>
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="10">
 
-       <VerticalStackLayout Padding="16" Spacing="10">
+            <!-- Header -->
+            <Label Text="{Binding CreatedAt, StringFormat='{0:MMMM d, yyyy · h:mm tt}'}"
+                   FontSize="12"
+                   TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" />
 
-              <!-- Header -->
-              <Label Text="{Binding CreatedAt, StringFormat='{0:MMMM d, yyyy · h:mm tt}'}"
-                     FontSize="12"
-                     TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" />
-              
-              <Button Text="View revision history"
-                      FontSize="12"
-                      Padding="6,4"
-                      HorizontalOptions="Start"
-                      BackgroundColor="Transparent"
-                      TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
-                      Command="{Binding ViewRevisionHistoryCommand}" />
+            <Button Text="View revision history"
+                    FontSize="12"
+                    Padding="6,4"
+                    HorizontalOptions="Start"
+                    BackgroundColor="Transparent"
+                    TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                    Command="{Binding ViewRevisionHistoryCommand}" />
 
-              <Label Text="Edited"
-                     FontSize="12"
-                     TextColor="#CC8844"
-                     IsVisible="{Binding IsEdited}" />
+            <Label Text="Edited"
+                   FontSize="12"
+                   TextColor="#CC8844"
+                   IsVisible="{Binding IsEdited}" />
 
-              <!-- Body -->
-              <Label Text="{Binding Text}"
-                     FontSize="16"
-                     LineBreakMode="WordWrap" />
+            <!-- Body -->
+            <Label Text="{Binding Text}"
+                   FontSize="16"
+                   LineBreakMode="WordWrap" />
 
-              <!-- Metadata -->
-              <VerticalStackLayout Spacing="4">
+            <!-- Metadata -->
+            <VerticalStackLayout Spacing="4">
 
-                     <Label Text="{Binding Tags, Converter={StaticResource TagsToText}}"
-                            FontSize="12"
-                            TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
-                            IsVisible="{Binding Tags.Count}" />
+                <Label Text="{Binding Tags, Converter={StaticResource TagsToText}}"
+                       FontSize="12"
+                       TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                       IsVisible="{Binding Tags.Count}" />
 
-                     <Label Text="{Binding Mood}"
-                            FontSize="12"
-                            TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
-                            IsVisible="{Binding Mood}" />
-                     
-                     <Label Text="{Binding MoodScore}"
-                            FontSize="12"
-                            TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
-                            IsVisible="{Binding MoodScore}" />
-                     
-                     <Button Text="Edit entry"
-                             FontSize="12"
-                             BackgroundColor="Transparent"
-                             Command="{Binding EditEntryCommand}" />
+                <Label Text="{Binding Mood}"
+                       FontSize="12"
+                       TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                       IsVisible="{Binding Mood}" />
 
-              </VerticalStackLayout>
-              
-              
-              <ActivityIndicator IsRunning="{Binding IsLoading}"
-                                 IsVisible="{Binding IsLoading}" />
+                <Label Text="{Binding MoodScore}"
+                       FontSize="12"
+                       TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                       IsVisible="{Binding MoodScore}" />
 
-       </VerticalStackLayout>
+                <Button Text="Edit entry"
+                        FontSize="12"
+                        BackgroundColor="Transparent"
+                        Command="{Binding EditEntryCommand}" />
+
+            </VerticalStackLayout>
+
+
+            <ActivityIndicator IsRunning="{Binding IsLoading}"
+                               IsVisible="{Binding IsLoading}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

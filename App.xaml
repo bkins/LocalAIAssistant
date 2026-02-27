@@ -12,6 +12,7 @@
             <converters:ApiStatusTextConverter x:Key="ApiStatusTextConverter" />
             <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
             <converters:TagsToTextConverter x:Key="TagsToTextConverter"/>
+            <converters:IntGreaterThanZeroConverter x:Key="IntGreaterThanZeroConverter" />
             
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />

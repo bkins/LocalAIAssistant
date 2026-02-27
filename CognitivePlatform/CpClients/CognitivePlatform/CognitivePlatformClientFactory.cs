@@ -31,8 +31,10 @@ public class CognitivePlatformClientFactory : BaseHttpClient, ICognitivePlatform
         
         var cpClient = new CognitivePlatformClient(client, _connectivity, _logger);
         
+        
         _logger.LogInformation($"CP Client created: {cpClient}");
         
         return cpClient;
     }
+    
 }

@@ -57,4 +57,13 @@ public static class EnvironmentHandshakePolicy
     private static string Normalize(string env) => env.HasNoValue() 
                                                            ? "UNKNOWN" 
                                                            : env.Trim().ToUpperInvariant();
+    public static EnvironmentHandshakeResult Failed(string clientEnv, string apiEnv, Exception exception )
+    {
+        return new EnvironmentHandshakeResult(Normalize(clientEnv)
+                                            , Normalize(apiEnv)
+                                            , HandshakeSeverity.Error
+                                            , false
+                                            , $"Environment handshake failed: {exception.GetBaseException().Message}"
+            , $"{exception.Message}\n{exception.StackTrace}");
+    }
 }

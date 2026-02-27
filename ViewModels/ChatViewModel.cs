@@ -9,6 +9,7 @@ using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Extensions;
 using LocalAIAssistant.Knowledge.Inbox;
+using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.AiMemory;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
 using LocalAIAssistant.Services.Interfaces;
@@ -30,6 +31,9 @@ public partial class ChatViewModel : ObservableObject
     private readonly IOrchestratorService             _orchestrator;
     private readonly ICognitivePlatformClientFactory  _cpFactory;
     private readonly IConnectivityState               _apiState;
+    private readonly IOfflineQueueService             _offlineQueueService;
+    private readonly ApiHealthService                 _apiHealthService;
+    private readonly AppShellMasterViewModel          _appShellMasterViewModel;
 
     public  bool    IsOffline => _apiState.IsOffline;
     
@@ -45,7 +49,8 @@ public partial class ChatViewModel : ObservableObject
     public ObservableCollection<Personality> Personalities  { get; } = new();
 
     [ObservableProperty] private Personality _selectedPersonality;
-    
+    [ObservableProperty] private int         _pendingQueueCount;
+
     public string ConversationId { get; } = Guid.NewGuid().ToString();
 
     public Action ScrollToBottomRequested { get; set; }
@@ -54,7 +59,7 @@ public partial class ChatViewModel : ObservableObject
     public ICommand SendForStreamingCommand { get; }
     // public ICommand OpenKnowledgeCommand    { get; }
 
-    public ChatViewModel (ILlmService                      llmService
+    public ChatViewModel( ILlmService                      llmService
                         , IConversationMemory              conversationMemory
                         , IMemoryService                   memory
                         , IPersonalityService              personalityService
@@ -62,20 +67,26 @@ public partial class ChatViewModel : ObservableObject
                         , IOptions<MemoryRetrievalOptions> memoryOptions
                         , IOrchestratorService             orchestrator
                         , ICognitivePlatformClientFactory  cpFactory
-                        , IConnectivityState               apiState)
+                        , IConnectivityState               apiState
+                        , IOfflineQueueService             offlineQueueService
+                        , ApiHealthService                 apiHealthService
+                        , AppShellMasterViewModel          appShellMasterViewModel )
     {
-        _llmService             = llmService;
-        _conversationMemory     = conversationMemory;
-        _memory                 = memory;
-        _personalityService     = personalityService;
-        _log                    = log;
-        _memoryRetrievalOptions = memoryOptions;
-        _orchestrator           = orchestrator;
-        _cpFactory              = cpFactory;
-        _apiState               = apiState;
+        _llmService              = llmService;
+        _conversationMemory      = conversationMemory;
+        _memory                  = memory;
+        _personalityService      = personalityService;
+        _log                     = log;
+        _memoryRetrievalOptions  = memoryOptions;
+        _orchestrator            = orchestrator;
+        _cpFactory               = cpFactory;
+        _apiState                = apiState;
+        _offlineQueueService     = offlineQueueService;
+        _apiHealthService        = apiHealthService;
+        _appShellMasterViewModel = appShellMasterViewModel;
 
-        _apiState.ConnectivityChanged += (_
-                                        , _) =>
+        _apiState.ConnectivityChanged += ( _
+                                         , _ ) =>
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
@@ -85,6 +96,7 @@ public partial class ChatViewModel : ObservableObject
 
         SendCommand             = new AsyncRelayCommand(SendAsync);
         SendForStreamingCommand = new AsyncRelayCommand(SendPromptForStreamingAsync);
+
     }
 
     private async Task SendAsync()
@@ -137,6 +149,10 @@ public partial class ChatViewModel : ObservableObject
                            ?? Personalities.First();
         _personalityService.SetCurrent(SelectedPersonality.Name);
         
+        // 4) Reset items in the queue in case app failed/stopped while processing
+        await _offlineQueueService.ResetProcessingItemsAsync();
+        
+        await _appShellMasterViewModel.RefreshQueueCountAsync();
     }
     
     partial void OnSelectedPersonalityChanged(Personality newValue)
@@ -186,19 +202,40 @@ public partial class ChatViewModel : ObservableObject
 
             _ = StartThinkingAsync(assistantMsg);
 
-            if (!UseStreaming)
+            var cp = _cpFactory.Create();
+            
+            await _apiHealthService.CheckApiAsync();
+            var apiAlive = _apiHealthService.IsApiAvailable;
+            
+            if (apiAlive.Not())
             {
-                var cp = _cpFactory.Create();
-                var response = await cp.ConverseAsync(text
-                                                    , ConversationId
-                                                    , modelToUse)
-                                       .ConfigureAwait(false);
-                
-                assistantMsg.Content = response.Message;
+                await _offlineQueueService.EnqueueAsync(ConversationId
+                                                      , text
+                                                      , modelToUse);
+                var queued = await _offlineQueueService.GetPendingCountAsync();
+                await RefreshQueueStatusAsync();
+                queued = await _offlineQueueService.GetPendingCountAsync();
+            }
+
+            if (UseStreaming.Not())
+            {
+                try
+                {
+                    
+                    var response = await cp.ConverseAsync(text
+                                                        , ConversationId
+                                                        , modelToUse)
+                                           .ConfigureAwait(false);
+                    assistantMsg.Content = response.Message;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
             }
             else
             {
-                var cp = _cpFactory.Create();
                 await foreach (var chunk in cp.ConverseStreamAsync(text
                                                                     , ConversationId
                                                                   , modelToUse))
@@ -311,6 +348,11 @@ public partial class ChatViewModel : ObservableObject
         Messages.Clear();
         
         _log.LogInformation("Started new chat (STM cleared).");
+    }
+
+    private async Task RefreshQueueStatusAsync()
+    {
+        PendingQueueCount = await _offlineQueueService.GetPendingCountAsync();
     }
 
     private async Task RememberEntryAsync(Message message)

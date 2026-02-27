@@ -40,7 +40,7 @@ public partial class AppShell : Shell
 		_viewModel     = masterViewModel;
 		
 		// Trigger the initial API status check via the master view model's property
-		_ = _viewModel.ApiHealthViewModel.CheckApiStatusAsync();
+		//_ = _viewModel.ApiHealthViewModel.CheckApiStatusAsync();
 	}
 	protected override async void OnAppearing()
 	{

@@ -28,11 +28,10 @@ public partial class App : Application
 		_loggingService     = loggingService;
 		_masterViewModel    = masterViewModel;
 		
-		// envService.InitializeAsync(ApiEnvironment.Qa).Wait();
+		RegisterGlobalExceptionHandlers();
 		
 		AppDomain.CurrentDomain.UnhandledException += OnCurrentDomainOnUnhandledException;
-
-		//CheckApiAvailabilityAsync(_ollamaApiService);
+		
 	}
 
 	private void OnCurrentDomainOnUnhandledException(object                      sender
@@ -64,12 +63,51 @@ public partial class App : Application
 	}
 	protected override async void OnStart()
 	{
-		var somethingStupid = "dummy";
-
-		var apiHealthService = Handler?.MauiContext?.Services.GetRequiredService<ApiHealthService>();
-		if (apiHealthService != null) await apiHealthService.InitializeAsync().ConfigureAwait(false);
+		// var apiHealthService = Handler?.MauiContext?.Services.GetRequiredService<ApiHealthService>();
+		// if (apiHealthService != null) await apiHealthService.InitializeAsync().ConfigureAwait(false);
+		//
+		// var handshake = Handler?.MauiContext?.Services.GetRequiredService<StartupHandshakeService>();
+		// await handshake?.RunAsync(BuildEnvironment.Name)!;
 		
-		var handshake = Handler?.MauiContext?.Services.GetRequiredService<StartupHandshakeService>();
-		await handshake?.RunAsync(BuildEnvironment.Name)!;
+		try
+		{
+			var apiHealthService = Handler?.MauiContext?.Services.GetRequiredService<ApiHealthService>();
+			if (apiHealthService != null) 
+				await apiHealthService.InitializeAsync().ConfigureAwait(false);
+        
+			var handshake = Handler?.MauiContext?.Services.GetRequiredService<StartupHandshakeService>();
+			if (handshake != null)
+				await handshake.RunAsync(BuildEnvironment.Name);
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"OnStart failed: {ex}");
+			_loggingService.LogError(ex, "OnStart failed", Category.App);
+		}
 	}
+	
+	private void RegisterGlobalExceptionHandlers()
+	{
+		// .NET unhandled exceptions (non-UI thread)
+		AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
+		{
+			var ex = args.ExceptionObject as Exception;
+			LogCrash("AppDomain.UnhandledException", ex);
+		};
+
+		// Async void / Task exceptions that weren't awaited
+		TaskScheduler.UnobservedTaskException += (sender, args) =>
+		{
+			LogCrash("TaskScheduler.UnobservedTaskException", args.Exception);
+			args.SetObserved(); // Prevents process termination
+		};
+	}
+
+	private void LogCrash(string source, Exception? ex)
+	{
+		var message = $"[CRASH] Source: {source}\n{ex}";
+		System.Diagnostics.Debug.WriteLine(message);
+		_loggingService?.LogError(ex!, message, Category.App);
+	}
+	
 }

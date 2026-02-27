@@ -20,11 +20,14 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
 
     private Guid _journalId;
 
-    public  bool IsEdited => State == JournalEntryState.Edited;
+    private Exception _caughtException;
+    
+    public  bool      IsEdited => State == JournalEntryState.Edited && false;
     
     public JournalDetailViewModel(IJournalApiClientFactory clientFactory)
     {
-        _clientFactory = clientFactory;
+        _clientFactory   = clientFactory;
+        _caughtException = new Exception();
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -46,17 +49,21 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
         try
         {
             var client = _clientFactory.Create();
-            var entry = await client.GetByIdAsync(_journalId);
-            
+            var entry  = await client.GetByIdAsync(_journalId);
+
             if (entry is not null)
             {
-                Text               = entry.Text;
-                CreatedAt          = entry.CreatedAt;
-                Tags               = entry.Tags;
-                Mood               = entry.Mood;
-                State              = entry.State;
-                MoodScore          = entry.MoodScore;
+                Text      = entry.Text;
+                CreatedAt = entry.CreatedAt;
+                Tags      = entry.Tags;
+                Mood      = entry.Mood;
+                State     = entry.State;
+                MoodScore = entry.MoodScore;
             }
+        }
+        catch (Exception e)
+        {
+            _caughtException = e;
         }
         finally
         {

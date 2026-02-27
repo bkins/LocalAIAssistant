@@ -18,82 +18,92 @@
     Shell.TabBarUnselectedColor="{StaticResource SecondaryTextColor}"
     >
     <Shell.TitleView>
-        <HorizontalStackLayout Padding="8"
-                               Spacing="8"
-                               HorizontalOptions="Center"
-                               VerticalOptions="Center">
-        
-            <Label Text="Cognitive Assistant"
+        <Grid ColumnDefinitions="Auto,Auto,Auto,* ,Auto"
+              Padding="8"
+              VerticalOptions="Center">
+
+            <!-- Title -->
+            <Label Grid.Column="0"
+                   Text="Cognitive Assistant"
                    FontSize="20"
                    FontAttributes="Bold"
                    TextColor="{x:Static local:EnvironmentTheme.PrimaryColor}"
                    VerticalOptions="Center" />
-        
-            <Label Text="{Binding EnvironmentName}"
+
+            <!-- Environment Name -->
+            <Label Grid.Column="1"
+                   Text="{Binding EnvironmentName}"
                    FontSize="10"
                    TextColor="Orange"
-                   HorizontalOptions="End"
-                   Margin="8"/>
-            
-            <Border
-                WidthRequest="10"
-                HeightRequest="10"
-                BackgroundColor="{Binding StatusColor}"
-                StrokeThickness="0"
-                StrokeShape="RoundRectangle 5">
-                <Border.Shadow>
-                    <Shadow Brush="Black"
-                            Offset="10,10"
-                            Radius="10"
-                            Opacity="0.4" />
-                </Border.Shadow>
-            </Border>
-        
-        
-        </HorizontalStackLayout>
-        <!-- IsVisible="{Binding IsOffline}" -->
-<!--         <Border -->
-<!--             IsVisible="True" -->
-<!--             BackgroundColor="#332222" -->
-<!--             Stroke="#884444" -->
-<!--             StrokeThickness="1" -->
-<!--             Padding="6" -->
-<!--             Margin="6" -->
-<!--             StrokeShape="RoundRectangle 8"> -->
-<!-- ~1~ Text="Offline · Read-only" @1@ -->
-<!--             <Label -->
-<!--                 Text="🔴" -->
-<!--                 FontAttributes="Bold" -->
-<!--                 FontSize="12" -->
-<!--                 TextColor="#FFCCCC" -->
-<!--                 HorizontalOptions="Center" -->
-<!--                 HorizontalTextAlignment="Center" /> -->
-<!--         </Border> -->
+                   Margin="8,0"
+                   VerticalOptions="Center"/>
+
+            <!-- Status Dot -->
+            <Border Grid.Column="2"
+                    WidthRequest="10"
+                    HeightRequest="10"
+                    BackgroundColor="{Binding StatusColor}"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 5"
+                    VerticalOptions="Center"/>
+
+            <!-- Spacer -->
+            <BoxView Grid.Column="3"
+                     BackgroundColor="{StaticResource SurfaceColor}"/>
+    
+            <!-- Queue Badge -->
+            <Frame Grid.Column="4"
+                   BackgroundColor="Red"
+                   Padding="4"
+                   CornerRadius="20"
+                   HasShadow="False"
+                   IsVisible="{Binding PendingQueueCount, Converter={StaticResource IntGreaterThanZeroConverter}}"
+                   VerticalOptions="Center">
+
+                <Label Text="{Binding PendingQueueCount}"
+                       TextColor="White"
+                       FontSize="10"/>
+            </Frame>
+
+        </Grid>
     </Shell.TitleView>
 
     <!-- <Shell.TitleView> -->
-    <!--      -->
-    <!--     <HorizontalStackLayout Padding="8"  -->
-    <!--                            Spacing="8"  -->
-    <!--                            HorizontalOptions="Center"  -->
+    <!--     <HorizontalStackLayout Padding="8" -->
+    <!--                            Spacing="8" -->
+    <!--                            HorizontalOptions="Center" -->
     <!--                            VerticalOptions="Center"> -->
-    <!--          -->
+    <!--      -->
     <!--         <Label Text="Cognitive Assistant" -->
-    <!--                FontSize="21" -->
+    <!--                FontSize="20" -->
     <!--                FontAttributes="Bold" -->
-    <!--                TextColor="{StaticResource PrimaryTextColor}" /> -->
-    <!--          -->
+    <!--                TextColor="{x:Static local:EnvironmentTheme.PrimaryColor}" -->
+    <!--                VerticalOptions="Center" /> -->
+    <!--      -->
     <!--         <Label Text="{Binding EnvironmentName}" -->
     <!--                FontSize="10" -->
     <!--                TextColor="Orange" -->
     <!--                HorizontalOptions="End" -->
     <!--                Margin="8"/> -->
     <!--          -->
-    <!--          -->
-    <!--          -->
+    <!--         <Border -->
+    <!--             WidthRequest="10" -->
+    <!--             HeightRequest="10" -->
+    <!--             BackgroundColor="{Binding StatusColor}" -->
+    <!--             StrokeThickness="0" -->
+    <!--             StrokeShape="RoundRectangle 5"> -->
+    <!--             <Border.Shadow> -->
+    <!--                 <Shadow Brush="Black" -->
+    <!--                         Offset="10,10" -->
+    <!--                         Radius="10" -->
+    <!--                         Opacity="0.4" /> -->
+    <!--             </Border.Shadow> -->
+    <!--         </Border> -->
+    <!--      -->
+    <!--      -->
     <!--     </HorizontalStackLayout> -->
     <!-- </Shell.TitleView> -->
-    
+
     <TabBar>
         <Tab Title="🏚️">
             <ShellContent ContentTemplate="{DataTemplate views:MainPage}"/>

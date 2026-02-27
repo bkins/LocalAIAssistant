@@ -20,14 +20,18 @@ public partial class KnowledgeInboxViewModel : ObservableObject
     //TODO: Implement later
     // public string KindDisplay => Kind.ToString();
 
+    private Exception _caughtException;
+    
     public KnowledgeInboxViewModel(IKnowledgeClientFactory clientFactory)
     {
-        _clientFactory = clientFactory;
+        _clientFactory   = clientFactory;
+        _caughtException = new Exception();
     }
 
     [RelayCommand]
     public async Task LoadAsync()
     {
+        
         if (IsLoading) return;
 
         IsLoading = true;
@@ -36,11 +40,15 @@ public partial class KnowledgeInboxViewModel : ObservableObject
             Items.Clear();
             var client = _clientFactory.Create();
             var items  = await client.GetKnowledgeAsync();
-            
+
             foreach (var item in items)
             {
                 Items.Add(item);
             }
+        }
+        catch(Exception e)
+        {
+            _caughtException = e;
         }
         finally
         {

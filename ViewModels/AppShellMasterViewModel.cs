@@ -4,6 +4,7 @@ using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 using LocalAIAssistant.Core.Environment;
 using LocalAIAssistant.Core.Environment.Models;
 using LocalAIAssistant.Services;
+using LocalAIAssistant.Services.Interfaces;
 
 namespace LocalAIAssistant.ViewModels;
 
@@ -11,10 +12,12 @@ public partial class AppShellMasterViewModel : ObservableObject
 {
     private ApiEnvironmentDescriptor  _environment;
     
-    private readonly EnvironmentHandshakeState _handshakeState;
-    
+    private readonly EnvironmentHandshakeState       _handshakeState;
     private readonly IConnectivityState              _connectivity;
     private readonly ICognitivePlatformClientFactory _cpClientFactory;
+    private readonly IOfflineQueueService            _offlineQueueService;
+    
+    [ObservableProperty] private int _pendingQueueCount;
 
     public bool IsOffline => _connectivity.IsOffline;
 
@@ -36,14 +39,16 @@ public partial class AppShellMasterViewModel : ObservableObject
     public AppShellMasterViewModel (ApiHealthViewModel              apiHealthViewModel
                                   , AppShellViewModel               appShellViewModel
                                   , ApiEnvironmentDescriptor        environment
-                                    , EnvironmentHandshakeState  handshakeState
+                                    , EnvironmentHandshakeState     handshakeState
                                   , IConnectivityState              connectivity
-                                  , ICognitivePlatformClientFactory cpClientFactory)
+                                  , ICognitivePlatformClientFactory cpClientFactory
+        , IOfflineQueueService offlineQueueService)
     {
         ApiHealthViewModel = apiHealthViewModel;
         AppShellViewModel  = appShellViewModel;
 
         _cpClientFactory = cpClientFactory;
+        _statusColor     = Colors.Red;
 
         _environment = environment;
         _environment.PropertyChanged += (_, __) =>
@@ -66,6 +71,8 @@ public partial class AppShellMasterViewModel : ObservableObject
             });
         };
 
+        _offlineQueueService = offlineQueueService;
+        
         UpdateStatusColor();
         DisplayEnvMismatchMessage();
     }
@@ -76,6 +83,8 @@ public partial class AppShellMasterViewModel : ObservableObject
         {
             var cpClient = _cpClientFactory.Create();
             await cpClient.Ping();
+
+            await RefreshQueueCountAsync();
         }
         catch
         {
@@ -100,5 +109,10 @@ public partial class AppShellMasterViewModel : ObservableObject
             var messageToUser = _currentEnv.UserMessage;
             // TODO: Determine way to display message
         }
+    }
+    
+    public async Task RefreshQueueCountAsync()
+    {
+        PendingQueueCount = await _offlineQueueService.GetPendingCountAsync();
     }
 }

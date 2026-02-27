@@ -5,6 +5,7 @@ using CP.Client.Core.Common.ConectivityToApi;
 using LocalAIAssistant.CognitivePlatform.DTOs;
 using LocalAIAssistant.Core.Environment.Models;
 using LocalAIAssistant.Data;
+using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.Logging;
 using static CP.Client.Core.Intent.FastPathIntentDetector;
 
@@ -12,49 +13,57 @@ namespace LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 
 public class CognitivePlatformClient : ICognitivePlatformClient
 {
-    private readonly HttpClient            _httpClient;
-    private readonly ILoggingService       _loggingService;
+    private readonly HttpClient               _httpClient;
+    private readonly ILoggingService          _loggingService;
 
     public IConnectivityReporter Connectivity { get; private set; }
 
-    public CognitivePlatformClient (HttpClient            httpClient
-                                  , IConnectivityReporter connectivity
-                                  , ILoggingService       loggingService)
+    public CognitivePlatformClient( HttpClient               httpClient
+                                  , IConnectivityReporter    connectivity
+                                  , ILoggingService          loggingService)
     {
-        _httpClient     = httpClient;
-        Connectivity    = connectivity;
-        _loggingService = loggingService;
+        _httpClient               = httpClient;
+        Connectivity              = connectivity;
+        _loggingService           = loggingService;
     }
 
     public override async Task<ConverseResponseDto> ConverseAsync(string userMessage
                                                                 , string conversationId
                                                                 , string model)
     {
+        var response = new HttpResponseMessage();
+        
         try
         {
             var request = BuildRequest(userMessage
                                      , conversationId
                                      , model);
 
-            var response = await _httpClient.PostAsJsonAsync("api/conversation/converse", request);
+            response = await _httpClient.PostAsJsonAsync("api/conversation/converse", request);
 
-            response.EnsureSuccessStatusCode();
+            if (response.IsSuccessStatusCode)
+            {
+                Connectivity.ReportOnline();
             
-            Connectivity.ReportOnline();
-            
-            return await response.Content.ReadFromJsonAsync<ConverseResponseDto>()
-                ?? new ConverseResponseDto { Message = "(empty response)" };
+                return await response.Content.ReadFromJsonAsync<ConverseResponseDto>()
+                    ?? new ConverseResponseDto { Message = "(empty response)" };    
+            }
         }
         catch (HttpRequestException ex)
         {
             Connectivity.ReportOffline(ex);
-            throw;
         }
         catch (TaskCanceledException ex)
         {
             Connectivity.ReportOffline(ex);
-            throw;
         }
+        
+        // API is Offline
+        var responseMessage = $"Error: {response.StatusCode} - {response.ReasonPhrase}";
+            
+        Connectivity.ReportOffline(responseMessage);
+            
+        return new ConverseResponseDto { Message = responseMessage };
     }
 
     private static ConverseRequestDto BuildRequest (string userMessage
@@ -126,6 +135,7 @@ public class CognitivePlatformClient : ICognitivePlatformClient
         return await _httpClient.GetFromJsonAsync<SystemEnvironmentInfo>("system/environment"
                                                                        , cancellationToken: ct) ?? new SystemEnvironmentInfo();
     }
+    
 
     public override async Task Ping()
     {
@@ -147,9 +157,9 @@ public class CognitivePlatformClient : ICognitivePlatformClient
 
     public override async Task<HttpResponseMessage> Ready()
     {
-        return await _httpClient.GetAsync(StringConsts.OllamaServerUrl);
+        return await _httpClient.GetAsync("health/ready");
     }
-
+    
     public override string ToString()
     {
         return $"{nameof(CognitivePlatformClient)} :: HttpClient -> {_httpClient.BaseAddress}";

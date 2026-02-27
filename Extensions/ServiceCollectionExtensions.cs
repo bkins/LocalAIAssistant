@@ -28,7 +28,6 @@ public static class ServiceCollectionExtensions
                                                   , string logPath
                                                   , string memoryFilePath)
     {
-        services.AddSingleton<ILongTermMemoryStore>(_ => new JsonlAiMemoryStore(memoryFilePath));
         services.AddSingleton<IRoleInjectionService, RoleInjectionService>();
         
         services.AddTransient<ILlmService, LlmService>();

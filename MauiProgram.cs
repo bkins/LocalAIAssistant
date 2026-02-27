@@ -5,12 +5,16 @@ using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
 using LocalAIAssistant.CognitivePlatform.CpClients.Knowledge;
 using LocalAIAssistant.CognitivePlatform.CpClients.Tasks;
 using LocalAIAssistant.Core.Environment;
+using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Extensions;
 using LocalAIAssistant.Services;
+using LocalAIAssistant.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Maui.LifecycleEvents;
 using Serilog;
 using Serilog.Formatting.Compact;
 
@@ -71,19 +75,19 @@ public static class MauiProgram
 		// Log.Error("This is a test error from MauiProgram");
   //       
 		// Check if Serilog wrote to the file
-		if (File.Exists(logPath))
-		{
-			var lines = File.ReadAllLines(logPath);
-			Debug.WriteLine($"MauiProgram: Serilog file has {lines.Length} lines");
-			foreach (var line in lines)
-			{
-				Debug.WriteLine($"MauiProgram: {line}");
-			}
-		}
-		else
-		{
-			Debug.WriteLine("MauiProgram: Serilog file does not exist");
-		}
+		// if (File.Exists(logPath))
+		// {
+		// 	var lines = File.ReadAllLines(logPath);
+		// 	Debug.WriteLine($"MauiProgram: Serilog file has {lines.Length} lines");
+		// 	foreach (var line in lines)
+		// 	{
+		// 		Debug.WriteLine($"MauiProgram: {line}");
+		// 	}
+		// }
+		// else
+		// {
+		// 	Debug.WriteLine("MauiProgram: Serilog file does not exist");
+		// }
 
 		var builder = MauiApp.CreateBuilder();
 		
@@ -125,6 +129,23 @@ public static class MauiProgram
 		       {
 			       fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
 			       fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+		       })
+		       .ConfigureMauiHandlers(handlers => { })
+		       .ConfigureLifecycleEvents(lifecycle =>
+		       {
+#if ANDROID
+			       lifecycle.AddAndroid(android =>
+			       {
+				       android.OnCreate((activity, bundle) =>
+				       {
+					       Android.Runtime.AndroidEnvironment.UnhandledExceptionRaiser += (sender, args) =>
+					       {
+						       Debug.WriteLine($"[ANDROID CRASH] {args.Exception}");
+						       args.Handled = true; // Prevents hard crash — remove once you've identified issues
+					       };
+				       });
+			       });
+#endif
 		       });
 
 		// Add Serilog to logging
@@ -161,8 +182,18 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IOptionsChangeTokenSource<OllamaConfig>>(new FileOptionsSource<OllamaConfig>(ollamaConfigFilePath));
 		
 		// Your SQLite connection string for STM
-		var sqliteConnStr  = "TODO: your SQLite connection string";
+		//var sqliteConnStr  = "TODO: your SQLite connection string";
+		builder.Services.AddDbContext<LocalAiAssistantDbContext>(options =>
+		{
+			var dbPath = Path.Combine(FileSystem.AppDataDirectory, "localaiassistant.db");
+			options.UseSqlite($"Filename={dbPath}");
+		});
 
+		builder.Services.AddScoped<DatabaseInitializer>();
+		
+		builder.Services.AddSingleton<IOfflineQueueService, OfflineQueueService>();
+		builder.Services.AddSingleton<QueueReplayCoordinator>();
+		
 		builder.Configuration.AddJsonFile(ollamaConfigFilePath, optional: false, reloadOnChange: true);
 
 		// Bind Ollama section (you can drop “Ollama” section wrapper if you just want flat file)
@@ -175,7 +206,7 @@ public static class MauiProgram
 		//builder.Services.AddSingleton<LlmService>();
 		
 		builder.Services.AddAllServices(logPath, memoryFilePath);
-		builder.Services.AddAiMemoryServices(sqliteConnStr
+		builder.Services.AddAiMemoryServices(Path.Combine(FileSystem.AppDataDirectory, "Memory.db")
 		                                   , memoryFilePath
 		                                   , factsFilePath
 		                                   , memoryFilePath);
@@ -193,11 +224,17 @@ public static class MauiProgram
 #endif
 
 		var app = builder.Build();
-		
-		// Ensure STM is loaded into session on startup (synchronous ok for now)
-		// var cm = app.Services.GetRequiredService<IConversationMemory>();
-		// cm.InitializeAsync().GetAwaiter().GetResult();
+	
+		using var scope = app.Services.CreateScope();
 
+		var db          = scope.ServiceProvider.GetRequiredService<LocalAiAssistantDbContext>();
+		var initializer = scope.ServiceProvider.GetRequiredService<DatabaseInitializer>();
+		
+		// Blocking is ok in this case
+		initializer.InitializeAsync().GetAwaiter().GetResult();
+		
+		var coordinator = scope.ServiceProvider
+		                       .GetRequiredService<QueueReplayCoordinator>();
 		return app;
 	}
 }
