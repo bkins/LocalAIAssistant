@@ -1,5 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using CP.Client.Core.Common.ConectivityToApi;
+using CP.Client.Core.Common.ConnectivityToApi;
 using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 using LocalAIAssistant.Core.Environment;
 using LocalAIAssistant.Core.Environment.Models;

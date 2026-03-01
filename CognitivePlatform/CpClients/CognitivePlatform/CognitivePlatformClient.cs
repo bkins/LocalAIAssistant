@@ -1,11 +1,9 @@
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using CP.Client.Core.Avails;
-using CP.Client.Core.Common.ConectivityToApi;
+using CP.Client.Core.Common.ConnectivityToApi;
 using LocalAIAssistant.CognitivePlatform.DTOs;
 using LocalAIAssistant.Core.Environment.Models;
-using LocalAIAssistant.Data;
-using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.Logging;
 using static CP.Client.Core.Intent.FastPathIntentDetector;
 
@@ -13,8 +11,8 @@ namespace LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 
 public class CognitivePlatformClient : ICognitivePlatformClient
 {
-    private readonly HttpClient               _httpClient;
-    private readonly ILoggingService          _loggingService;
+    private readonly HttpClient       _httpClient;
+    private readonly ILoggingService  _loggingService;
 
     public IConnectivityReporter Connectivity { get; private set; }
 
@@ -22,9 +20,9 @@ public class CognitivePlatformClient : ICognitivePlatformClient
                                   , IConnectivityReporter    connectivity
                                   , ILoggingService          loggingService)
     {
-        _httpClient               = httpClient;
-        Connectivity              = connectivity;
-        _loggingService           = loggingService;
+        _httpClient       = httpClient;
+        Connectivity      = connectivity;
+        _loggingService   = loggingService;
     }
 
     public override async Task<ConverseResponseDto> ConverseAsync(string userMessage
@@ -35,6 +33,8 @@ public class CognitivePlatformClient : ICognitivePlatformClient
         
         try
         {
+            if (Connectivity.Online().Not()) throw new TaskCanceledException("API Offline");
+            
             var request = BuildRequest(userMessage
                                      , conversationId
                                      , model);
@@ -51,6 +51,7 @@ public class CognitivePlatformClient : ICognitivePlatformClient
         }
         catch (HttpRequestException ex)
         {
+            // Probably a timeout
             Connectivity.ReportOffline(ex);
         }
         catch (TaskCanceledException ex)
@@ -59,7 +60,10 @@ public class CognitivePlatformClient : ICognitivePlatformClient
         }
         
         // API is Offline
-        var responseMessage = $"Error: {response.StatusCode} - {response.ReasonPhrase}";
+        var shortenTextBy = userMessage.Length < 25
+                                    ? userMessage.Length
+                                    : 25;
+        var responseMessage = $"Added to queued:{Environment.NewLine}{userMessage[..shortenTextBy]}...{Environment.NewLine}{conversationId}";
             
         Connectivity.ReportOffline(responseMessage);
             

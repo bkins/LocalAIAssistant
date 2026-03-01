@@ -1,4 +1,4 @@
-using CP.Client.Core.Common.ConectivityToApi;
+using CP.Client.Core.Common.ConnectivityToApi;
 using LocalAIAssistant.Services.Interfaces;
 using System.Threading;
 using CP.Client.Core.Avails;

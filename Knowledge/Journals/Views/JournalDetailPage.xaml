@@ -1,19 +1,20 @@
-<?xml version="1.0" encoding="utf-8"?>
-
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="LocalAIAssistant.Knowledge.Journals.Views.JournalDetailPage"
              xmlns:converters1="clr-namespace:LocalAIAssistant.Converters"
              Title="Journal">
+
     <ContentPage.Resources>
         <ResourceDictionary>
             <converters1:TagsToTextConverter x:Key="TagsToText" />
         </ResourceDictionary>
     </ContentPage.Resources>
-    <ScrollView>
-        <VerticalStackLayout Padding="16" Spacing="10">
 
-            <!-- Header -->
+    <Grid RowDefinitions="Auto,Auto,*">
+
+        <!-- Header / Metadata / Actions -->
+        <VerticalStackLayout Grid.Row="0" Padding="16" Spacing="8">
+
             <Label Text="{Binding CreatedAt, StringFormat='{0:MMMM d, yyyy · h:mm tt}'}"
                    FontSize="12"
                    TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" />
@@ -31,40 +32,51 @@
                    TextColor="#CC8844"
                    IsVisible="{Binding IsEdited}" />
 
-            <!-- Body -->
-            <Label Text="{Binding Text}"
-                   FontSize="16"
-                   LineBreakMode="WordWrap" />
+            <!-- Metadata moved up -->
+            <Label Text="{Binding Tags, Converter={StaticResource TagsToText}}"
+                   FontSize="12"
+                   TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                   IsVisible="{Binding Tags.Count}" />
 
-            <!-- Metadata -->
-            <VerticalStackLayout Spacing="4">
+            <Label Text="{Binding Mood}"
+                   FontSize="12"
+                   TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                   IsVisible="{Binding Mood}" />
 
-                <Label Text="{Binding Tags, Converter={StaticResource TagsToText}}"
-                       FontSize="12"
-                       TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
-                       IsVisible="{Binding Tags.Count}" />
+            <Label Text="{Binding MoodScore}"
+                   FontSize="12"
+                   TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                   IsVisible="{Binding MoodScore}" />
 
-                <Label Text="{Binding Mood}"
-                       FontSize="12"
-                       TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
-                       IsVisible="{Binding Mood}" />
-
-                <Label Text="{Binding MoodScore}"
-                       FontSize="12"
-                       TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
-                       IsVisible="{Binding MoodScore}" />
-
-                <Button Text="Edit entry"
-                        FontSize="12"
-                        BackgroundColor="Transparent"
-                        Command="{Binding EditEntryCommand}" />
-
-            </VerticalStackLayout>
-
-
-            <ActivityIndicator IsRunning="{Binding IsLoading}"
-                               IsVisible="{Binding IsLoading}" />
+            <Button Text="Edit entry"
+                    FontSize="12"
+                    BackgroundColor="Transparent"
+                    Command="{Binding EditEntryCommand}" />
 
         </VerticalStackLayout>
-    </ScrollView>
+
+        <!-- Divider -->
+        <BoxView Grid.Row="1"
+                 HeightRequest="1"
+                 Margin="16,0"
+                 Color="{AppThemeBinding Light=#DDD, Dark=#333}" />
+
+        <!-- Scrollable Body Only -->
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout Padding="16">
+                <Label Text="{Binding Text}"
+                       FontSize="16"
+                       LineBreakMode="WordWrap" />
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Loading overlay -->
+        <ActivityIndicator
+            IsRunning="{Binding IsLoading}"
+            IsVisible="{Binding IsLoading}"
+            VerticalOptions="Center"
+            HorizontalOptions="Center"
+            Grid.RowSpan="3" />
+
+    </Grid>
 </ContentPage>

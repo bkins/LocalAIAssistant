@@ -5,7 +5,7 @@
              x:Class="LocalAIAssistant.Knowledge.Journals.Views.JournalRevisionHistoryPage"
              Title="Revision History">
     
-    <Grid RowDefinitions="Auto,Auto,Auto"
+    <Grid RowDefinitions="Auto,*,Auto"
           Padding="12">
 
         <!-- Honesty Banner -->
@@ -42,11 +42,6 @@
                                    FontSize="12"
                                    TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" />
 
-                            <!-- Text snapshot -->
-                            <Label Text="{Binding Text}"
-                                   FontSize="16"
-                                   LineBreakMode="WordWrap" />
-
                             <!-- Metadata snapshot -->
                             <HorizontalStackLayout Spacing="12">
 
@@ -66,7 +61,12 @@
                                        IsVisible="{Binding MoodScore}" />
 
                             </HorizontalStackLayout>
-
+                            
+                                <!-- Text snapshot -->
+                                <Label Text="{Binding Text}"
+                                       FontSize="16"
+                                       LineBreakMode="WordWrap" />
+                            
                         </VerticalStackLayout>
                     </Border>
                 </DataTemplate>

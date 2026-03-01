@@ -8,9 +8,11 @@
     <ScrollView>
         <VerticalStackLayout Padding="12" Spacing="12">
 
-            <Editor Text="{Binding Text}"
-                    AutoSize="TextChanges"
-                    Placeholder="Journal text" />
+            <ScrollView HeightRequest="300">
+                <Editor Text="{Binding Text}"
+                        AutoSize="TextChanges"
+                        Placeholder="Journal text" />
+            </ScrollView>
 
             <Entry Text="{Binding Tags}"
                    Placeholder="Tags (comma-separated)" />
@@ -23,7 +25,6 @@
                    Placeholder="Mood score (1–5)" />
 
             <HorizontalStackLayout Spacing="12">
-
                 <Button Text="Cancel"
                         Command="{Binding CancelCommand}"
                         HorizontalOptions="Start" />
@@ -31,8 +32,8 @@
                 <Button Text="Save changes"
                         Command="{Binding SaveCommand}"
                         HorizontalOptions="EndAndExpand" />
-
             </HorizontalStackLayout>
+
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

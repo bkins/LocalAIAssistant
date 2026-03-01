@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics;
-using CP.Client.Core.Common.ConectivityToApi;
+using CP.Client.Core.Common.ConnectivityToApi;
 using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
 using LocalAIAssistant.CognitivePlatform.CpClients.Knowledge;

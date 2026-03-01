@@ -1,5 +1,3 @@
-using CP.Client.Core.Common.ConectivityToApi;
-using LocalAIAssistant.CognitivePlatform.CpClients.Tasks;
 using LocalAIAssistant.Services;
 
 namespace LocalAIAssistant.CognitivePlatform.CpClients.Tasks;

@@ -1,5 +1,4 @@
-using System.Runtime.CompilerServices;
-using CP.Client.Core.Common.ConectivityToApi;
+using CP.Client.Core.Common.ConnectivityToApi;
 using LocalAIAssistant.CognitivePlatform.DTOs;
 using LocalAIAssistant.Core.Environment.Models;
 
