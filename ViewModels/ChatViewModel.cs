@@ -50,6 +50,7 @@ public partial class ChatViewModel : ObservableObject
 
     [ObservableProperty] private Personality _selectedPersonality;
     [ObservableProperty] private int         _pendingQueueCount;
+    [ObservableProperty] private bool        _showStreamingOption = false;
 
     public string ConversationId { get; } = Guid.NewGuid().ToString();
 
@@ -57,7 +58,6 @@ public partial class ChatViewModel : ObservableObject
 
     public ICommand SendCommand             { get; }
     public ICommand SendForStreamingCommand { get; }
-    // public ICommand OpenKnowledgeCommand    { get; }
 
     public ChatViewModel( ILlmService                      llmService
                         , IConversationMemory              conversationMemory
@@ -118,9 +118,9 @@ public partial class ChatViewModel : ObservableObject
         
         Messages.Clear();
         
-        foreach (var m in stm.OrderBy(m => m.Timestamp))
+        foreach (var message in stm.OrderBy(m => m.Timestamp))
         {
-            Messages.Add(m);
+            Messages.Add(message);
         }
 
         // 2) Load personalities from your service (fallback if empty)

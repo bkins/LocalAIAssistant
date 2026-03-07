@@ -2,7 +2,8 @@ namespace LocalAIAssistant.Knowledge.Inbox;
 
 public sealed class KnowledgeItem
 {
-    public Guid Id { get; init; }
+    public Guid   Id       { get; init; }
+    public string IdString => Id.ToString(); // convenience for SQLite store
 
     public KnowledgeKind   Kind   { get; init; }
     public KnowledgeStatus Status { get; init; }
@@ -18,12 +19,14 @@ public sealed class KnowledgeItem
     public IReadOnlyList<string> Tags { get; init; } = Array.Empty<string>();
     
     public bool IsEdited { get; set; }
+    public bool IsQueued { get; init; }  // true = came from offline queue, not yet API-processed
 }
 
 public enum KnowledgeKind
 {
     Journal
   , Task
+  , Pending // queued offline — kind not yet assigned by API
 }
 
 public enum KnowledgeStatus

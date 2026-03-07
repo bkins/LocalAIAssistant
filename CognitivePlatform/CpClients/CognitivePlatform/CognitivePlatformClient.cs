@@ -114,18 +114,18 @@ public class CognitivePlatformClient : ICognitivePlatformClient
         await using var stream = await response.Content.ReadAsStreamAsync(ct);
         using var       reader = new StreamReader(stream);
 
-        while ( ! reader.EndOfStream && !ct.IsCancellationRequested)
+        while ( reader.EndOfStream.Not() 
+             && ct.IsCancellationRequested.Not())
         {
-            var line = await reader.ReadLineAsync();
+            var line = await reader.ReadLineAsync(ct) ?? string.Empty;
             
-            if (string.IsNullOrWhiteSpace(line)) continue;
-            if ( ! line.StartsWith("data:", StringComparison.OrdinalIgnoreCase)) continue;
+            if (line.HasNoValue()) continue;
+            if (line.StartsWith("data:", StringComparison.OrdinalIgnoreCase).Not()) continue;
             
-            var payload = line.Substring("data:".Length);
+            var payload = line["data:".Length..];
 
             // server writes "data: {chunk}"
-            if (payload.StartsWith(" ", StringComparison.Ordinal))
-                payload = payload.Substring(1);
+            if (payload.StartsWith(' ')) payload = payload[1..];
 
             // IMPORTANT: do NOT Trim() — it destroys legitimate spaces
             if (payload.Length > 0)
@@ -140,28 +140,31 @@ public class CognitivePlatformClient : ICognitivePlatformClient
                                                                        , cancellationToken: ct) ?? new SystemEnvironmentInfo();
     }
     
-
-    public override async Task Ping()
+    public override async Task<HttpResponseMessage> Ping(string callersCaller
+                                                       , [CallerFilePath] string caller = ""
+                                                       , [CallerMemberName] string member = "")
     {
-        var endpoint = $"health/ready";
+        var fileName = Path.GetFileName(caller);
+        var source   = $"{callersCaller}->{member}";
+        var endpoint = $"health/ready?caller={source}";
         try
         {
             var response = await _httpClient.GetAsync(endpoint);
 
             response.EnsureSuccessStatusCode();
-
+            
             Connectivity.ReportOnline();
+
+            return response;
+
         }
         catch (Exception e)
         {
             _loggingService.LogWarning($"Ping ({endpoint}) failed: {e.Message}", Category.CognitivePlatformClient);
             Connectivity.ReportOffline(e);
+            
+            return new HttpResponseMessage();
         }
-    }
-
-    public override async Task<HttpResponseMessage> Ready()
-    {
-        return await _httpClient.GetAsync("health/ready");
     }
     
     public override string ToString()

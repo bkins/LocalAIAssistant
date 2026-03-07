@@ -1,3 +1,4 @@
+using CP.Client.Core.Avails;
 using LocalAIAssistant.Services;
 
 namespace LocalAIAssistant.ViewModels;
@@ -22,11 +23,24 @@ public class ApiHealthViewModel : INotifyPropertyChanged
         get => _isApiAvailable;
         set
         {
-            if (_isApiAvailable != value)
-            {
-                _isApiAvailable = value;
-                OnPropertyChanged();
-            }
+            if (_isApiAvailable == value) return;
+            
+            _isApiAvailable = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private string _timeSinceLastCheck;
+
+    public string TimeSinceLastCheck
+    {
+        get => _timeSinceLastCheck;
+        set
+        {
+            if (_timeSinceLastCheck == value) return;
+            
+            _timeSinceLastCheck = value;
+            OnPropertyChanged();
         }
     }
 
@@ -34,8 +48,12 @@ public class ApiHealthViewModel : INotifyPropertyChanged
 
     public async Task CheckApiStatusAsync()
     {
+        //await _apiHealthService.InitializeAsync();
         await _apiHealthService.CheckApiAsync().ConfigureAwait(false);
         IsApiAvailable = _apiHealthService.IsApiAvailable;
+        
+        var elapsed = _apiHealthService.TimeSinceLastCheck;
+        TimeSinceLastCheck = $"{elapsed.Minutes:00}:{elapsed.Seconds:00}:{elapsed.Milliseconds:000}";
     }
 
     public event PropertyChangedEventHandler PropertyChanged;

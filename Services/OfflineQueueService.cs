@@ -7,10 +7,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LocalAIAssistant.Services;
 
-// Skeleton
-
-// TODO: Complete implementation of an offline queue service that can be used to queue up tasks or messages when the system is offline,
-//  and process them when connectivity is restored.
 public class OfflineQueueService: IOfflineQueueService
 {
     private readonly LocalAiAssistantDbContext _db;

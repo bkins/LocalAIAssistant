@@ -3,7 +3,6 @@
     x:Class="LocalAIAssistant.Knowledge.Inbox.KnowledgeInboxPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:converters="clr-namespace:LocalAIAssistant.Knowledge"
     xmlns:converters1="clr-namespace:LocalAIAssistant.Converters"
     Title="Knowledge">
 
@@ -14,73 +13,188 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <!-- <Grid RowDefinitions="Auto,*"> -->
-    <Grid RowDefinitions="*">
-        <!-- Loading indicator -->
-        <!-- <ActivityIndicator Grid.Row="0" -->
-        <!--                    IsRunning="{Binding IsLoading}" -->
-        <!--                    IsVisible="{Binding IsLoading}" -->
-        <!--                    Margin="12" /> -->
+    <Grid RowDefinitions="Auto,*">
 
-      <CollectionView
-    ItemsSource="{Binding Items}"
-    SelectionMode="Single"
-    SelectedItem="{Binding SelectedItem}">
+        <!-- Offline banner -->
+        <Border
+            Grid.Row="0"
+            Padding="10,6"
+            BackgroundColor="#553300"
+            IsVisible="{Binding IsOffline}">
+            <Label
+                Text="Offline — showing last synced data and queued items"
+                FontSize="12"
+                TextColor="#FFCC88"
+                HorizontalOptions="Center" />
+        </Border>
 
-    <CollectionView.ItemTemplate>
-        <DataTemplate>
-            <SwipeView>
+        <CollectionView
+            Grid.Row="1"
+            ItemsSource="{Binding Items}"
+            SelectionMode="Single"
+            SelectedItem="{Binding SelectedItem}">
 
-                <SwipeView.RightItems>
-                    <SwipeItems>
-                        <SwipeItem
-                            Text="Archive"
-                            BackgroundColor="#883333"
-                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}},
-                                              Path=BindingContext.ArchiveCommand}"
-                            CommandParameter="{Binding .}" />
-                    </SwipeItems>
-                </SwipeView.RightItems>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <SwipeView>
 
-                <Border
-                    Padding="12"
-                    Margin="6"
-                    Stroke="#333"
-                    StrokeThickness="1"
-                    StrokeShape="RoundRectangle 8">
+                        <SwipeView.RightItems>
+                            <SwipeItems>
+                                <SwipeItem
+                                    Text="Archive"
+                                    BackgroundColor="#883333"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}},
+                                                      Path=BindingContext.ArchiveCommand}"
+                                    CommandParameter="{Binding .}" />
+                            </SwipeItems>
+                        </SwipeView.RightItems>
 
-                    <VerticalStackLayout Spacing="6">
+                        <Border
+                            Padding="12"
+                            Margin="6"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 8">
 
-                        <!-- Main text -->
-                        <Label
-                            Text="{Binding Title}"
-                            FontSize="16"
-                            LineBreakMode="WordWrap" />
+                            <!-- Queued items get a muted dashed-style stroke; normal items use the standard border -->
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsQueued}" Value="True">
+                                    <Setter Property="Stroke" Value="#664400" />
+                                    <Setter Property="BackgroundColor" Value="#1A110500" />
+                                </DataTrigger>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsQueued}" Value="False">
+                                    <Setter Property="Stroke" Value="#333" />
+                                </DataTrigger>
+                            </Border.Triggers>
 
-                        <!-- Metadata row -->
-                        <HorizontalStackLayout Spacing="12">
+                            <VerticalStackLayout Spacing="6">
 
-                            <Label
-                                Text="{Binding Tags, Converter={StaticResource TagsToTextConverter}}"
-                                FontSize="12"
-                                TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
-                                IsVisible="{Binding Tags.Count, Converter={StaticResource StatusToTextConverter}}" />
+                                <Label
+                                    Text="{Binding Title}"
+                                    FontSize="16"
+                                    LineBreakMode="WordWrap" />
 
-                            <Label
-                                Text="Edited"
-                                FontSize="12"
-                                TextColor="#CC8844"
-                                IsVisible="{Binding IsEdited}" />
+                                <HorizontalStackLayout Spacing="12">
 
-                        </HorizontalStackLayout>
+                                    <Label
+                                        Text="{Binding Tags, Converter={StaticResource TagsToTextConverter}}"
+                                        FontSize="12"
+                                        TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                                        IsVisible="{Binding Tags.Count, Converter={StaticResource StatusToTextConverter}}" />
 
-                    </VerticalStackLayout>
-                </Border>
+                                    <Label
+                                        Text="Edited"
+                                        FontSize="12"
+                                        TextColor="#CC8844"
+                                        IsVisible="{Binding IsEdited}" />
 
-            </SwipeView>
-        </DataTemplate>
-    </CollectionView.ItemTemplate>
-</CollectionView>
+                                    <!-- Queued badge -->
+                                    <Border
+                                        Padding="4,2"
+                                        BackgroundColor="#664400"
+                                        StrokeShape="RoundRectangle 4"
+                                        IsVisible="{Binding IsQueued}">
+                                        <Label
+                                            Text="Queued"
+                                            FontSize="11"
+                                            TextColor="#FFCC88" />
+                                    </Border>
+
+                                </HorizontalStackLayout>
+
+                            </VerticalStackLayout>
+                        </Border>
+
+                    </SwipeView>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
 
     </Grid>
 </ContentPage>
+
+<!-- <?xml version="1.0" encoding="utf-8" ?> -->
+<!-- <ContentPage -->
+<!--     x:Class="LocalAIAssistant.Knowledge.Inbox.KnowledgeInboxPage" -->
+<!--     xmlns="http://schemas.microsoft.com/dotnet/2021/maui" -->
+<!--     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" -->
+<!--     xmlns:converters="clr-namespace:LocalAIAssistant.Knowledge" -->
+<!--     xmlns:converters1="clr-namespace:LocalAIAssistant.Converters" -->
+<!--     Title="Knowledge"> -->
+<!-- -->
+<!--     <ContentPage.Resources> -->
+<!--         <ResourceDictionary> -->
+<!--             <converters1:TagsToTextConverter x:Key="TagsToTextConverter" /> -->
+<!--             <converters1:KnowledgeStatusToTextConverter x:Key="StatusToTextConverter" /> -->
+<!--         </ResourceDictionary> -->
+<!--     </ContentPage.Resources> -->
+<!-- -->
+<!--     ~1~ <Grid RowDefinitions="Auto,*"> @1@ -->
+<!--     <Grid RowDefinitions="*"> -->
+<!--         ~1~ Loading indicator @1@ -->
+<!--         ~1~ <ActivityIndicator Grid.Row="0" @1@ -->
+<!--         ~1~                    IsRunning="{Binding IsLoading}" @1@ -->
+<!--         ~1~                    IsVisible="{Binding IsLoading}" @1@ -->
+<!--         ~1~                    Margin="12" /> @1@ -->
+<!-- -->
+<!--       <CollectionView -->
+<!--     ItemsSource="{Binding Items}" -->
+<!--     SelectionMode="Single" -->
+<!--     SelectedItem="{Binding SelectedItem}"> -->
+<!-- -->
+<!--     <CollectionView.ItemTemplate> -->
+<!--         <DataTemplate> -->
+<!--             <SwipeView> -->
+<!-- -->
+<!--                 <SwipeView.RightItems> -->
+<!--                     <SwipeItems> -->
+<!--                         <SwipeItem -->
+<!--                             Text="Archive" -->
+<!--                             BackgroundColor="#883333" -->
+<!--                             Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, -->
+<!--                                               Path=BindingContext.ArchiveCommand}" -->
+<!--                             CommandParameter="{Binding .}" /> -->
+<!--                     </SwipeItems> -->
+<!--                 </SwipeView.RightItems> -->
+<!-- -->
+<!--                 <Border -->
+<!--                     Padding="12" -->
+<!--                     Margin="6" -->
+<!--                     Stroke="#333" -->
+<!--                     StrokeThickness="1" -->
+<!--                     StrokeShape="RoundRectangle 8"> -->
+<!-- -->
+<!--                     <VerticalStackLayout Spacing="6"> -->
+<!-- -->
+<!--                         ~1~ Main text @1@ -->
+<!--                         <Label -->
+<!--                             Text="{Binding Title}" -->
+<!--                             FontSize="16" -->
+<!--                             LineBreakMode="WordWrap" /> -->
+<!-- -->
+<!--                         ~1~ Metadata row @1@ -->
+<!--                         <HorizontalStackLayout Spacing="12"> -->
+<!-- -->
+<!--                             <Label -->
+<!--                                 Text="{Binding Tags, Converter={StaticResource TagsToTextConverter}}" -->
+<!--                                 FontSize="12" -->
+<!--                                 TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" -->
+<!--                                 IsVisible="{Binding Tags.Count, Converter={StaticResource StatusToTextConverter}}" /> -->
+<!-- -->
+<!--                             <Label -->
+<!--                                 Text="Edited" -->
+<!--                                 FontSize="12" -->
+<!--                                 TextColor="#CC8844" -->
+<!--                                 IsVisible="{Binding IsEdited}" /> -->
+<!-- -->
+<!--                         </HorizontalStackLayout> -->
+<!-- -->
+<!--                     </VerticalStackLayout> -->
+<!--                 </Border> -->
+<!-- -->
+<!--             </SwipeView> -->
+<!--         </DataTemplate> -->
+<!--     </CollectionView.ItemTemplate> -->
+<!-- </CollectionView> -->
+<!-- -->
+<!--     </Grid> -->
+<!-- </ContentPage> -->

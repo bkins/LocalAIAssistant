@@ -45,12 +45,21 @@
                     BackgroundColor="{Binding StatusColor}"
                     StrokeThickness="0"
                     StrokeShape="RoundRectangle 5"
-                    VerticalOptions="Center"/>
-
-            <!-- Spacer -->
-            <BoxView Grid.Column="3"
-                     BackgroundColor="{StaticResource SurfaceColor}"/>
-    
+                    VerticalOptions="Center">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding CheckStatusCommand}" />
+                </Border.GestureRecognizers>
+            </Border>
+            
+            <Label Grid.Column="3"
+                   Text="{Binding TimeSinceLastCheck}"
+                   TextColor="{StaticResource Primary}"
+                   FontSize="10"
+                   VerticalOptions="Center"/>
+            <!-- ~1~ Spacer @1@ -->
+            <!-- <BoxView Grid.Column="3" -->
+            <!--          BackgroundColor="{StaticResource SurfaceColor}"/> -->
+            <!-- -->
             <!-- Queue Badge -->
             <Frame Grid.Column="4"
                    BackgroundColor="Red"

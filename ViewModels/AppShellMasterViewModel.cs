@@ -1,4 +1,7 @@
+using System.Runtime.CompilerServices;
+using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using CP.Client.Core.Common.ConnectivityToApi;
 using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 using LocalAIAssistant.Core.Environment;
@@ -13,13 +16,13 @@ public partial class AppShellMasterViewModel : ObservableObject
     private ApiEnvironmentDescriptor  _environment;
     
     private readonly EnvironmentHandshakeState       _handshakeState;
-    private readonly IConnectivityState              _connectivity;
+    private static   IConnectivityState              _connectivity;
     private readonly ICognitivePlatformClientFactory _cpClientFactory;
     private readonly IOfflineQueueService            _offlineQueueService;
     
     [ObservableProperty] private int _pendingQueueCount;
 
-    public bool IsOffline => _connectivity.IsOffline;
+    public static bool IsOffline => _connectivity.IsOffline;
 
     // These properties will hold your individual view models
     public ApiHealthViewModel ApiHealthViewModel { get; }
@@ -27,7 +30,8 @@ public partial class AppShellMasterViewModel : ObservableObject
 
     public string EnvironmentName => _environment.Name;
 
-    private          Color                      _statusColor;
+    private static   Color                      _statusColor;
+    private static   Timer                      _timer;
     private readonly EnvironmentHandshakeResult _currentEnv;
 
     public Color StatusColor
@@ -36,13 +40,25 @@ public partial class AppShellMasterViewModel : ObservableObject
         set => SetProperty(ref _statusColor, value);
     }
 
-    public AppShellMasterViewModel (ApiHealthViewModel              apiHealthViewModel
+    public  ICommand CheckStatusCommand { get; }
+
+    [RelayCommand]
+    private async Task CheckApiStatus()
+    {
+        // var cpClient = _cpClientFactory.Create();
+        // await cpClient.Ping();
+        
+        await ApiHealthViewModel.CheckApiStatusAsync();
+        UpdateStatusColor();
+    }
+
+    public AppShellMasterViewModel( ApiHealthViewModel              apiHealthViewModel
                                   , AppShellViewModel               appShellViewModel
                                   , ApiEnvironmentDescriptor        environment
-                                    , EnvironmentHandshakeState     handshakeState
+                                  , EnvironmentHandshakeState       handshakeState
                                   , IConnectivityState              connectivity
                                   , ICognitivePlatformClientFactory cpClientFactory
-        , IOfflineQueueService offlineQueueService)
+                                  , IOfflineQueueService            offlineQueueService )
     {
         ApiHealthViewModel = apiHealthViewModel;
         AppShellViewModel  = appShellViewModel;
@@ -51,18 +67,18 @@ public partial class AppShellMasterViewModel : ObservableObject
         _statusColor     = Colors.Red;
 
         _environment = environment;
-        _environment.PropertyChanged += (_, __) =>
+        _environment.PropertyChanged += ( _, __ ) =>
         {
             OnPropertyChanged(nameof(EnvironmentName));
             UpdateStatusColor();
         };
-        
+
         _handshakeState = handshakeState;
-        
+
         _currentEnv = _handshakeState.Current;
-        
+
         _connectivity = connectivity;
-        _connectivity.ConnectivityChanged += (_, _) =>
+        _connectivity.ConnectivityChanged += ( _, _ ) =>
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
@@ -71,20 +87,33 @@ public partial class AppShellMasterViewModel : ObservableObject
             });
         };
 
+        CheckStatusCommand = new Command(async void () =>
+        {
+            try
+            {
+                await CheckApiStatus();
+            }
+            catch (Exception e)
+            {
+                // Gulp!
+            }
+        });
         _offlineQueueService = offlineQueueService;
-        
+
         UpdateStatusColor();
         DisplayEnvMismatchMessage();
     }
 
-    public async Task InitializeAsync()
+    public async Task InitializeAsync([CallerMemberName] string memberName = "")
     {
         try
         {
-            var cpClient = _cpClientFactory.Create();
-            await cpClient.Ping();
+            // var cpClient = _cpClientFactory.Create();
+            // await cpClient.Ping(memberName);
 
             await RefreshQueueCountAsync();
+
+            
         }
         catch
         {

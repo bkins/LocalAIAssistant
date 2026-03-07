@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using CP.Client.Core.Common.ConnectivityToApi;
 using LocalAIAssistant.CognitivePlatform.DTOs;
 using LocalAIAssistant.Core.Environment.Models;
@@ -19,7 +20,7 @@ public abstract class ICognitivePlatformClient
 
     public abstract Task<SystemEnvironmentInfo> SystemEnvironmentAsync (CancellationToken ct = default);
     
-    public abstract Task Ping();
+    public abstract Task<HttpResponseMessage> Ping(string callersCaller, [CallerFilePath] string caller = "", [CallerMemberName] string member = "");
 
-    public abstract Task<HttpResponseMessage> Ready();
+    //public abstract Task<HttpResponseMessage> Ready();
 }

@@ -8,6 +8,7 @@ using LocalAIAssistant.Core.Environment;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Extensions;
+using LocalAIAssistant.Knowledge.Inbox;
 using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -190,6 +191,13 @@ public static class MauiProgram
 		});
 
 		builder.Services.AddScoped<DatabaseInitializer>();
+		
+		var localDbPath = Path.Combine(FileSystem.AppDataDirectory, "knowledge_local.db");
+
+		builder.Services.AddSingleton<ILocalKnowledgeStore>(_ => new SqliteLocalKnowledgeStore(localDbPath));
+		builder.Services.AddSingleton<IKnowledgeSyncService, KnowledgeSyncService>();
+		builder.Services.AddTransient<KnowledgeInboxViewModel>();
+		builder.Services.AddTransient<KnowledgeInboxPage>();
 		
 		builder.Services.AddSingleton<IOfflineQueueService, OfflineQueueService>();
 		builder.Services.AddSingleton<QueueReplayCoordinator>();
