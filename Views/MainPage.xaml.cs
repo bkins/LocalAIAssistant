@@ -1,4 +1,5 @@
-﻿using CP.Client.Core.Avails;
+﻿using System.Collections.Specialized;
+using CP.Client.Core.Avails;
 using LocalAIAssistant.Services.Logging;
 using LocalAIAssistant.ViewModels;
 
@@ -6,15 +7,13 @@ namespace LocalAIAssistant.Views;
 
 public partial class MainPage : ContentPage
 {
-    
     private readonly ILoggingService _logger;
-    private readonly MainViewModel _mainViewModel;
+    private readonly MainViewModel   _mainViewModel;
 
     private bool                     _isPulsing;
     private CancellationTokenSource? _pulseCts;
-    
-    public ChatViewModel ChatViewModel { get; }
 
+    public ChatViewModel ChatViewModel { get; }
 
     public MainPage( MainViewModel   mainViewModel
                    , ILoggingService logger
@@ -22,59 +21,88 @@ public partial class MainPage : ContentPage
     {
         InitializeComponent();
 
-        //var llmService = new LlmService(new PersonalityService());
         _mainViewModel = mainViewModel;
         ChatViewModel  = chatViewModel;
 
         BindingContext = ChatViewModel;
-
+        // ChatViewModel.Messages.CollectionChanged += (s, e) => 
+        // {
+        //     if (ChatViewModel.Messages.Count > 0)
+        //     {
+        //         MainThread.BeginInvokeOnMainThread(() =>
+        //         {
+        //             Task.Delay(50); // Allow the new message to render before scrolling.
+        //             MessagesView.ScrollTo(ChatViewModel.Messages.Count - 1
+        //                                 , position: ScrollToPosition.End
+        //                                 , animate: true);
+        //         });
+        //     }
+        // };
+        
         _logger = logger;
-        //                       Application startup. Verifying log file write.
         _logger.LogWarning($"{_mainViewModel.ApiEnvironmentDescriptor.Name}{Environment.NewLine}{_mainViewModel.ApiEnvironmentDescriptor.BaseUrl}"
                          , Category.MainPage);
 
 #if DEBUG && false
-        //logger.LogError(new Exception("TEST"), "Error" );
-        
         var harness = new TestHarness(_logger);
         harness.RunAll();
 #endif
-
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        
+
         StartBackgroundPulse();
-        
-        // if (Math.Abs(Root.Opacity - 1) < 0.1)
-        //     return;
 
         await Root.FadeTo(1, 250, Easing.Linear);
-        
+
         await ChatViewModel.InitializeAsync();
 
-        // Subscribe to the CollectionChanged event of the ObservableCollection
-        ChatViewModel.ScrollToBottomRequested += () =>
-        {
-            // Use the Dispatcher to ensure the UI update runs on the main thread
-            Dispatcher.Dispatch(() =>
-            {
-                // Check if there are messages before attempting to scroll
-                if (ChatViewModel.Messages.Count <= 0) return;
-                
-                var lastItem = ChatViewModel.Messages.LastOrDefault();
-                MessagesView.ScrollTo(lastItem, position: ScrollToPosition.End, animate: true);
-            });
-        };
+        // The view owns scroll behaviour — wire up here, tear down in
+        // OnDisappearing to avoid double-subscription on re-navigation.
+        ChatViewModel.Messages.CollectionChanged += OnMessagesCollectionChanged;
     }
-    
+
     protected override void OnDisappearing()
     {
+        ChatViewModel.Messages.CollectionChanged -= OnMessagesCollectionChanged;
         StopBackgroundPulse();
         base.OnDisappearing();
     }
+
+    // ── Scroll management ─────────────────────────────────────────────────────
+
+    private async void OnMessagesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        // Only scroll when a new message arrives, not on Clear() or Remove().
+        if (e.Action != NotifyCollectionChangedAction.Add) return;
+        
+        // Yield allows the UI thread to process the layout of the newly added message
+        await Task.Yield();
+        var lastMessage = ChatViewModel.Messages.LastOrDefault();
+        if (lastMessage is null) return;
+
+        Dispatcher.Dispatch(() =>
+            MessagesView.ScrollTo(lastMessage
+                                , position: ScrollToPosition.End
+                                , animate: true));
+    }
+
+    // ── Input handlers ────────────────────────────────────────────────────────
+
+    // Both the Editor's Completed event and the Entry's Completed event
+    // funnel through here — one path, one command.
+    private void OnEntryCompleted(object? sender, EventArgs e)
+    {
+        if (ChatViewModel.SendCommand.CanExecute(null))
+            ChatViewModel.SendCommand.Execute(null);
+    }
+
+    public static Keyboard CreateKeyboard =>
+        Keyboard.Create(KeyboardFlags.CapitalizeSentence | KeyboardFlags.Suggestions);
+
+    // ── Background pulse animation ────────────────────────────────────────────
 
     private void StartBackgroundPulse()
     {
@@ -87,8 +115,6 @@ public partial class MainPage : ContentPage
         _isPulsing = true;
         _pulseCts  = new CancellationTokenSource();
 
-        // Fire and forget pulsing background
-        // _ = RunPulseLoopAsync(_pulseCts.Token);
         _ = RunHeartPulseLoopAsync(_pulseCts.Token, 15D);
     }
 
@@ -100,7 +126,10 @@ public partial class MainPage : ContentPage
         {
             _pulseCts?.Cancel();
         }
-        catch { /* ignore */ }
+        catch
+        {
+            // Gulp
+        }
         finally
         {
             _pulseCts?.Dispose();
@@ -108,50 +137,25 @@ public partial class MainPage : ContentPage
         }
     }
 
-    private async Task RunPulseLoopAsync(CancellationToken ct)
+    private async Task RunHeartPulseLoopAsync( CancellationToken ct
+                                             , double            beatsPerMinute = 60 )
     {
-        // Fade range:
-        const double minOpacity = 0.10;
-        const double maxOpacity = 0.25;
+        const double restingOpacity = 0.10;
+        const double firstBeatPeak  = 0.15;
+        const double secondBeatPeak = 0.13;
 
-        // number of ms up + number of ms down = number of ms x2 cycle
-        const uint halfCycleMs = 7500; //15000;
-
-        // Ensure known starting state
-        BackgroundGlyph.Opacity = minOpacity;
-
-        while (ct.IsCancellationRequested.Not())
-        {
-            await BackgroundGlyph.FadeTo(maxOpacity
-                                       , halfCycleMs
-                                       , Easing.SinInOut);
-            if (ct.IsCancellationRequested) break;
-
-            await BackgroundGlyph.FadeTo(minOpacity
-                                       , halfCycleMs
-                                       , Easing.SinInOut);
-        }
-    }
-
-    private async Task RunHeartPulseLoopAsync(CancellationToken ct, double beatsPerMinute = 60)
-    {
-        const double restingOpacity = 0.10;//0.10;
-        const double firstBeatPeak  = 0.15;//0.30;
-        const double secondBeatPeak = 0.13;//0.22;
-
-        // Derive all timing from BPM
         var cycleDurationMs = (uint)(60_000          / beatsPerMinute);
         var beatRiseMs      = (uint)(cycleDurationMs * 0.08);
         var beatFallMs      = (uint)(cycleDurationMs * 0.13);
         var betweenBeatsMs  = (uint)(cycleDurationMs * 0.08);
-        var restMs          = (uint)(cycleDurationMs * 0.55); // remainder is the long rest
+        var restMs          = (uint)(cycleDurationMs * 0.55);
 
         BackgroundGlyph.Opacity = restingOpacity;
 
         while (ct.IsCancellationRequested.Not())
         {
             // "lub"
-            await BackgroundGlyph.FadeTo(firstBeatPeak, beatRiseMs, Easing.CubicIn);
+            await BackgroundGlyph.FadeTo(firstBeatPeak,  beatRiseMs, Easing.CubicIn);
             if (ct.IsCancellationRequested) break;
             await BackgroundGlyph.FadeTo(restingOpacity, beatFallMs, Easing.CubicOut);
             if (ct.IsCancellationRequested) break;
@@ -168,23 +172,44 @@ public partial class MainPage : ContentPage
             await Task.Delay((int)restMs, ct);
         }
     }
-    
-    private async void PromptEditor_Completed(object sender, EventArgs e)
-    {
-        await _mainViewModel.SendPromptAsync();
-    }
 
-    
-    public static Keyboard CreateKeyboard =>
-        Keyboard.Create(KeyboardFlags.CapitalizeSentence | KeyboardFlags.Suggestions);
-
-    private void OnEntryCompleted (object?   sender
-                                 , EventArgs e)
+    private async Task RunPulseLoopAsync(CancellationToken ct)
     {
-        if (BindingContext is ChatViewModel vm 
-          && vm.SendCommand.CanExecute(null))
+        const double minOpacity  = 0.10;
+        const double maxOpacity  = 0.25;
+        const uint   halfCycleMs = 7500;
+
+        BackgroundGlyph.Opacity = minOpacity;
+
+        while (ct.IsCancellationRequested.Not())
         {
-            vm.SendCommand.Execute(null);
+            await BackgroundGlyph.FadeTo(maxOpacity, halfCycleMs, Easing.SinInOut);
+            if (ct.IsCancellationRequested) break;
+
+            await BackgroundGlyph.FadeTo(minOpacity, halfCycleMs, Easing.SinInOut);
         }
     }
+
+    // private void OnCollectionViewScrolled(object? sender, ItemsViewScrolledEventArgs e)
+    // {
+    //     // If the user is more than 200 pixels from the bottom, show the button
+    //     // e.VerticalOffset is the current position, e.VerticalDelta is change.
+    //     // Note: Finding the 'bottom' exactly is hard in MAUI, so we check if they are 
+    //     // scrolling up or if they are significantly far from the 'end'.
+    //
+    //     // Simple logic: Show if they have scrolled away from the very bottom
+    //     // Adjust '200' to your preference for sensitivity.
+    //     bool isAwayFromBottom = e.VerticalOffset < (MessagesView.Height - 200); 
+    //
+    //     // To make it feel better, we only show it if they are actually moving.
+    //     ScrollToBottomButton.IsVisible = e.VerticalOffset > 100 && isAwayFromBottom;
+    // }
+    //
+    // private void OnScrollToBottomClicked(object? sender, EventArgs e)
+    // {
+    //     if (ChatViewModel.Messages.Count > 0)
+    //     {
+    //         MessagesView.ScrollTo(ChatViewModel.Messages.Count - 1, position: ScrollToPosition.End, animate: true);
+    //     }
+    //}
 }

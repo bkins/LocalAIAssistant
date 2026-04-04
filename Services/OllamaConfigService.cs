@@ -7,6 +7,7 @@ namespace LocalAIAssistant.Services;
 
 public class OllamaConfigService
 {
+    private const string DefaultModel = "qwen2.5:14b";
 
     private readonly string _configPath = Path.Combine(FileSystem.AppDataDirectory
                                                      , StringConsts.OllamaConfigJsonFileName);
@@ -28,11 +29,11 @@ public class OllamaConfigService
         if (File.Exists(_configPath))
         {
             var json = File.ReadAllText(_configPath);
-            _config = JsonSerializer.Deserialize<OllamaConfig>(json) ?? new OllamaConfig { Model = "llama3" };
+            _config = JsonSerializer.Deserialize<OllamaConfig>(json) ?? new OllamaConfig { Model = DefaultModel };
         }
         else
         {
-            _config = new OllamaConfig { Model = "llama3" };
+            _config = new OllamaConfig { Model = DefaultModel };
             SaveConfig();
         }
     }

@@ -92,10 +92,10 @@ public class LlmService : ILlmService
     {
         var req = new LlmRequest
                   {
-                      UserPrompt   = prompt,
-                      SystemPrompt = _personalityService.Current?.SystemPrompt ?? "You are a helpful AI.",
-                      Personality  = _personalityService.Current,
-                      OllamaConfig = _personalityService.Current?.OllamConfiguration
+                          UserPrompt   = prompt
+                        , SystemPrompt = _personalityService.Current?.SystemPrompt ?? "You are a helpful AI."
+                        , Personality  = _personalityService.Current
+                        , OllamaConfig = _personalityService.Current?.OllamConfiguration
                   };
 
         return SendPromptStreamingAsync(req, cancellationToken);

@@ -3,24 +3,73 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="LocalAIAssistant.Knowledge.Tasks.Views.TaskDetailPage"
-             Title="Task"
-             >
-    
+             Title="Task">
+
     <ScrollView>
-        <VerticalStackLayout Padding="16" 
+        <VerticalStackLayout Padding="16"
                              Spacing="12">
-
-            <Label Text="{Binding CreatedAt, StringFormat='{0:MMMM d, yyyy · h:mm tt}'}"
-                   FontSize="12"
-                   TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" />
-
-            <Label Text="{Binding Text}"
-                   FontSize="16"
-                   LineBreakMode="WordWrap" />
 
             <ActivityIndicator IsRunning="{Binding IsLoading}"
                                IsVisible="{Binding IsLoading}" />
 
+            <!-- Description -->
+            <Label Text="{Binding ShortDescription}"
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   LineBreakMode="WordWrap" />
+
+            <!-- Details (only shown when present) -->
+            <Label Text="{Binding Details}"
+                   FontSize="15"
+                   LineBreakMode="WordWrap"
+                   IsVisible="{Binding Details, Converter={StaticResource NullToBoolConverter}}" />
+
+            <!-- Status row -->
+            <HorizontalStackLayout Spacing="8">
+
+                <Label Text="Completed"
+                       TextColor="{AppThemeBinding Light=#2E7D32, Dark=#81C784}"
+                       FontSize="13"
+                       IsVisible="{Binding IsCompleted}" />
+
+                <Label Text="{Binding Priority}"
+                       FontSize="13"
+                       TextColor="{AppThemeBinding Light=#555, Dark=#BBB}" />
+
+                <Label Text="Important"
+                       FontSize="13"
+                       TextColor="{AppThemeBinding Light=#1565C0, Dark=#90CAF9}"
+                       IsVisible="{Binding IsImportant}" />
+
+                <Label Text="Urgent"
+                       FontSize="13"
+                       TextColor="{AppThemeBinding Light=#B71C1C, Dark=#EF9A9A}"
+                       IsVisible="{Binding IsUrgent}" />
+
+            </HorizontalStackLayout>
+
+            <!-- Due date (only shown when present) -->
+            <Label Text="{Binding DueDate, StringFormat='Due: {0:MMMM d, yyyy}'}"
+                   FontSize="13"
+                   TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                   IsVisible="{Binding DueDate, Converter={StaticResource NullToBoolConverter}}" />
+
+            <!-- Tags (only shown when present) -->
+            <Label Text="{Binding Tags, StringFormat='Tags: {0}'}"
+                   FontSize="13"
+                   TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                   IsVisible="{Binding Tags, Converter={StaticResource NullToBoolConverter}}" />
+
+            <!-- Timestamps -->
+            <Label Text="{Binding CreatedAt, StringFormat='Created: {0:MMMM d, yyyy · h:mm tt}'}"
+                   FontSize="11"
+                   TextColor="{AppThemeBinding Light=#999, Dark=#777}" />
+
+            <Label Text="{Binding UpdatedAt, StringFormat='Updated: {0:MMMM d, yyyy · h:mm tt}'}"
+                   FontSize="11"
+                   TextColor="{AppThemeBinding Light=#999, Dark=#777}" />
+
         </VerticalStackLayout>
     </ScrollView>
+
 </ContentPage>

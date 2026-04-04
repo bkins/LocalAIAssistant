@@ -14,17 +14,19 @@ public partial class Message : ObservableObject
     [ObservableProperty] private List<string> _tags           = new(); // e.g. ["summary","promotion"]
     [ObservableProperty] private int          _importance     = 1;     // 1..5
     [ObservableProperty] private double       _score;
+    [ObservableProperty] private bool         _wasFastPath;
 
     public Message()
     {
     }
 
-    public Message(int      id
-                 , string   sender
-                 , string   content
-                 , DateTime timestamp
-                 , string   conversationId
-                 , int      score)
+    public Message( int      id
+                  , string   sender
+                  , string   content
+                  , DateTime timestamp
+                  , string   conversationId
+                  , int      score
+                  , bool     wasFastPath )
     {
         Id             = id;
         Sender         = sender;
@@ -32,8 +34,9 @@ public partial class Message : ObservableObject
         Timestamp      = timestamp;
         ConversationId = conversationId;
         Score          = score;
+        WasFastPath    = wasFastPath;
     }
-    
+
     public bool IsMultiLine => Content?.Contains('\n') == true;
     public bool IsTaskList => 
             Sender?.Equals("assistant", StringComparison.OrdinalIgnoreCase) == true

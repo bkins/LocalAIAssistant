@@ -6,21 +6,19 @@ namespace LocalAIAssistant.CognitivePlatform.CpClients.Tasks;
 
 public class TaskApiClient : ITaskApiClient
 {
-    
     private readonly HttpClient _httpClient;
 
-    public TaskApiClient (HttpClient httpClient)
+    public TaskApiClient(HttpClient httpClient)
     {
         _httpClient = httpClient;
     }
 
-    public async Task<TasksDto?> GetByIdAsync (Guid              id
-                                             , CancellationToken ct = default)
+    public async Task<TasksDto?> GetByIdAsync( Guid              id
+                                             , CancellationToken ct = default )
     {
         try
         {
-            var response = await _httpClient.GetAsync($"api/tasks/{id}"
-                                                    , ct);
+            var response = await _httpClient.GetAsync($"api/tasks/{id}", ct);
 
             if (response.StatusCode == HttpStatusCode.NotFound)
                 return null;
@@ -36,8 +34,30 @@ public class TaskApiClient : ITaskApiClient
         }
         catch (HttpRequestException)
         {
-            // Offline, DNS failure, server unreachable, etc.
             return null;
+        }
+    }
+
+    public async Task<IReadOnlyList<TasksDto>> GetAllAsync( CancellationToken ct = default )
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync("api/tasks", ct);
+
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content
+                                       .ReadFromJsonAsync<List<TasksDto>>(cancellationToken: ct);
+
+            return result ?? [];
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (HttpRequestException)
+        {
+            return [];
         }
     }
 }

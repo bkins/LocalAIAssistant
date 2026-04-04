@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using CP.Client.Core.Avails;
@@ -9,7 +10,7 @@ using static CP.Client.Core.Intent.FastPathIntentDetector;
 
 namespace LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 
-public class CognitivePlatformClient : ICognitivePlatformClient
+public class CognitivePlatformClient : CognitivePlatformClientBase
 {
     private readonly HttpClient       _httpClient;
     private readonly ILoggingService  _loggingService;
@@ -41,6 +42,7 @@ public class CognitivePlatformClient : ICognitivePlatformClient
 
             response = await _httpClient.PostAsJsonAsync("api/conversation/converse", request);
 
+            response.EnsureSuccessStatusCode();
             if (response.IsSuccessStatusCode)
             {
                 Connectivity.ReportOnline();
@@ -51,7 +53,7 @@ public class CognitivePlatformClient : ICognitivePlatformClient
         }
         catch (HttpRequestException ex)
         {
-            // Probably a timeout
+            // TODO: differentiate between API being offline vs. other HTTP issues (e.g. 400s, 500s)
             Connectivity.ReportOffline(ex);
         }
         catch (TaskCanceledException ex)
@@ -163,7 +165,7 @@ public class CognitivePlatformClient : ICognitivePlatformClient
             _loggingService.LogWarning($"Ping ({endpoint}) failed: {e.Message}", Category.CognitivePlatformClient);
             Connectivity.ReportOffline(e);
             
-            return new HttpResponseMessage();
+            return new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
         }
     }
     

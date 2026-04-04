@@ -1,9 +1,7 @@
 using System.Collections.ObjectModel;
-using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CP.Client.Core.Common.ConnectivityToApi;
-using LocalAIAssistant.Avails.ThinkingAnimation;
 using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
@@ -35,29 +33,26 @@ public partial class ChatViewModel : ObservableObject
     private readonly ApiHealthService                 _apiHealthService;
     private readonly AppShellMasterViewModel          _appShellMasterViewModel;
 
-    public  bool    IsOffline => _apiState.IsOffline;
-    
-    private Thinker thinking;
-    public  string  SuggestedModelToUse { get; set; } = "phi-3:mini";
+    // ── Connectivity ──────────────────────────────────────────────────────────
+    // IsOffline uses [ObservableProperty] so CommunityToolkit handles
+    // OnPropertyChanged — no MainThread marshalling needed here.
+    [ObservableProperty] private bool _isOffline;
 
-    [ObservableProperty] private bool   _useStreaming = false;
-    [ObservableProperty] private string _promptText   = string.Empty;
-    [ObservableProperty] private bool   _isBusy;
-    [ObservableProperty] private bool   _isTyping;
-    
-    public ObservableCollection<Message>     Messages       { get; } = new();
-    public ObservableCollection<Personality> Personalities  { get; } = new();
-
+    // ── UI state ──────────────────────────────────────────────────────────────
+    [ObservableProperty] private bool        _useStreaming      = false;
+    [ObservableProperty] private string      _promptText        = string.Empty;
+    [ObservableProperty] private bool        _isBusy;
+    [ObservableProperty] private bool        _isTyping;
     [ObservableProperty] private Personality _selectedPersonality;
     [ObservableProperty] private int         _pendingQueueCount;
     [ObservableProperty] private bool        _showStreamingOption = false;
 
+    public string SuggestedModelToUse { get; set; } = "phi-3:mini";
+
+    public ObservableCollection<Message>     Messages      { get; } = new();
+    public ObservableCollection<Personality> Personalities { get; } = new();
+
     public string ConversationId { get; } = Guid.NewGuid().ToString();
-
-    public Action ScrollToBottomRequested { get; set; }
-
-    public ICommand SendCommand             { get; }
-    public ICommand SendForStreamingCommand { get; }
 
     public ChatViewModel( ILlmService                      llmService
                         , IConversationMemory              conversationMemory
@@ -85,55 +80,30 @@ public partial class ChatViewModel : ObservableObject
         _apiHealthService        = apiHealthService;
         _appShellMasterViewModel = appShellMasterViewModel;
 
-        _apiState.ConnectivityChanged += ( _
-                                         , _ ) =>
-        {
-            MainThread.BeginInvokeOnMainThread(() =>
-            {
-                OnPropertyChanged(nameof(IsOffline));
-            });
-        };
-
-        SendCommand             = new AsyncRelayCommand(SendAsync);
-        SendForStreamingCommand = new AsyncRelayCommand(SendPromptForStreamingAsync);
-
+        // No MainThread call needed — [ObservableProperty] + MAUI's binding
+        // system handles cross-thread property-changed notifications.
+        _apiState.ConnectivityChanged += (_, _) => IsOffline = _apiState.IsOffline;
     }
 
-    private async Task SendAsync()
-    {
-        _log.LogInformation($"UseStreaming = {UseStreaming}");
-
-        await SendPromptAsync();
-    }
-
-    private async Task SentForStreamingAsync()
-    {
-        await SendPromptForStreamingAsync();
-    }
-    
     public async Task InitializeAsync()
     {
-        // 1) Load STM messages into the UI
         var stm = await _conversationMemory.LoadShortTermAsync();
-        
-        Messages.Clear();
-        
-        foreach (var message in stm.OrderBy(m => m.Timestamp))
-        {
-            Messages.Add(message);
-        }
 
-        // 2) Load personalities from your service (fallback if empty)
+        Messages.Clear();
+
+        foreach (var message in stm.OrderBy(message => message.Timestamp))
+            Messages.Add(message);
+
         Personalities.Clear();
-        
+
         var allPersonalities = _personalityService.GetAll();
         if (allPersonalities is { Count: > 0 })
         {
-            foreach (var personality in allPersonalities) Personalities.Add(personality);
+            foreach (var personality in allPersonalities)
+                Personalities.Add(personality);
         }
         else
         {
-            // Safety fallback so the UI works
             Personalities.Add(new Personality
                               {
                                   Name         = "The Barista"
@@ -143,217 +113,148 @@ public partial class ChatViewModel : ObservableObject
                               });
         }
 
-        // 3) Restore previously selected personality
-        var last = Preferences.Get(SelectedPersonalityPrefKey, Personalities.First().Name);
-        SelectedPersonality = Personalities.FirstOrDefault(personality => personality.Name == last) 
+        var lastPersonalityName = Preferences.Get(SelectedPersonalityPrefKey, Personalities.First().Name);
+        SelectedPersonality = Personalities.FirstOrDefault(personality => personality.Name == lastPersonalityName)
                            ?? Personalities.First();
         _personalityService.SetCurrent(SelectedPersonality.Name);
-        
-        // 4) Reset items in the queue in case app failed/stopped while processing
+
         await _offlineQueueService.ResetProcessingItemsAsync();
-        
         await _appShellMasterViewModel.RefreshQueueCountAsync();
     }
-    
+
     partial void OnSelectedPersonalityChanged(Personality newValue)
     {
         if (newValue == null) return;
-        
+
+        var oldName = Preferences.Get(SelectedPersonalityPrefKey, Personalities.First().Name);
+
         Preferences.Set(SelectedPersonalityPrefKey, newValue.Name);
-        
-        var oldValue = Preferences.Get(SelectedPersonalityPrefKey,  Personalities.First().Name);
-        
         _personalityService.SetCurrent(newValue.Name);
-        _log.LogInformation($"Personality switched from {oldValue} to {newValue.Name}");
+        _log.LogInformation($"Personality switched from {oldName} to {newValue.Name}");
     }
 
-    [RelayCommand]
-    public async Task SendPromptAsync()
-    {
-        var hasReceivedFirstOutput = false;
+    // ── Send ──────────────────────────────────────────────────────────────────
+    // Single command, single entry point. UseStreaming drives the branch.
 
+    [RelayCommand]
+    public async Task SendAsync()
+    {
         var text = PromptText;
         if (text.HasNoValue()) return;
 
         Messages.Add(new Message
                      {
-                             Sender    = "user"
-                           , Content   = text
-                           , Timestamp = DateTime.Now
+                         Sender    = "user"
+                       , Content   = text
+                       , Timestamp = DateTime.Now
                      });
-        
-        PromptText = "";
-        
-        ScrollToBottomRequested?.Invoke();
 
-        var modelToUse = "llama3"; //"mistral:latest"; //
+        PromptText = string.Empty;
+
+        var modelToUse = "qwen2.5:14b";
 
         IsTyping = true;
 
+        var assistantMsg = new Message
+                           {
+                               Sender    = "assistant"
+                             , Content   = "thinking"
+                             , Timestamp = DateTime.Now
+                           };
+        Messages.Add(assistantMsg);
+
+        _ = StartThinkingAsync(assistantMsg);
+
         try
         {
-            var assistantMsg = new Message
-                               {
-                                       Sender    = "assistant"
-                                     , Content   = "thinking"
-                                     , Timestamp = DateTime.Now
-                               };
-            Messages.Add(assistantMsg);
-
-            _ = StartThinkingAsync(assistantMsg);
-
             var cp = _cpFactory.Create();
-            
+
             await _apiHealthService.CheckApiAsync();
-            var apiAlive = _apiHealthService.IsApiAvailable;
-            
-            if (apiAlive.Not())
+
+            if (_apiHealthService.IsApiAvailable.Not())
             {
                 await _offlineQueueService.EnqueueAsync(ConversationId
                                                       , text
                                                       , modelToUse);
-                var queued = await _offlineQueueService.GetPendingCountAsync();
                 await RefreshQueueStatusAsync();
-                queued = await _offlineQueueService.GetPendingCountAsync();
+                return;
             }
 
             if (UseStreaming.Not())
             {
-                try
+                var response = await cp.ConverseAsync(text
+                                                    , ConversationId
+                                                    , modelToUse)
+                                       .ConfigureAwait(false);
+                
+                MainThread.BeginInvokeOnMainThread(() => 
                 {
-                    
-                    var response = await cp.ConverseAsync(text
-                                                        , ConversationId
-                                                        , modelToUse)
-                                           .ConfigureAwait(false);
-                    assistantMsg.Content = response.Message;
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    throw;
-                }
+                    assistantMsg.Content     = response.Message;
+                    assistantMsg.WasFastPath = response.WasFastPath;
+                });
             }
             else
             {
+                var hasReceivedFirstChunk = false;
+
                 await foreach (var chunk in cp.ConverseStreamAsync(text
-                                                                    , ConversationId
+                                                                  , ConversationId
                                                                   , modelToUse))
                 {
+                    // Marshal to UI thread: streaming updates mutate a bound
+                    // object's property directly, so we stay responsible for
+                    // thread affinity here.
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
-                        if (hasReceivedFirstOutput.Not())
+                        if (hasReceivedFirstChunk.Not())
                         {
-                            assistantMsg.Content   = string.Empty;
-                            hasReceivedFirstOutput = true;
+                            assistantMsg.Content  = string.Empty;
+                            hasReceivedFirstChunk = true;
                         }
 
                         assistantMsg.Content += chunk;
-                        ScrollToBottomRequested?.Invoke();
                     });
                 }
             }
         }
         catch (Exception ex)
         {
+            assistantMsg.Content = $"⚠ Error: {ex.Message}";
             Messages.Add(new Message
                          {
-                                 Sender = "system"
-                               , Content = $"Error contacting CognitivePlatform:\n{ex.Message}"
-                               , Timestamp = DateTime.Now
-                         });
-        }
-        finally
-        {
-            StopThinking();   // 🔒 ALWAYS stop
-            IsTyping = false; // 🔒 ALWAYS clear busy state
-        }
-        
-        ScrollToBottomRequested?.Invoke();
-    }
-    
-    [RelayCommand]
-    public async Task SendPromptForStreamingAsync()
-    {
-        var text = PromptText;
-        if (string.IsNullOrWhiteSpace(text)) return;
-
-        // Add user message to UI
-        Messages.Add(new Message
-                     {
-                             Sender = "user"
-                           , Content = text
+                             Sender    = "system"
+                           , Content   = $"Error contacting CognitivePlatform:\n{ex.Message}"
                            , Timestamp = DateTime.Now
-                     });
-
-        PromptText = "";
-        ScrollToBottomRequested?.Invoke();
-
-        IsTyping = true;
-        
-        try
-        {
-            var assistantMsg = new Message
-                               {
-                                       Sender = "assistant"
-                                     , Content = ""
-                               };
-
-            Messages.Add(assistantMsg);
-
-            var cp = _cpFactory.Create();
-            await foreach (var chunk in cp.ConverseStreamAsync(text
-                                                             , ConversationId
-                                                             , "llama3")) //"phi-3:mini"); //TODO: make `model` param defined by user)
-            {
-                MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    assistantMsg.Content += chunk;
-                    ScrollToBottomRequested?.Invoke();
-                });
-            }
-
-        }
-        catch (Exception ex)
-        {
-            Messages.Add(new Message
-                         {
-                                 Sender = "system"
-                               , Content = $"Error contacting CognitivePlatform:\n{ex.Message}"
-                               , Timestamp = DateTime.Now
                          });
         }
         finally
         {
+            StopThinking();
             IsTyping = false;
         }
-        
-        ScrollToBottomRequested?.Invoke();
     }
+
+    // ── Ancillary commands ────────────────────────────────────────────────────
 
     [RelayCommand]
     private async Task OpenKnowledge()
-    {
-        await Shell.Current.GoToAsync(nameof(KnowledgeInboxPage));
+        => await Shell.Current.GoToAsync(nameof(KnowledgeInboxPage));
 
-    }
-    
     [RelayCommand]
     public async Task NewChatAsync()
     {
-        // Clear current session (STM + UI)
         await _conversationMemory.ClearShortTermAsync();
         await _conversationMemory.ClearAsync();
-        
+
         Messages.Clear();
-        
+
         _log.LogInformation("Started new chat (STM cleared).");
     }
 
+    // ── Private helpers ───────────────────────────────────────────────────────
+
     private async Task RefreshQueueStatusAsync()
-    {
-        PendingQueueCount = await _offlineQueueService.GetPendingCountAsync();
-    }
+        => PendingQueueCount = await _offlineQueueService.GetPendingCountAsync();
 
     private async Task RememberEntryAsync(Message message)
     {
@@ -363,24 +264,24 @@ public partial class ChatViewModel : ObservableObject
                                    , message.Timestamp);
     }
 
+    // ── Thinking animation ────────────────────────────────────────────────────
+
     private static readonly string[] ThinkingFrames =
     {
-          //   "thinking"
-          // , 
-            "thinking"
-          , "THinking"
-          , "ThInking"
-          , "ThiNking"
-          , "ThinKing"
-          , "ThinkIng"
-          , "ThinkiNg"
-          , "ThinkinG"
-          , "ThinkiNg"
-          , "ThinkIng"
-          , "ThinKing"
-          , "ThiNking"
-          , "ThInking"
-          , "THinking"
+          "thinking"
+        , "THinking"
+        , "ThInking"
+        , "ThiNking"
+        , "ThinKing"
+        , "ThinkIng"
+        , "ThinkiNg"
+        , "ThinkinG"
+        , "ThinkiNg"
+        , "ThinkIng"
+        , "ThinKing"
+        , "ThiNking"
+        , "ThInking"
+        , "THinking"
     };
 
     private CancellationTokenSource? _thinkingCts;
@@ -392,55 +293,44 @@ public partial class ChatViewModel : ObservableObject
 
         try
         {
-            var index      = 0;
-            var _startedAt = DateTime.UtcNow;
-            
-            while (!token.IsCancellationRequested)
+            var frameIndex = 0;
+            var startedAt  = DateTime.UtcNow;
+
+            while (token.IsCancellationRequested.Not())
             {
-                var    elapsed = DateTime.UtcNow - _startedAt;
-                string elapsedText;
+                var elapsed     = DateTime.UtcNow - startedAt;
+                var elapsedText = FormatElapsedText(elapsed);
+                var frame       = ThinkingFrames[frameIndex];
 
-                elapsedText = FormatElapsedText(elapsed);
-                
+                // Marshal to UI thread: same reasoning as the streaming loop —
+                // we are mutating a bound object's property from a background task.
                 MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    assistantMsg.Content = $"{ThinkingFrames[index]} ⏱ {elapsedText}";
-                });
+                    assistantMsg.Content = $"{frame} ⏱ {elapsedText}");
 
-                index = (index + 1) % ThinkingFrames.Length;
+                frameIndex = (frameIndex + 1) % ThinkingFrames.Length;
 
                 await Task.Delay(120, token);
             }
         }
         catch (TaskCanceledException)
         {
-            // expected
+            // Expected on StopThinking().
         }
     }
 
-    private static string FormatElapsedText (TimeSpan elapsed)
+    private static string FormatElapsedText(TimeSpan elapsed)
     {
-
-        string elapsedText;
         if (elapsed.TotalSeconds < 60)
         {
-            // s.0 -> ss
-            elapsedText = elapsed.TotalSeconds < 10
-                                  ? elapsed.TotalSeconds.ToString("0.0") + "s"
-                                  : elapsed.TotalSeconds.ToString("0")   + "s";
-        }
-        else if (elapsed.TotalMinutes < 60)
-        {
-            // mm:ss
-            elapsedText = $"{(int)elapsed.TotalMinutes:00}:{elapsed.Seconds:00}";
-        }
-        else
-        {
-            // hh:mm:ss
-            elapsedText = $"{(int)elapsed.TotalHours:00}:{(int)elapsed.TotalMinutes:00}:{elapsed.Seconds:00}";
+            return elapsed.TotalSeconds < 10
+                       ? elapsed.TotalSeconds.ToString("0.0") + "s"
+                       : elapsed.TotalSeconds.ToString("0")   + "s";
         }
 
-        return elapsedText;
+        if (elapsed.TotalMinutes < 60)
+            return $"{(int)elapsed.TotalMinutes:00}:{elapsed.Seconds:00}";
+
+        return $"{(int)elapsed.TotalHours:00}:{(int)elapsed.TotalMinutes:00}:{elapsed.Seconds:00}";
     }
 
     private void StopThinking()

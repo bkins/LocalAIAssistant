@@ -9,8 +9,8 @@ namespace LocalAIAssistant.Services;
 
 public class OfflineQueueService: IOfflineQueueService
 {
-    private readonly LocalAiAssistantDbContext _db;
-    private readonly ICognitivePlatformClient _apiClient;
+    private readonly LocalAiAssistantDbContext   _db;
+    private readonly CognitivePlatformClientBase _apiClient;
 
     public OfflineQueueService( LocalAiAssistantDbContext       db
                               , ICognitivePlatformClientFactory clientFactory  )

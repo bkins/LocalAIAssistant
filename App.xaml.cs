@@ -38,17 +38,16 @@ public partial class App : Application
 	                                               , UnhandledExceptionEventArgs eventArgs)
 	{
 		var exception = eventArgs.ExceptionObject as Exception;
-		if (exception != null)
-		{
-			var message = $"Unhandled exception: {exception}";
-			// Log the exception details here.
-			// For example, you can write to the console or a file.
-			System.Diagnostics.Debug.WriteLine(message);
+		
+		if (exception == null) return;
+		
+		var message = $"Unhandled exception: {exception}";
+		
+		System.Diagnostics.Debug.WriteLine(message);
 			
-			_loggingService.LogError(exception
-			                       , $"Global Unhandled Exception occurred: {exception.Message}"
-			                       , Category.App);
-		}
+		_loggingService.LogError(exception
+		                       , $"Global Unhandled Exception occurred: {exception.Message}"
+		                       , Category.App);
 	}
 
 	private async void CheckApiAvailabilityAsync(ILlmService ollamaApiService)
@@ -63,12 +62,6 @@ public partial class App : Application
 	}
 	protected override async void OnStart()
 	{
-		// var apiHealthService = Handler?.MauiContext?.Services.GetRequiredService<ApiHealthService>();
-		// if (apiHealthService != null) await apiHealthService.InitializeAsync().ConfigureAwait(false);
-		//
-		// var handshake = Handler?.MauiContext?.Services.GetRequiredService<StartupHandshakeService>();
-		// await handshake?.RunAsync(BuildEnvironment.Name)!;
-		
 		try
 		{
 			var apiHealthService = Handler?.MauiContext?.Services.GetRequiredService<ApiHealthService>();

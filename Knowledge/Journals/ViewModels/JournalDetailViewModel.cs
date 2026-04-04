@@ -17,8 +17,7 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
     [ObservableProperty] private string?               _mood;
     [ObservableProperty] private int?                  _moodScore;
     [ObservableProperty] private JournalEntryState     _state;
-
-    private Guid _journalId;
+    [ObservableProperty] private Guid                  _journalId;
 
     private Exception _caughtException;
     

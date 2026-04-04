@@ -22,7 +22,7 @@ public class CognitivePlatformClientFactory : BaseHttpClient, ICognitivePlatform
         _logger           = logger;
     }
 
-    public ICognitivePlatformClient Create()
+    public CognitivePlatformClientBase Create()
     {
         var client = _httpFactory.CreateClient(HttpClientNames.CpApi);
 

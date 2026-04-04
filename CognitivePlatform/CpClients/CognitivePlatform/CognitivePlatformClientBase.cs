@@ -5,7 +5,7 @@ using LocalAIAssistant.Core.Environment.Models;
 
 namespace LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 
-public abstract class ICognitivePlatformClient
+public abstract class CognitivePlatformClientBase
 {
     public IConnectivityReporter? Connectivity;
     

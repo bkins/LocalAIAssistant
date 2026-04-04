@@ -129,8 +129,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Maui" Version="12.3.0" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="CP.Client.Core" Version="0.1.47" />
+		<PackageReference Include="Markdig" Version="1.1.1" />
 		<PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.8" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.13" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="9.0.13" />
@@ -187,5 +189,9 @@
 	  <Folder Include="Knowledge\_KnowledgeDomainFolderTemplate\ViewModels\" />
 	  <Folder Include="Knowledge\_KnowledgeDomainFolderTemplate\Views\" />
 	  <Folder Include="Services\Logging\Archived\" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0-windows10.0.19041.0'">
+	  <PackageReference Include="MarkdView" Version="1.0.11" />
 	</ItemGroup>
 </Project>

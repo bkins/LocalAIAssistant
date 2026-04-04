@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using CommunityToolkit.Maui;
 using CP.Client.Core.Common.ConnectivityToApi;
 using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
@@ -9,6 +10,9 @@ using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Extensions;
 using LocalAIAssistant.Knowledge.Inbox;
+using LocalAIAssistant.Knowledge.Journals.ViewModels;
+using LocalAIAssistant.Knowledge.Tasks.ViewModels;
+using LocalAIAssistant.MarkdownFormatter;
 using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -119,6 +123,10 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IJournalApiClientFactory, JournalApiClientFactory>();
 		builder.Services.AddSingleton<ITaskApiClientFactory, TaskApiClientFactory>();
 
+		//Markdown formatters:
+		builder.Services.AddSingleton<IMarkdownFormatter<TaskDetailViewModel>, TaskMarkdownFormatter>();
+		builder.Services.AddSingleton<IMarkdownFormatter<JournalDetailViewModel>, JournalMarkdownFormatter>();
+		
 		// Bind Ollama config (with validation)
 		builder.Services
 		       .AddOptions<OllamaConfig>()
@@ -126,6 +134,7 @@ public static class MauiProgram
 		       .ValidateDataAnnotations();
 
 		builder.UseMauiApp<App>()
+		       .UseMauiCommunityToolkit()
 		       .ConfigureFonts(fonts =>
 		       {
 			       fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");

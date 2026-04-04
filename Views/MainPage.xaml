@@ -2,149 +2,161 @@
 
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:LocalAIAssistant.Views.Controls"
              x:Class="LocalAIAssistant.Views.MainPage"
              BackgroundColor="{StaticResource SplashBackgroundColor}"
              Title="Local AI Assistant">
 
-    <ContentPage.ToolbarItems >
-        
+    <ContentPage.ToolbarItems>
         <ToolbarItem Text="🧭"
                      Command="{Binding OpenKnowledgeCommand}" />
-        
     </ContentPage.ToolbarItems>
-    
+
     <Grid x:Name="Root"
           Opacity="0"
-          BackgroundColor="Black"
-          
-          >
-       
+          BackgroundColor="Black">
+
         <Grid RowDefinitions="Auto,*,Auto">
 
-            <!-- Header -->
-            <Grid RowDefinitions="*, *"
-                  Padding="16"
+            <!-- Streaming toggle header — only visible when ShowStreamingOption is true -->
+            <Grid Padding="16"
                   BackgroundColor="{StaticResource SurfaceAltColor}"
                   Row="0"
-                  IsVisible="{Binding ShowStreamingOption}"
-                  >
-                <HorizontalStackLayout Grid.Row="1"
-                                       Spacing="40"
+                  IsVisible="{Binding ShowStreamingOption}">
+
+                <HorizontalStackLayout Spacing="40"
                                        VerticalOptions="Center">
-            
+
                     <Label Text="Streaming"
                            TextColor="{StaticResource SecondaryTextColor}"
-                           VerticalTextAlignment="Center"/>
-                    
+                           VerticalTextAlignment="Center" />
+
                     <Switch IsToggled="{Binding UseStreaming}"
                             VerticalOptions="Center"
                             HorizontalOptions="End" />
-            
+
                 </HorizontalStackLayout>
             </Grid>
 
+            <!-- Message list -->
             <Grid Grid.Row="1"
                   Margin="12">
 
                 <!-- Dark overlay to keep contrast -->
-                <BoxView
-                    Color="Black" />
+                <BoxView Color="Black" />
 
-                <!-- Background image -->
+                <!-- Background glyph — animated from code-behind -->
                 <Image x:Name="BackgroundGlyph"
                        Source="appicon_background.png"
                        Aspect="Center"
                        Scale="0.5"
                        Opacity="0.5" />
-
-
-                <!-- Messages -->
+                <!-- ItemsUpdatingScrollMode="KeepLastItemInView" -->
+                <!-- Scrolled="OnCollectionViewScrolled" -->
                 <CollectionView x:Name="MessagesView"
+                                
                                 ItemsSource="{Binding Messages}"
+                                ItemSizingStrategy="MeasureAllItems"
                                 BackgroundColor="Transparent"
-                                VerticalOptions="FillAndExpand">
-
+                                VerticalOptions="Fill">
+                    
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <Frame Padding="12"
-                                   Margin="0,6"
-                                   BorderColor="#000000"
-                                   HasShadow="False"
-                                   CornerRadius="12"
-                                   MaximumWidthRequest="320"
-                                   HorizontalOptions="Start"
-                                   BackgroundColor="{StaticResource SurfaceColor}">
+                            <!--
+                                Border replaces the deprecated Frame.
+                                  • StrokeShape supplies the rounded corners.
+                                  • StrokeThickness="0" hides the border line.
+                                  • Triggers adjust BackgroundColor / HorizontalOptions per sender.
+                            -->
+                            <Border Padding="12"
+                                    Margin="0,6"
+                                    Stroke="#000000"
+                                    StrokeThickness="0"
+                                    MaximumWidthRequest="480"
+                                    HorizontalOptions="Start"
+                                    VerticalOptions="Start"
+                                    BackgroundColor="{StaticResource SurfaceColor}">
 
-                                <Frame.Triggers>
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
 
-                                    <!-- USER MESSAGE -->
-                                    <DataTrigger TargetType="Frame"
+                                <Border.Triggers>
+
+                                    <DataTrigger TargetType="Border"
                                                  Binding="{Binding Sender}"
                                                  Value="user">
-                                        <Setter Property="BackgroundColor" Value="#4CAF50" />
+                                        <Setter Property="BackgroundColor"  Value="#4CAF50" />
                                         <Setter Property="HorizontalOptions" Value="End" />
                                     </DataTrigger>
 
-                                    <!-- ASSISTANT MESSAGE -->
-                                    <DataTrigger TargetType="Frame"
+                                    <DataTrigger TargetType="Border"
                                                  Binding="{Binding Sender}"
                                                  Value="assistant">
-                                        <Setter Property="BackgroundColor" Value="#7C5CE6" />
+                                        <Setter Property="BackgroundColor"  Value="#7C5CE6" />
                                         <Setter Property="HorizontalOptions" Value="Start" />
                                     </DataTrigger>
 
-                                    <!-- SYSTEM MESSAGE -->
-                                    <DataTrigger TargetType="Frame"
+                                    <DataTrigger TargetType="Border"
                                                  Binding="{Binding Sender}"
                                                  Value="system">
-                                        <Setter Property="BackgroundColor" Value="Transparent" />
+                                        <Setter Property="BackgroundColor"  Value="Transparent" />
                                         <Setter Property="HorizontalOptions" Value="Center" />
                                     </DataTrigger>
 
-                                </Frame.Triggers>
+                                </Border.Triggers>
 
-                                <Label Text="{Binding Content}"
-                                       LineBreakMode="WordWrap"
-                                       FontSize="14">
-
-                                    <Label.Triggers>
-
-                                        <!-- USER TEXT -->
-                                        <DataTrigger TargetType="Label"
-                                                     Binding="{Binding Sender}"
-                                                     Value="user">
-                                            <Setter Property="TextColor" Value="White" />
-                                            <Setter Property="FontFamily" Value="Default" />
-                                        </DataTrigger>
-
-                                        <!-- ASSISTANT TEXT -->
-                                        <DataTrigger TargetType="Label"
-                                                     Binding="{Binding Sender}"
-                                                     Value="assistant">
-                                            <Setter Property="TextColor" Value="#0F172A" />
-                                            <Setter Property="FontFamily" Value="JetBrainsMono" />
-                                        </DataTrigger>
-
-                                        <!-- SYSTEM TEXT -->
-                                        <DataTrigger TargetType="Label"
-                                                     Binding="{Binding Sender}"
-                                                     Value="system">
-                                            <Setter Property="TextColor" Value="Red" />
-                                            <Setter Property="FontAttributes" Value="Italic" />
-                                            <Setter Property="HorizontalTextAlignment" Value="Center" />
-                                        </DataTrigger>
-
-                                    </Label.Triggers>
-                                </Label>
-                            </Frame>
+                                <Grid ColumnDefinitions="*" VerticalOptions="Start">
+                                    <controls:NativeMarkdownView 
+                                        Grid.Column="0"
+                                        Markdown="{Binding Content}"
+                                        HorizontalOptions="Fill"
+                                        VerticalOptions="Start" />
+                                    <Label Text="⚡"
+                                           FontSize="14"
+                                           HorizontalOptions="End"
+                                           VerticalOptions="Start"
+                                           Margin="0,-8,-4,0" 
+                                           IsVisible="{Binding WasFastPath}"
+                                           InputTransparent="True">
+                                        <Label.Shadow>
+                                            <Shadow Brush="Black" 
+                                                    Offset="1,1" 
+                                                    Radius="2" 
+                                                    Opacity="0.5" />
+                                        </Label.Shadow>
+                                    </Label>
+                                </Grid>
+                            </Border>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
+                <!-- <VerticalStackLayout x:Name="ScrollToBottomButton" -->
+                <!--                      IsVisible="False" -->
+                <!--                      VerticalOptions="End" -->
+                <!--                      HorizontalOptions="Center" -->
+                <!--                      Margin="0,0,0,20"> -->
+                <!--     <Border StrokeShape="RoundRectangle 25" -->
+                <!--             BackgroundColor="{StaticResource SurfaceColor}" -->
+                <!--             Padding="10" -->
+                <!--             HeightRequest="50" -->
+                <!--             WidthRequest="50" -->
+                <!--             StrokeThickness="1" -->
+                <!--             Stroke="#7C5CE6"> -->
+                <!--         <Border.GestureRecognizers> -->
+                <!--             <TapGestureRecognizer Tapped="OnScrollToBottomClicked" /> -->
+                <!--         </Border.GestureRecognizers> -->
+                <!--         <Label Text="↓"  -->
+                <!--                TextColor="White"  -->
+                <!--                FontSize="24"  -->
+                <!--                HorizontalOptions="Center"  -->
+                <!--                VerticalOptions="Center" /> -->
+                <!--     </Border> -->
+                <!-- </VerticalStackLayout> -->
             </Grid>
 
-
-            <!-- Input Bar -->
-            <Grid Row="2"
+            <!-- Input bar -->
+            <Grid Grid.Row="2"
                   Padding="12"
                   ColumnDefinitions="*,Auto"
                   BackgroundColor="{StaticResource SurfaceColor}">
@@ -160,14 +172,17 @@
                         BackgroundColor="{StaticResource InputBackgroundColor}"
                         TextColor="White"
                         Margin="0,0,8,0"
-                />
+                        IsEnabled="{Binding IsTyping, Converter={StaticResource InverseBoolConverter}}"
+                        Completed="OnEntryCompleted" />
 
                 <Button Grid.Column="1"
                         Text="Send"
-                        Command="{Binding SendCommand}"
+                        Command="{Binding SendAsyncCommand}"
+                        IsEnabled="{Binding IsTyping, Converter={StaticResource InverseBoolConverter}}"
                         HeightRequest="44"
-                        Padding="16,0" 
-                        BackgroundColor="#4CAF50"/>
+                        Padding="16,0"
+                        BackgroundColor="#4CAF50" />
+
             </Grid>
         </Grid>
     </Grid>

@@ -147,7 +147,7 @@ public class OrchestratorService : IOrchestratorService
         
         // defaults
         if (ollamaConfig.Model.HasNoValue())
-            ollamaConfig.Model = "llama3";
+            ollamaConfig.Model = "qwen2.5:14b";
         
         if (ollamaConfig.Host.HasNoValue())
             ollamaConfig.Host = StringConsts.OllamaServerUrl;
