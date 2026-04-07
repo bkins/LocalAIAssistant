@@ -11,7 +11,7 @@ public class LoggingService : ILoggingService
 {
     private readonly ILogger _logger;
     private readonly string  _logFilePath;
-
+    
     public LoggingService(ILogger logger
                         , string  logFilePath)
     {
@@ -95,7 +95,11 @@ public class LoggingService : ILoggingService
 
         try
         {
-            using var stream = File.OpenRead(_logFilePath);
+            using var stream = new FileStream(_logFilePath
+                                            , FileMode.Open
+                                            , FileAccess.Read
+                                            , FileShare.ReadWrite);
+            
             using var reader = new StreamReader(stream);
 
             string? line;

@@ -15,6 +15,7 @@ using LocalAIAssistant.Knowledge.Tasks.ViewModels;
 using LocalAIAssistant.MarkdownFormatter;
 using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.Interfaces;
+using LocalAIAssistant.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -42,58 +43,7 @@ public static class MauiProgram
 		                                      .WriteTo.Debug()
 		                                      .CreateLogger();
 		Debug.WriteLine($"Configuring Serilog to log to: {logPath}");
-		try
-		{
-			// Log a message that will definitely be written to the file
-			Log.Information("Application startup. Verifying log file write.");
-
-			// Check if the file was created and is not empty
-			if (File.Exists(logPath))
-			{
-				var content = File.ReadAllText(logPath);
-				if (!string.IsNullOrEmpty(content))
-				{
-					Debug.WriteLine($"Log file successfully written. Content length: {content.Length}");
-				}
-				else
-				{
-					Debug.WriteLine("Log file exists but is empty.");
-				}
-			}
-			else
-			{
-				Debug.WriteLine("Log file does not exist after initial log call.");
-			}
-		}
-		catch (Exception ex)
-		{
-			Debug.WriteLine($"Error writing to log file: {ex.Message}");
-		}
 		
-		// // Log that Serilog is configured
-		// Log.Information("Serilog configured. Log file: {LogPath}", logPath);
-		// System.Diagnostics.Debug.WriteLine($"Serilog log file path: {logPath}");
-  //       
-		// // Test Serilog directly
-		// Log.Information("This is a test log entry from MauiProgram");
-		// Log.Warning("This is a test warning from MauiProgram");
-		// Log.Error("This is a test error from MauiProgram");
-  //       
-		// Check if Serilog wrote to the file
-		// if (File.Exists(logPath))
-		// {
-		// 	var lines = File.ReadAllLines(logPath);
-		// 	Debug.WriteLine($"MauiProgram: Serilog file has {lines.Length} lines");
-		// 	foreach (var line in lines)
-		// 	{
-		// 		Debug.WriteLine($"MauiProgram: {line}");
-		// 	}
-		// }
-		// else
-		// {
-		// 	Debug.WriteLine("MauiProgram: Serilog file does not exist");
-		// }
-
 		var builder = MauiApp.CreateBuilder();
 		
 		builder.Services.AddSingleton<ApiEnvironmentDescriptor>();
@@ -210,6 +160,9 @@ public static class MauiProgram
 		
 		builder.Services.AddSingleton<IOfflineQueueService, OfflineQueueService>();
 		builder.Services.AddSingleton<QueueReplayCoordinator>();
+		
+		builder.Services.AddSingleton<UsageService>();
+		builder.Services.AddSingleton<UsageViewModel>();
 		
 		builder.Configuration.AddJsonFile(ollamaConfigFilePath, optional: false, reloadOnChange: true);
 

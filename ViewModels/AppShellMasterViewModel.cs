@@ -13,25 +13,25 @@ namespace LocalAIAssistant.ViewModels;
 
 public partial class AppShellMasterViewModel : ObservableObject
 {
-    private ApiEnvironmentDescriptor  _environment;
-    
+    private ApiEnvironmentDescriptor _environment;
+
     private readonly EnvironmentHandshakeState       _handshakeState;
     private static   IConnectivityState              _connectivity;
     private readonly ICognitivePlatformClientFactory _cpClientFactory;
     private readonly IOfflineQueueService            _offlineQueueService;
-    
+
     [ObservableProperty] private int _pendingQueueCount;
 
     public static bool IsOffline => _connectivity.IsOffline;
 
-    // These properties will hold your individual view models
     public ApiHealthViewModel ApiHealthViewModel { get; }
     public AppShellViewModel  AppShellViewModel  { get; }
+    public UsageViewModel     UsageViewModel     { get; }
 
     public string EnvironmentName => _environment.Name;
 
-    private static   Color                      _statusColor;
-    private static   Timer                      _timer;
+    private static Color _statusColor;
+    private static Timer _timer;
     private readonly EnvironmentHandshakeResult _currentEnv;
 
     public Color StatusColor
@@ -40,20 +40,18 @@ public partial class AppShellMasterViewModel : ObservableObject
         set => SetProperty(ref _statusColor, value);
     }
 
-    public  ICommand CheckStatusCommand { get; }
+    public ICommand CheckStatusCommand { get; }
 
     [RelayCommand]
     private async Task CheckApiStatus()
     {
-        // var cpClient = _cpClientFactory.Create();
-        // await cpClient.Ping();
-        
         await ApiHealthViewModel.CheckApiStatusAsync();
         UpdateStatusColor();
     }
 
     public AppShellMasterViewModel( ApiHealthViewModel              apiHealthViewModel
                                   , AppShellViewModel               appShellViewModel
+                                  , UsageViewModel                  usageViewModel
                                   , ApiEnvironmentDescriptor        environment
                                   , EnvironmentHandshakeState       handshakeState
                                   , IConnectivityState              connectivity
@@ -62,23 +60,23 @@ public partial class AppShellMasterViewModel : ObservableObject
     {
         ApiHealthViewModel = apiHealthViewModel;
         AppShellViewModel  = appShellViewModel;
+        UsageViewModel     = usageViewModel;
 
         _cpClientFactory = cpClientFactory;
         _statusColor     = Colors.Red;
 
         _environment = environment;
-        _environment.PropertyChanged += ( _, __ ) =>
+        _environment.PropertyChanged += (_, __) =>
         {
             OnPropertyChanged(nameof(EnvironmentName));
             UpdateStatusColor();
         };
 
         _handshakeState = handshakeState;
-
-        _currentEnv = _handshakeState.Current;
+        _currentEnv     = _handshakeState.Current;
 
         _connectivity = connectivity;
-        _connectivity.ConnectivityChanged += ( _, _ ) =>
+        _connectivity.ConnectivityChanged += (_, _) =>
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
@@ -89,15 +87,10 @@ public partial class AppShellMasterViewModel : ObservableObject
 
         CheckStatusCommand = new Command(async void () =>
         {
-            try
-            {
-                await CheckApiStatus();
-            }
-            catch (Exception e)
-            {
-                // Gulp!
-            }
+            try { await CheckApiStatus(); }
+            catch { /* ConnectivityState tracks failure */ }
         });
+
         _offlineQueueService = offlineQueueService;
 
         UpdateStatusColor();
@@ -108,12 +101,7 @@ public partial class AppShellMasterViewModel : ObservableObject
     {
         try
         {
-            // var cpClient = _cpClientFactory.Create();
-            // await cpClient.Ping(memberName);
-
             await RefreshQueueCountAsync();
-
-            
         }
         catch
         {
@@ -121,14 +109,18 @@ public partial class AppShellMasterViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Called by ChatViewModel (or OrchestratorService) after each
+    /// completed conversation turn so usage data stays fresh.
+    /// </summary>
+    public async Task OnConversationTurnCompletedAsync()
+    {
+        await UsageViewModel.RefreshAfterTurnAsync();
+    }
+
     private void UpdateStatusColor()
     {
-        // Simple rule for now:
-        // Offline = red, Online = green.
-        // (Later we can incorporate environment-specific colors if you want.)
-        StatusColor = IsOffline
-                              ? Colors.Red
-                              : Colors.Green;
+        StatusColor = IsOffline ? Colors.Red : Colors.Green;
     }
 
     private void DisplayEnvMismatchMessage()
@@ -139,9 +131,11 @@ public partial class AppShellMasterViewModel : ObservableObject
             // TODO: Determine way to display message
         }
     }
-    
+
     public async Task RefreshQueueCountAsync()
     {
         PendingQueueCount = await _offlineQueueService.GetPendingCountAsync();
     }
+
+    public string TimeSinceLastCheck => ApiHealthViewModel.TimeSinceLastCheck;
 }

@@ -45,7 +45,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ILoggingService, LoggingService>(s =>
         {
             var logger = s.GetRequiredService<ILogger>();
-            return new LoggingService(logger, logPath);
+            var loggingService = new LoggingService(logger, logPath);
+            
+            return loggingService;
         });
         
         services.Configure<MemoryRetrievalOptions>(opts =>

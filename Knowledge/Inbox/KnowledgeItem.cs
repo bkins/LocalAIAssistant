@@ -17,7 +17,10 @@ public sealed class KnowledgeItem
     public DateTime       LastModifiedAtLocal => LastModifiedAt.ToLocalTime().DateTime;
 
     public IReadOnlyList<string> Tags { get; init; } = Array.Empty<string>();
-    
+
+    public string? Mood      { get; init; }
+    public int?    MoodScore { get; init; }
+
     public bool IsEdited { get; set; }
     public bool IsQueued { get; init; }  // true = came from offline queue, not yet API-processed
 }

@@ -14,12 +14,12 @@ public class CognitivePlatformClientFactory : BaseHttpClient, ICognitivePlatform
     public CognitivePlatformClientFactory( IHttpClientFactory       httpFactory
                                          , ApiEnvironmentDescriptor env
                                          , IConnectivityReporter    connectivity
-                                         , ILoggingService          logger)
+                                         , ILoggingService          logger )
     {
-        _httpFactory      = httpFactory;
-        _env              = env;
-        _connectivity     = connectivity;
-        _logger           = logger;
+        _httpFactory  = httpFactory;
+        _env          = env;
+        _connectivity = connectivity;
+        _logger       = logger;
     }
 
     public CognitivePlatformClientBase Create()
@@ -28,13 +28,11 @@ public class CognitivePlatformClientFactory : BaseHttpClient, ICognitivePlatform
 
         client.BaseAddress = new Uri(_env.BaseUrl);
         client.Timeout     = TimeSpan.FromSeconds(Timeout);
-        
+
         var cpClient = new CognitivePlatformClient(client, _connectivity, _logger);
-        
-        
+
         _logger.LogInformation($"CP Client created: {cpClient}");
-        
+
         return cpClient;
     }
-    
 }

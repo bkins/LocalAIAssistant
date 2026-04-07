@@ -116,7 +116,7 @@ public class OrchestratorService : IOrchestratorService
                                     , turnId).ConfigureAwait(false);
 
         LogEvent(turnId
-               , $"Completed; tokens_out≈{assistantText.Length}");
+               , $"Completed tokens_out≈{assistantText.Length}");
     }
 
     public async IAsyncEnumerable<string> HandleUserMessageStreamingAsync(string                                     userInput

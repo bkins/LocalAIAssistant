@@ -21,7 +21,7 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
 
     private Exception _caughtException;
     
-    public  bool      IsEdited => State == JournalEntryState.Edited && false;
+    [ObservableProperty] private bool _isEdited;
     
     public JournalDetailViewModel(IJournalApiClientFactory clientFactory)
     {
@@ -35,6 +35,12 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
             Guid.TryParse(idObj?.ToString(), out var id))
         {
             _journalId = id;
+        }
+
+        if (query.TryGetValue("isEdited", out var isEditedObj) &&
+            bool.TryParse(isEditedObj?.ToString(), out var isEdited))
+        {
+            IsEdited = isEdited;
         }
     }
 

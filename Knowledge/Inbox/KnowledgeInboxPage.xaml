@@ -8,8 +8,9 @@
 
     <ContentPage.Resources>
         <ResourceDictionary>
-            <converters1:TagsToTextConverter x:Key="TagsToTextConverter" />
-            <converters1:KnowledgeStatusToTextConverter x:Key="StatusToTextConverter" />
+            <converters1:TagsToTextConverter         x:Key="TagsToTextConverter" />
+            <converters1:IntGreaterThanZeroConverter x:Key="IntGtZero" />
+            <converters1:NullToBoolConverter         x:Key="NullToBool" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -79,7 +80,19 @@
                                         Text="{Binding Tags, Converter={StaticResource TagsToTextConverter}}"
                                         FontSize="12"
                                         TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
-                                        IsVisible="{Binding Tags.Count, Converter={StaticResource StatusToTextConverter}}" />
+                                        IsVisible="{Binding Tags.Count, Converter={StaticResource IntGtZero}}" />
+
+                                    <Label
+                                        Text="{Binding Mood}"
+                                        FontSize="12"
+                                        TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                                        IsVisible="{Binding Mood, Converter={StaticResource NullToBool}}" />
+
+                                    <Label
+                                        Text="{Binding MoodScore}"
+                                        FontSize="12"
+                                        TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                                        IsVisible="{Binding MoodScore, Converter={StaticResource NullToBool}}" />
 
                                     <Label
                                         Text="Edited"

@@ -259,8 +259,6 @@ public class LlmService : ILlmService
                                                                , [EnumeratorCancellation] 
                                                                  CancellationToken        cancellation = default)
     {
-        _loggingService.LogInformation($"[LlmService] Sending prompt to Ollama (model={config.Model}):\n{Truncate(finalPrompt, 500)}");
-
         // Example: using HttpClient to call Ollama's streaming endpoint
         using var request = new HttpRequestMessage(HttpMethod.Post
                                                  , GetGenerateEndpoint(config))

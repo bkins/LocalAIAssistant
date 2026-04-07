@@ -34,8 +34,6 @@ public partial class ChatViewModel : ObservableObject
     private readonly AppShellMasterViewModel          _appShellMasterViewModel;
 
     // ── Connectivity ──────────────────────────────────────────────────────────
-    // IsOffline uses [ObservableProperty] so CommunityToolkit handles
-    // OnPropertyChanged — no MainThread marshalling needed here.
     [ObservableProperty] private bool _isOffline;
 
     // ── UI state ──────────────────────────────────────────────────────────────
@@ -80,8 +78,6 @@ public partial class ChatViewModel : ObservableObject
         _apiHealthService        = apiHealthService;
         _appShellMasterViewModel = appShellMasterViewModel;
 
-        // No MainThread call needed — [ObservableProperty] + MAUI's binding
-        // system handles cross-thread property-changed notifications.
         _apiState.ConnectivityChanged += (_, _) => IsOffline = _apiState.IsOffline;
     }
 
@@ -106,10 +102,10 @@ public partial class ChatViewModel : ObservableObject
         {
             Personalities.Add(new Personality
                               {
-                                  Name         = "The Barista"
-                                , SystemPrompt = "You are Jenny, a friendly coffee barista who remembers regulars."
-                                , Description  = "Warm, upbeat coffee expert."
-                                , IsDefault    = true
+                                      Name         = "The Barista"
+                                    , SystemPrompt = "You are Jenny, a friendly coffee barista who remembers regulars."
+                                    , Description  = "Warm, upbeat coffee expert."
+                                    , IsDefault    = true
                               });
         }
 
@@ -130,11 +126,14 @@ public partial class ChatViewModel : ObservableObject
 
         Preferences.Set(SelectedPersonalityPrefKey, newValue.Name);
         _personalityService.SetCurrent(newValue.Name);
-        _log.LogInformation($"Personality switched from {oldName} to {newValue.Name}");
+        
+        if (oldName != newValue.Name)
+        {
+            _log.LogInformation($"Personality switched from {oldName} to {newValue.Name}");    
+        }
     }
 
     // ── Send ──────────────────────────────────────────────────────────────────
-    // Single command, single entry point. UseStreaming drives the branch.
 
     [RelayCommand]
     public async Task SendAsync()
@@ -144,9 +143,9 @@ public partial class ChatViewModel : ObservableObject
 
         Messages.Add(new Message
                      {
-                         Sender    = "user"
-                       , Content   = text
-                       , Timestamp = DateTime.Now
+                             Sender    = "user"
+                           , Content   = text
+                           , Timestamp = DateTime.Now
                      });
 
         PromptText = string.Empty;
@@ -157,13 +156,17 @@ public partial class ChatViewModel : ObservableObject
 
         var assistantMsg = new Message
                            {
-                               Sender    = "assistant"
-                             , Content   = "thinking"
-                             , Timestamp = DateTime.Now
+                                   Sender    = "assistant"
+                                 , Content   = "thinking"
+                                 , Timestamp = DateTime.Now
                            };
         Messages.Add(assistantMsg);
 
         _ = StartThinkingAsync(assistantMsg);
+
+        // Tracks whether the API was actually reached so we only
+        // refresh usage when a real Groq call may have been made.
+        var reachedApi = false;
 
         try
         {
@@ -180,14 +183,16 @@ public partial class ChatViewModel : ObservableObject
                 return;
             }
 
+            reachedApi = true;
+
             if (UseStreaming.Not())
             {
                 var response = await cp.ConverseAsync(text
                                                     , ConversationId
                                                     , modelToUse)
                                        .ConfigureAwait(false);
-                
-                MainThread.BeginInvokeOnMainThread(() => 
+
+                MainThread.BeginInvokeOnMainThread(() =>
                 {
                     assistantMsg.Content     = response.Message;
                     assistantMsg.WasFastPath = response.WasFastPath;
@@ -201,9 +206,6 @@ public partial class ChatViewModel : ObservableObject
                                                                   , ConversationId
                                                                   , modelToUse))
                 {
-                    // Marshal to UI thread: streaming updates mutate a bound
-                    // object's property directly, so we stay responsible for
-                    // thread affinity here.
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
                         if (hasReceivedFirstChunk.Not())
@@ -222,15 +224,20 @@ public partial class ChatViewModel : ObservableObject
             assistantMsg.Content = $"⚠ Error: {ex.Message}";
             Messages.Add(new Message
                          {
-                             Sender    = "system"
-                           , Content   = $"Error contacting CognitivePlatform:\n{ex.Message}"
-                           , Timestamp = DateTime.Now
+                                 Sender    = "system"
+                               , Content   = $"Error contacting CognitivePlatform:\n{ex.Message}"
+                               , Timestamp = DateTime.Now
                          });
         }
         finally
         {
             StopThinking();
             IsTyping = false;
+
+            // Refresh usage after every turn that reached the API.
+            // Non-fatal — runs fire-and-forget so it never delays the UI.
+            if (reachedApi)
+                _ = _appShellMasterViewModel.OnConversationTurnCompletedAsync();
         }
     }
 
@@ -268,20 +275,20 @@ public partial class ChatViewModel : ObservableObject
 
     private static readonly string[] ThinkingFrames =
     {
-          "thinking"
-        , "THinking"
-        , "ThInking"
-        , "ThiNking"
-        , "ThinKing"
-        , "ThinkIng"
-        , "ThinkiNg"
-        , "ThinkinG"
-        , "ThinkiNg"
-        , "ThinkIng"
-        , "ThinKing"
-        , "ThiNking"
-        , "ThInking"
-        , "THinking"
+            "thinking"
+          , "THinking"
+          , "ThInking"
+          , "ThiNking"
+          , "ThinKing"
+          , "ThinkIng"
+          , "ThinkiNg"
+          , "ThinkinG"
+          , "ThinkiNg"
+          , "ThinkIng"
+          , "ThinKing"
+          , "ThiNking"
+          , "ThInking"
+          , "THinking"
     };
 
     private CancellationTokenSource? _thinkingCts;
@@ -289,7 +296,7 @@ public partial class ChatViewModel : ObservableObject
     private async Task StartThinkingAsync(Message assistantMsg)
     {
         _thinkingCts = new CancellationTokenSource();
-        var token = _thinkingCts.Token;
+        var token    = _thinkingCts.Token;
 
         try
         {
@@ -302,8 +309,6 @@ public partial class ChatViewModel : ObservableObject
                 var elapsedText = FormatElapsedText(elapsed);
                 var frame       = ThinkingFrames[frameIndex];
 
-                // Marshal to UI thread: same reasoning as the streaming loop —
-                // we are mutating a bound object's property from a background task.
                 MainThread.BeginInvokeOnMainThread(() =>
                     assistantMsg.Content = $"{frame} ⏱ {elapsedText}");
 

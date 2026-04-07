@@ -6,7 +6,9 @@
 
     <ContentPage.Resources>
         <ResourceDictionary>
-            <converters1:TagsToTextConverter x:Key="TagsToText" />
+            <converters1:TagsToTextConverter         x:Key="TagsToText" />
+            <converters1:IntGreaterThanZeroConverter x:Key="IntGtZero" />
+            <converters1:NullToBoolConverter         x:Key="NullToBool" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -36,17 +38,17 @@
             <Label Text="{Binding Tags, Converter={StaticResource TagsToText}}"
                    FontSize="12"
                    TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
-                   IsVisible="{Binding Tags.Count}" />
+                   IsVisible="{Binding Tags.Count, Converter={StaticResource IntGtZero}}" />
 
             <Label Text="{Binding Mood}"
                    FontSize="12"
                    TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
-                   IsVisible="{Binding Mood}" />
+                   IsVisible="{Binding Mood, Converter={StaticResource NullToBool}}" />
 
             <Label Text="{Binding MoodScore}"
                    FontSize="12"
                    TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
-                   IsVisible="{Binding MoodScore}" />
+                   IsVisible="{Binding MoodScore, Converter={StaticResource NullToBool}}" />
 
             <Button Text="Edit entry"
                     FontSize="12"
