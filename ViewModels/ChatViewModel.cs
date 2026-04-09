@@ -272,6 +272,79 @@ public partial class ChatViewModel : ObservableObject
     }
 
     // ── Thinking animation ────────────────────────────────────────────────────
+    
+    private static string[] GenerateThinkingFrames(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            text = "...";
+
+        var frames = new List<string>();
+
+        for (int i = 0; i < text.Length; i++)
+        {
+            var chars = text.ToCharArray();
+
+            for (int j = 0; j < chars.Length; j++)
+            {
+                chars[j] = j == i
+                                   ? char.ToUpper(chars[j])
+                                   : char.ToLower(chars[j]);
+            }
+
+            frames.Add(new string(chars));
+        }
+
+        // Optional: reverse for smoother loop
+        for (int i = text.Length - 2; i > 0; i--)
+        {
+            var chars = text.ToCharArray();
+
+            for (int j = 0; j < chars.Length; j++)
+            {
+                chars[j] = j == i
+                                   ? char.ToUpper(chars[j])
+                                   : char.ToLower(chars[j]);
+            }
+
+            frames.Add(new string(chars));
+        }
+
+        return frames.ToArray();
+    }
+
+    private static readonly string[] ThinkingWords =
+    {
+            "pondering"
+          , "contemplating"
+          , "ruminating"
+          , "deliberating"
+          , "cogitating"
+          , "meditating"
+          , "dwelling"
+          , "reckoning"
+          , "deeming"
+          , "opining"
+          , "assuming"
+          , "judging"
+          , "surmising"
+          , "conceiving"
+          , "envisioning"
+          , "envisaging"
+          , "ideating"
+          , "visualizing"
+          , "brainstorming"
+          , "mulling"
+          , "reflecting"
+          , "reasoning"
+          , "speculating"
+          , "musing"
+          , "cerebrating"
+          , "synthesizing"
+          , "structuring"
+          , "deciphering"
+          , "evaluating"
+    };
+
 
     private static readonly string[] ThinkingFrames =
     {
@@ -293,35 +366,54 @@ public partial class ChatViewModel : ObservableObject
 
     private CancellationTokenSource? _thinkingCts;
 
-    private async Task StartThinkingAsync(Message assistantMsg)
+    private async Task StartThinkingAsync(Message assistantMsg, string[]? thinkingWords = null)
     {
         _thinkingCts = new CancellationTokenSource();
         var token    = _thinkingCts.Token;
 
+        thinkingWords ??= ThinkingWords;
+
         try
         {
+            var wordIndex  = 0;
+            var frames     = GenerateThinkingFrames(thinkingWords[wordIndex]);
             var frameIndex = 0;
-            var startedAt  = DateTime.UtcNow;
 
-            while (token.IsCancellationRequested.Not())
+            var startedAt = DateTime.UtcNow;
+
+            while (!token.IsCancellationRequested)
             {
                 var elapsed     = DateTime.UtcNow - startedAt;
                 var elapsedText = FormatElapsedText(elapsed);
-                var frame       = ThinkingFrames[frameIndex];
+                var frame       = frames[frameIndex];
 
                 MainThread.BeginInvokeOnMainThread(() =>
-                    assistantMsg.Content = $"{frame} ⏱ {elapsedText}");
+                                                           assistantMsg.Content = $"{frame} ⏱ {elapsedText}");
 
-                frameIndex = (frameIndex + 1) % ThinkingFrames.Length;
+                frameIndex++;
+
+                // ✅ Completed full animation cycle
+                if (frameIndex >= frames.Length)
+                {
+                    frameIndex = 0;
+
+                    // Move to next word
+                    wordIndex = (wordIndex + 1) % thinkingWords.Length;
+
+                    // Generate new frames for next word
+                    frames = GenerateThinkingFrames(thinkingWords[wordIndex]);
+                }
 
                 await Task.Delay(120, token);
             }
         }
         catch (TaskCanceledException)
         {
-            // Expected on StopThinking().
+            // Expected
         }
     }
+
+
 
     private static string FormatElapsedText(TimeSpan elapsed)
     {
