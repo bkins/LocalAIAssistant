@@ -221,18 +221,27 @@ public partial class ChatViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            assistantMsg.Content = $"⚠ Error: {ex.Message}";
-            Messages.Add(new Message
-                         {
-                                 Sender    = "system"
-                               , Content   = $"Error contacting CognitivePlatform:\n{ex.Message}"
-                               , Timestamp = DateTime.Now
-                         });
+            // ConfigureAwait(false) means this catch runs on a thread-pool thread.
+            // All UI-bound operations must be marshalled back to the main thread.
+            var errorMessage = ex.Message;
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                assistantMsg.Content = $"⚠ Error: {errorMessage}";
+                Messages.Add(new Message
+                             {
+                                     Sender    = "system"
+                                   , Content   = $"Error contacting CognitivePlatform:\n{errorMessage}"
+                                   , Timestamp = DateTime.Now
+                             });
+            });
         }
         finally
         {
             StopThinking();
-            IsTyping = false;
+
+            // IsTyping is an [ObservableProperty] — setting it from a background thread
+            // (after ConfigureAwait(false)) causes a WinUI cross-thread exception.
+            MainThread.BeginInvokeOnMainThread(() => IsTyping = false);
 
             // Refresh usage after every turn that reached the API.
             // Non-fatal — runs fire-and-forget so it never delays the UI.

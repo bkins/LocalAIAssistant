@@ -86,25 +86,31 @@ public partial class UsageViewModel : ObservableObject
         if (data is null || data.HasData.Not())
             return;
 
-        HasData = true;
+        // ApplySnapshot is called from RefreshAfterTurnAsync which runs fire-and-forget
+        // on a background thread. All [ObservableProperty] assignments must be marshalled
+        // to the main thread to avoid WinUI cross-thread exceptions.
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            HasData = true;
 
-        RequestsRemaining    = data.Requests.Remaining;
-        RequestLimit         = data.Requests.Limit;
-        RequestUsagePercent  = data.Requests.UsagePercent;
-        RequestsResetLabel   = data.Requests.ResetApproxLocal;
+            RequestsRemaining    = data.Requests.Remaining;
+            RequestLimit         = data.Requests.Limit;
+            RequestUsagePercent  = data.Requests.UsagePercent;
+            RequestsResetLabel   = data.Requests.ResetApproxLocal;
 
-        TokensRemaining      = data.Tokens.Remaining;
-        TokenLimit           = data.Tokens.Limit;
-        TokenUsagePercent    = data.Tokens.UsagePercent;
-        TokensResetLabel     = data.Tokens.ResetApproxLocal;
+            TokensRemaining      = data.Tokens.Remaining;
+            TokenLimit           = data.Tokens.Limit;
+            TokenUsagePercent    = data.Tokens.UsagePercent;
+            TokensResetLabel     = data.Tokens.ResetApproxLocal;
 
-        HeaderSummary = FormatHeaderSummary(data.Requests.Remaining
-                                          , data.Requests.Limit
-                                          , data.Tokens.Remaining
-                                          , data.Tokens.Limit);
+            HeaderSummary = FormatHeaderSummary(data.Requests.Remaining
+                                              , data.Requests.Limit
+                                              , data.Tokens.Remaining
+                                              , data.Tokens.Limit);
 
-        HeaderColor = DeriveHeaderColor(data.Requests.UsagePercent
-                                       , data.Tokens.UsagePercent);
+            HeaderColor = DeriveHeaderColor(data.Requests.UsagePercent
+                                           , data.Tokens.UsagePercent);
+        });
     }
 
     private static string FormatHeaderSummary( int requestsRemaining
