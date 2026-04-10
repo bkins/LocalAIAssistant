@@ -62,11 +62,13 @@ public partial class MainPage : ContentPage
         // The view owns scroll behaviour — wire up here, tear down in
         // OnDisappearing to avoid double-subscription on re-navigation.
         ChatViewModel.Messages.CollectionChanged += OnMessagesCollectionChanged;
+        ChatViewModel.PropertyChanged            += OnChatViewModelPropertyChanged;
     }
 
     protected override void OnDisappearing()
     {
         ChatViewModel.Messages.CollectionChanged -= OnMessagesCollectionChanged;
+        ChatViewModel.PropertyChanged            -= OnChatViewModelPropertyChanged;
         StopBackgroundPulse();
         base.OnDisappearing();
     }
@@ -87,6 +89,21 @@ public partial class MainPage : ContentPage
             MessagesView.ScrollTo(lastMessage
                                 , position: ScrollToPosition.End
                                 , animate: true));
+    }
+
+    private async void OnChatViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        // Scroll to the bottom when a response finishes (IsTyping: true → false).
+        // Content changes happen in-place on the assistant message so CollectionChanged
+        // never fires for them; this is the reliable "turn complete" signal.
+        if (e.PropertyName != nameof(ChatViewModel.IsTyping)) return;
+        if (ChatViewModel.IsTyping) return;
+
+        // Give the layout pass time to measure the final content before scrolling.
+        await Task.Delay(100);
+        var lastMessage = ChatViewModel.Messages.LastOrDefault();
+        if (lastMessage is null) return;
+        MessagesView.ScrollTo(lastMessage, position: ScrollToPosition.End, animate: true);
     }
 
     // ── Input handlers ────────────────────────────────────────────────────────
