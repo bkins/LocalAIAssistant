@@ -199,4 +199,12 @@
 	  <ProjectReference Include="LocalAIAssistant.Core\LocalAIAssistant.Core.csproj" />
 	</ItemGroup>
 
+	<!-- Prevent the MAUI project's implicit **/*.cs glob from picking up Core source
+	     files. The Core DLL is already referenced via ProjectReference above — compiling
+	     the source files a second time causes CS0579 (duplicate assembly attributes) and
+	     CS0436 (type conflicts with the referenced assembly). -->
+	<ItemGroup>
+	  <Compile Remove="LocalAIAssistant.Core\**\*.cs" />
+	</ItemGroup>
+
 </Project>
