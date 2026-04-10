@@ -397,7 +397,10 @@ public partial class ChatViewModel : ObservableObject
                 var frame       = frames[frameIndex];
 
                 MainThread.BeginInvokeOnMainThread(() =>
-                                                           assistantMsg.Content = $"{frame} ⏱ {elapsedText}");
+                {
+                    if (!token.IsCancellationRequested)
+                        assistantMsg.Content = $"{frame} ⏱ {elapsedText}";
+                });
 
                 frameIndex++;
 
