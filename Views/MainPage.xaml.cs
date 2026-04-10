@@ -10,6 +10,7 @@ public partial class MainPage : ContentPage
     private readonly ILoggingService _logger;
     private readonly MainViewModel   _mainViewModel;
 
+    private bool                     _isPageActive;
     private bool                     _isPulsing;
     private CancellationTokenSource? _pulseCts;
 
@@ -53,6 +54,7 @@ public partial class MainPage : ContentPage
     {
         base.OnAppearing();
 
+        _isPageActive = true;
         StartBackgroundPulse();
 
         await Root.FadeTo(1, 250, Easing.Linear);
@@ -67,6 +69,7 @@ public partial class MainPage : ContentPage
 
     protected override void OnDisappearing()
     {
+        _isPageActive = false;
         ChatViewModel.Messages.CollectionChanged -= OnMessagesCollectionChanged;
         ChatViewModel.PropertyChanged            -= OnChatViewModelPropertyChanged;
         StopBackgroundPulse();
@@ -110,8 +113,12 @@ public partial class MainPage : ContentPage
 
     // Both the Editor's Completed event and the Entry's Completed event
     // funnel through here — one path, one command.
+    // UX-01: guard _isPageActive so that keyboard-dismiss events fired during
+    // navigation (app going to background, shell page change) don't submit
+    // whatever text is sitting in the editor.
     private void OnEntryCompleted(object? sender, EventArgs e)
     {
+        if (!_isPageActive) return;
         if (ChatViewModel.SendCommand.CanExecute(null))
             ChatViewModel.SendCommand.Execute(null);
     }

@@ -47,7 +47,13 @@ public class NativeMarkdownView : VerticalStackLayout
     private void Render( string? markdown )
     {
         Children.Clear();
-        if (string.IsNullOrWhiteSpace(markdown)) return;
+        if (string.IsNullOrWhiteSpace(markdown))
+        {
+            // Explicitly re-measure even when clearing to empty so the bubble
+            // collapses rather than retaining the height of the previous content.
+            InvalidateMeasure();
+            return;
+        }
 
         var document = Markdig.Markdown.Parse(markdown
                                             , Pipeline);
@@ -56,6 +62,12 @@ public class NativeMarkdownView : VerticalStackLayout
         {
             Children.Add(uiElement);
         }
+
+        // UX-03: MAUI's CollectionView caches item heights after the first measure.
+        // Explicit invalidation here propagates up through the visual tree so that
+        // a shorter response shrinks the bubble rather than leaving it at the
+        // maximum height reached during the thinking animation.
+        InvalidateMeasure();
     }
 
     private View? CreateUiElementForBlock( Block block )
