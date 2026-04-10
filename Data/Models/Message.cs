@@ -1,5 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using LocalAIAssistant.CognitivePlatform.Rendering.Parsing;
+using LocalAIAssistant.Core.Parsing;
 
 namespace LocalAIAssistant.Data.Models;
 

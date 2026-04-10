@@ -1,5 +1,5 @@
 using System.Globalization;
-using LocalAIAssistant.CognitivePlatform.Rendering.Parsing;
+using LocalAIAssistant.Core.Parsing;
 
 namespace LocalAIAssistant.CognitivePlatform.Rendering.Converters;
 

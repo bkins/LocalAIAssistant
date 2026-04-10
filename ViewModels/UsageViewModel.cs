@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CP.Client.Core.Avails;
+using LocalAIAssistant.Core.Display;
 using LocalAIAssistant.Services;
 
 namespace LocalAIAssistant.ViewModels;
@@ -117,24 +118,15 @@ public partial class UsageViewModel : ObservableObject
                                              , int requestsLimit
                                              , int tokensRemaining
                                              , int tokensLimit )
-    {
-        var tokLabel = tokensRemaining >= 1000
-                               ? $"{tokensRemaining / 1000.0:0.#}k"
-                               : tokensRemaining.ToString();
-        var tokLabelLimit = tokensLimit >= 1000
-                               ? $"{tokensLimit / 1000.0:0.#}k"
-                               : tokensLimit.ToString();
-        
-        return $"{requestsRemaining}/{requestsLimit} req · {tokLabel}/{tokLabelLimit} tok";
-    }
+        => UsageDisplayFormatter.FormatHeaderSummary(requestsRemaining, requestsLimit, tokensRemaining, tokensLimit);
 
     private Color DeriveHeaderColor(double requestPercent, double tokenPercent)
     {
-        var worstPercent = Math.Max(requestPercent, tokenPercent);
-
-        if (worstPercent >= DangerThresholdPercent) return Colors.Red;
-        if (worstPercent >= WarnThresholdPercent)   return Colors.Orange;
-
-        return Colors.Gray;
+        return UsageDisplayFormatter.GetColorCategory(requestPercent, tokenPercent, WarnThresholdPercent, DangerThresholdPercent) switch
+        {
+                "Red"    => Colors.Red,
+                "Orange" => Colors.Orange,
+                _        => Colors.Gray
+        };
     }
 }
