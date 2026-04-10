@@ -289,6 +289,7 @@ public partial class ChatViewModel : ObservableObject
 
         var frames = new List<string>();
 
+        // Forwards
         for (int i = 0; i < text.Length; i++)
         {
             var chars = text.ToCharArray();
@@ -303,7 +304,7 @@ public partial class ChatViewModel : ObservableObject
             frames.Add(new string(chars));
         }
 
-        // Optional: reverse for smoother loop
+        // Backwards
         for (int i = text.Length - 2; i > 0; i--)
         {
             var chars = text.ToCharArray();
@@ -352,6 +353,62 @@ public partial class ChatViewModel : ObservableObject
           , "structuring"
           , "deciphering"
           , "evaluating"
+          , "thinkifying"
+          , "brainstorminating"
+          , "noodling"
+          , "head-scratching"
+          , "gear-turning"
+          , "hamster-wheeling"
+          , "brain-juggling"
+          , "mind-bubbling"
+          , "idea-cooking"
+          , "thought-wrangling"
+          , "brain-fizzling"
+          , "think-o-matic-ing"
+          , "ponderfying"
+          , "crunching"
+          , "scheming"
+          , "plotting"
+          , "connecting-dots"
+          , "untangling"
+          , "decoding"
+          , "unpacking"
+          , "assembling-thoughts"
+          , "lining-things-up"
+          , "figuring-things-out"
+          , "stitching-ideas"
+          , "mapping-it-out"
+          , "spinning-gears"
+          , "firing-neurons"
+          , "consulting-the-void"
+          , "summoning-tokens"
+          , "aligning-weights"
+          , "tickling-tensors"
+          , "waking-the-neurons"
+          , "jiggling-bits"
+          , "flipping-bits"
+          , "optimizing-thoughts"
+          , "warming-up-circuits"
+          , "charging-brain-cells"
+          , "pretending-to-think"
+          , "simulating-intelligence"
+          , "definitely-not-guessing"
+          , "calculating-ish"
+          , "thinking™"
+          , "working-on-it"
+          , "totally-thinking"
+          , "thinking-real-hard"
+          , "doing-my-best"
+          , "probably-thinking"
+          , "thinking...maybe"
+          , "this-might-work"
+          , "just-a-sec"
+          , "hold-please"
+          , "trust-the-process"
+          , "magic-happening"
+          , "questionable-math"
+          , "guessing-confidently"
+          , "vibing-with-data"
     };
 
 
