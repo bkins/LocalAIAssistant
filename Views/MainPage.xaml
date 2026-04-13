@@ -76,7 +76,11 @@
                                     HorizontalOptions="Start"
                                     VerticalOptions="Start"
                                     BackgroundColor="{StaticResource SurfaceColor}">
-
+                                
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnMessageTapped" />
+                                </Border.GestureRecognizers>
+                                
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
                                 </Border.StrokeShape>
@@ -97,7 +101,7 @@
                                         <Setter Property="HorizontalOptions" Value="Start" />
                                     </DataTrigger>
 
-                                    <DataTrigger TargetType="Border"
+                                    <DataTrigger x:Name="SystemDataTrigger" TargetType="Border"
                                                  Binding="{Binding Sender}"
                                                  Value="system">
                                         <Setter Property="BackgroundColor"  Value="Transparent" />
@@ -131,28 +135,6 @@
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
-                <!-- <VerticalStackLayout x:Name="ScrollToBottomButton" -->
-                <!--                      IsVisible="False" -->
-                <!--                      VerticalOptions="End" -->
-                <!--                      HorizontalOptions="Center" -->
-                <!--                      Margin="0,0,0,20"> -->
-                <!--     <Border StrokeShape="RoundRectangle 25" -->
-                <!--             BackgroundColor="{StaticResource SurfaceColor}" -->
-                <!--             Padding="10" -->
-                <!--             HeightRequest="50" -->
-                <!--             WidthRequest="50" -->
-                <!--             StrokeThickness="1" -->
-                <!--             Stroke="#7C5CE6"> -->
-                <!--         <Border.GestureRecognizers> -->
-                <!--             <TapGestureRecognizer Tapped="OnScrollToBottomClicked" /> -->
-                <!--         </Border.GestureRecognizers> -->
-                <!--         <Label Text="↓"  -->
-                <!--                TextColor="White"  -->
-                <!--                FontSize="24"  -->
-                <!--                HorizontalOptions="Center"  -->
-                <!--                VerticalOptions="Center" /> -->
-                <!--     </Border> -->
-                <!-- </VerticalStackLayout> -->
             </Grid>
 
             <!-- Input bar -->

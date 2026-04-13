@@ -213,27 +213,29 @@ public partial class MainPage : ContentPage
             await BackgroundGlyph.FadeTo(minOpacity, halfCycleMs, Easing.SinInOut);
         }
     }
+    
+    private async void OnMessageTapped(object sender, TappedEventArgs e)
+    {
+        if (sender is not Border border)
+            return;
 
-    // private void OnCollectionViewScrolled(object? sender, ItemsViewScrolledEventArgs e)
-    // {
-    //     // If the user is more than 200 pixels from the bottom, show the button
-    //     // e.VerticalOffset is the current position, e.VerticalDelta is change.
-    //     // Note: Finding the 'bottom' exactly is hard in MAUI, so we check if they are 
-    //     // scrolling up or if they are significantly far from the 'end'.
-    //
-    //     // Simple logic: Show if they have scrolled away from the very bottom
-    //     // Adjust '200' to your preference for sensitivity.
-    //     bool isAwayFromBottom = e.VerticalOffset < (MessagesView.Height - 200); 
-    //
-    //     // To make it feel better, we only show it if they are actually moving.
-    //     ScrollToBottomButton.IsVisible = e.VerticalOffset > 100 && isAwayFromBottom;
-    // }
-    //
-    // private void OnScrollToBottomClicked(object? sender, EventArgs e)
-    // {
-    //     if (ChatViewModel.Messages.Count > 0)
-    //     {
-    //         MessagesView.ScrollTo(ChatViewModel.Messages.Count - 1, position: ScrollToPosition.End, animate: true);
-    //     }
-    //}
+        var message = border.BindingContext;
+
+        var contentProp = message?.GetType().GetProperty("Content");
+        var text        = contentProp?.GetValue(message)?.ToString();
+
+        if (string.IsNullOrWhiteSpace(text))
+            return;
+
+        await Clipboard.Default.SetTextAsync(text);
+
+        // Optional: UX feedback
+        await DisplayToast("Copied to clipboard");
+    }
+    
+    private async Task DisplayToast(string message)
+    {
+        await DisplayAlert("", message, "OK");
+    }
+    
 }

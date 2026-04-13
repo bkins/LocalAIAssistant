@@ -1,0 +1,1 @@
+To update this project find the `LocalAIAssistant.Core.csproj` above and update those files these.  This is simply a reference to that real project.

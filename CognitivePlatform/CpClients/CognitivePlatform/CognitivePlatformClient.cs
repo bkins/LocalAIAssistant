@@ -60,6 +60,13 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
             Connectivity.ReportOffline(ex);
         }
 
+        var errorResponse   = response.Content.ReadFromJsonAsync<ConverseResponseDto>();
+        if (errorResponse.Result?.Message.Contains("Rate limit reached", StringComparison.OrdinalIgnoreCase) ?? false)
+        {
+            var formattedMessage = MarkdownFormatter.Format(errorResponse.Result.Message);
+            return new ConverseResponseDto { Message = formattedMessage };
+        }
+        
         var shortenTextBy   = userMessage.Length < 25 ? userMessage.Length : 25;
         var responseMessage = $"Added to queued:{Environment.NewLine}{userMessage[..shortenTextBy]}...{Environment.NewLine}{conversationId}";
 
@@ -68,9 +75,98 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
         return new ConverseResponseDto { Message = responseMessage };
     }
 
+    public static class MarkdownFormatter
+    {
+        public static string Format( string raw )
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+                return raw;
+
+            var result = raw;
+
+            // 1. Normalize escaped newlines
+            result = result.Replace("\\r\\n"
+                                  , "\n")
+                           .Replace("\\n"
+                                  , "\n")
+                           .Replace("\r\n"
+                                  , "\n");
+
+            // 2. Ensure code fences are on their own lines
+            result = NormalizeCodeFences(result);
+
+            // 3. Optional: trim excessive blank lines
+            result = CollapseExtraNewlines(result);
+
+            return result.Trim();
+        }
+
+        private static string NormalizeCodeFences( string input )
+        {
+            var lines  = input.Split('\n');
+            var output = new List<string>();
+
+            foreach (var line in lines)
+            {
+                var trimmed = line.Trim();
+
+                if (trimmed.StartsWith("```"))
+                {
+                    // Force fence to be isolated
+                    output.Add(trimmed);
+                }
+                else if (trimmed.EndsWith("```") && trimmed.Length > 3)
+                {
+                    // Handle inline closing fence
+                    var content = trimmed[..^3].TrimEnd();
+                    if (!string.IsNullOrEmpty(content))
+                        output.Add(content);
+
+                    output.Add("```");
+                }
+                else
+                {
+                    output.Add(line);
+                }
+            }
+
+            return string.Join("\n"
+                             , output);
+        }
+
+        private static string CollapseExtraNewlines( string input )
+        {
+            var lines  = input.Split('\n');
+            var output = new List<string>();
+
+            bool lastWasEmpty = false;
+
+            foreach (var line in lines)
+            {
+                var isEmpty = string.IsNullOrWhiteSpace(line);
+
+                if (isEmpty)
+                {
+                    if (!lastWasEmpty)
+                        output.Add(string.Empty);
+                }
+                else
+                {
+                    output.Add(line);
+                }
+
+                lastWasEmpty = isEmpty;
+            }
+
+            return string.Join("\n"
+                             , output);
+        }
+    }
+
+
     private static ConverseRequestDto BuildRequest( string userMessage
-                                                   , string conversationId
-                                                   , string model )
+                                                  , string conversationId
+                                                  , string model )
     {
         var isFastPath = IsFastPathIntent(userMessage);
 

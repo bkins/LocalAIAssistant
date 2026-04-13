@@ -2,19 +2,32 @@ namespace LocalAIAssistant.Core.Display;
 
 public static class UsageDisplayFormatter
 {
-    public static string FormatHeaderSummary( int requestsRemaining
-                                            , int requestsLimit
-                                            , int tokensRemaining
-                                            , int tokensLimit )
+    public static string FormatHeaderSummary( int    requestsRemaining
+                                            , int    requestsLimit
+                                            , string requestsResetLabel
+                                            , int    tokensRemaining
+                                            , int    tokensLimit
+                                            , string tokensResetLabel )
     {
-        var tokLabel = tokensRemaining >= 1000
+        var tokenLabel = tokensRemaining >= 1000
                                ? $"{tokensRemaining / 1000.0:0.#}k"
                                : tokensRemaining.ToString();
-        var tokLabelLimit = tokensLimit >= 1000
+        var tokenLabelLimit = tokensLimit >= 1000
                                ? $"{tokensLimit / 1000.0:0.#}k"
                                : tokensLimit.ToString();
 
-        return $"{requestsRemaining}/{requestsLimit} req · {tokLabel}/{tokLabelLimit} tok";
+        var requestOverLimit = requestsRemaining <= 0;
+        var tokenOverLimit   = tokensRemaining   <= 0;
+        
+        var requestReset = requestOverLimit 
+                                   ? $"({requestsResetLabel})" : string.Empty;
+        var tokenReset = tokenOverLimit
+                                 ? $"({tokensResetLabel})"
+                                 : string.Empty;
+        
+        var result = $"{requestsRemaining}/{requestsLimit} requests {requestReset}· {tokenLabel}/{tokenLabelLimit} tokens {tokenReset}";
+
+        return result;
     }
 
     /// <summary>

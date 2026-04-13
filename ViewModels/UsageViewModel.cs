@@ -106,19 +106,30 @@ public partial class UsageViewModel : ObservableObject
 
             HeaderSummary = FormatHeaderSummary(data.Requests.Remaining
                                               , data.Requests.Limit
+                                              , data.Requests.ResetApproxLocal
                                               , data.Tokens.Remaining
-                                              , data.Tokens.Limit);
+                                              , data.Tokens.Limit
+                                              , data.Tokens.ResetApproxLocal);
 
             HeaderColor = DeriveHeaderColor(data.Requests.UsagePercent
                                            , data.Tokens.UsagePercent);
         });
     }
 
-    private static string FormatHeaderSummary( int requestsRemaining
-                                             , int requestsLimit
-                                             , int tokensRemaining
-                                             , int tokensLimit )
-        => UsageDisplayFormatter.FormatHeaderSummary(requestsRemaining, requestsLimit, tokensRemaining, tokensLimit);
+    private static string FormatHeaderSummary( int    requestsRemaining
+                                             , int    requestsLimit
+                                             , string requestsResetLabel
+                                             , int    tokensRemaining
+                                             , int    tokensLimit
+                                             , string tokensResetLabel )
+    {
+        return UsageDisplayFormatter.FormatHeaderSummary(requestsRemaining
+                                                       , requestsLimit
+                                                       , requestsResetLabel
+                                                       , tokensRemaining
+                                                       , tokensLimit
+                                                       , tokensResetLabel);
+    }
 
     private Color DeriveHeaderColor(double requestPercent, double tokenPercent)
     {

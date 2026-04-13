@@ -77,22 +77,29 @@ public class NativeMarkdownView : VerticalStackLayout
                 ParagraphBlock paragraph  => CreateLabelForParagraph(paragraph)
               , FencedCodeBlock codeBlock => CreateCodeBlock(codeBlock)
               , ListBlock listBlock       => CreateList(listBlock)
-              , HeadingBlock heading      => CreateHeading(heading), _ => null
+              , HeadingBlock heading      => CreateHeading(heading)
+              , QuoteBlock quoteBlock     => CreateQuoteBlock(quoteBlock)
+              , _                         => null
         };
     }
 
     private Label CreateLabelForParagraph( LeafBlock block )
     {
-        var label = new Label
-                    {
-                            TextColor               = TextColor
-                          , FontSize                = 16
-                          , LineHeight              = 1.2
-                          , Margin                  = new Thickness(0, 4)
-                          , LineBreakMode           = LineBreakMode.WordWrap
-                          , HorizontalOptions       = LayoutOptions.Fill
-                          , HorizontalTextAlignment = TextAlignment.Start
-                    };
+        var rawText = ExtractRawText(block);
+        
+        // 🚨 Detect "complex" content (JSON, stack traces, etc.)
+        if (LooksLikeRawText(rawText))
+        {
+            return new Label
+                   {
+                           Text                    = rawText
+                         , TextColor               = TextColor
+                         , FontSize                = 16
+                         , LineBreakMode           = LineBreakMode.WordWrap
+                         , HorizontalOptions       = LayoutOptions.Fill
+                         , HorizontalTextAlignment = TextAlignment.Start
+                   };
+        }
 
         var formatted = new FormattedString();
         if (block.Inline != null)
@@ -104,10 +111,69 @@ public class NativeMarkdownView : VerticalStackLayout
             }
         }
 
+        Label label = new Label();
+        
         label.FormattedText = formatted;
+        
         return label;
     }
 
+    private static bool LooksLikeRawText(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return false;
+
+        return text.Contains("{")
+            && text.Contains("}")
+            && text.Contains(":");
+    }
+    
+    private static string ExtractRawText(LeafBlock block)
+    {
+        if (block.Inline == null)
+            return string.Empty;
+
+        var parts = new List<string>();
+
+        foreach (var inline in block.Inline)
+        {
+            switch (inline)
+            {
+                case LiteralInline literal:
+                    parts.Add(literal.Content.ToString());
+                    break;
+
+                case CodeInline code:
+                    parts.Add(code.Content);
+                    break;
+
+                case LineBreakInline:
+                    parts.Add("\n");
+                    break;
+
+                case EmphasisInline emphasis:
+                    foreach (var child in emphasis)
+                    {
+                        if (child is LiteralInline lit)
+                            parts.Add(lit.Content.ToString());
+                    }
+                    break;
+
+                case LinkInline link:
+                    parts.Add(link.Url ?? "");
+                    break;
+
+                default:
+                    // Fallback: try ToString for unknown inline types
+                    parts.Add(inline.ToString());
+                    break;
+            }
+        }
+
+        return string.Concat(parts);
+    }
+
+    
     private void AddSpans( IList<Span> spans
                          , Inline      inline )
     {
@@ -148,10 +214,91 @@ public class NativeMarkdownView : VerticalStackLayout
                 spans.Add(new Span { Text = "\n" });
                 
                 break;
+            
+            case LinkInline link:
+                var url = link.Url ?? "";
+
+                spans.Add(new Span
+                          {
+                                  Text            = url
+                                , TextColor       = Color.FromArgb("#4EA1FF")
+                                , TextDecorations = TextDecorations.Underline
+                          });
+
+                break;
+
         }
     }
 
-    private View CreateCodeBlock( FencedCodeBlock block )
+    private View CreateCodeBlock(FencedCodeBlock block)
+    {
+        var lines = new List<string>();
+
+        foreach (var line in block.Lines.Lines)
+        {
+            if (line.Slice.Text == null)
+                continue;
+
+            var text = line.Slice.Text
+                           .Substring(line.Slice.Start, line.Slice.Length);
+
+            lines.Add(text);
+        }
+
+        var code = string.Join("\n", lines);
+
+        var codeLabel = new Label
+                        {
+                                Text          = code.Trim()
+                              , FontFamily    = "Consolas"
+                              , TextColor     = Color.FromArgb("#CCCCCC")
+                              , FontSize      = 14
+                              , LineBreakMode = LineBreakMode.WordWrap
+                        };
+
+        return new Border
+               {
+                       BackgroundColor = Color.FromArgb("#1e1e1e")
+                     , Padding         = 10
+                     , Margin          = new Thickness(0, 8)
+                     , StrokeShape     = new RoundRectangle { CornerRadius = 6 }
+                     , Content         = codeLabel
+               };
+
+        // return new Border
+        //        {
+        //                BackgroundColor = Color.FromArgb("#1e1e1e")
+        //              , Padding         = 10
+        //              , Margin          = new Thickness(0, 8)
+        //              , StrokeShape     = new RoundRectangle { CornerRadius = 6 }
+        //              , Content = new ScrollView
+        //                          {
+        //                                  Orientation = ScrollOrientation.Horizontal
+        //                                , Content     = codeLabel
+        //                          }
+        //        };
+    }
+
+    private View CreateQuoteBlock(QuoteBlock block)
+    {
+        var stack = new VerticalStackLayout
+                    {
+                            Padding         = new Thickness(10, 4),
+                            BackgroundColor = Color.FromArgb("#22000000"),
+                            Margin          = new Thickness(0, 6),
+                    };
+
+        foreach (var sub in block)
+        {
+            var view = CreateUiElementForBlock(sub);
+            if (view != null)
+                stack.Add(view);
+        }
+
+        return stack;
+    }
+
+    private View CreateCodeBlock_old_delete( FencedCodeBlock block )
     {
         var code = string.Join(Environment.NewLine
                              , block.Lines.Lines.Take(block.Lines.Count));
@@ -164,6 +311,7 @@ public class NativeMarkdownView : VerticalStackLayout
                               , FontSize      = 14
                               , LineBreakMode = LineBreakMode.NoWrap // Don't wrap code, let it scroll
                         };
+        codeLabel.HorizontalOptions = LayoutOptions.Start;
 
         return new Border
                {

@@ -192,11 +192,28 @@ public partial class ChatViewModel : ObservableObject
                                                     , modelToUse)
                                        .ConfigureAwait(false);
 
-                MainThread.BeginInvokeOnMainThread(() =>
+                if (response.Message.Contains("Groq API returned 429", StringComparison.CurrentCultureIgnoreCase))
                 {
-                    assistantMsg.Content     = response.Message;
-                    assistantMsg.WasFastPath = response.WasFastPath;
-                });
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        //assistantMsg.Content = $"⚠ {response.Message}";
+                        Messages.Add(new Message
+                                     {
+                                             Sender    = "system"
+                                           , Content   = $"⚠ API rate limit reached:\n{response.Message}"
+                                           , Timestamp = DateTime.Now
+                                     });
+                        
+                    });
+                }
+                else
+                {
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        assistantMsg.Content     = response.Message;
+                        assistantMsg.WasFastPath = response.WasFastPath;
+                    });    
+                }
             }
             else
             {
