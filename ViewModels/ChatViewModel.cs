@@ -355,6 +355,7 @@ public partial class ChatViewModel : ObservableObject
           , "pondering"
           , "reflecting"
           , "considering"
+          , "pontificating"
 
             // ── Tier 2: Professional but softer / abstract ───────────────────────────
           , "ruminating"
@@ -374,6 +375,8 @@ public partial class ChatViewModel : ObservableObject
           , "deeming"
           , "opining"
           , "reckoning"
+          , "mustering"
+          , "sussing"
 
             // ── Tier 3: Neutral / approachable ───────────────────────────────────────
           , "crunching"
