@@ -159,7 +159,7 @@
 
                 <Button Grid.Column="1"
                         Text="Send"
-                        Command="{Binding SendAsyncCommand}"
+                        Command="{Binding SendCommand}"
                         IsEnabled="{Binding IsTyping, Converter={StaticResource InverseBoolConverter}}"
                         HeightRequest="44"
                         Padding="16,0"

@@ -138,7 +138,7 @@ public partial class ChatViewModel : ObservableObject
     [RelayCommand]
     public async Task SendAsync()
     {
-        var text = PromptText;
+        var text = PromptText?.Trim();
         if (text.HasNoValue()) return;
 
         Messages.Add(new Message
