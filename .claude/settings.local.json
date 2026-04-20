@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep:*)",
+      "Read(//c/Users/benho/.claude/projects/C--Users-benho-source-repos-LocalAIAssistant/memory//**)",
+      "Read(//c/Users/benho/.claude/projects/C--Users-benho-source-repos-LocalAIAssistant/memory/**)",
+      "Bash(grep -v \"\\\\.cs$\")",
+      "Bash(grep -v \"/obj/\\\\|/bin/\\\\|\\\\.cs$\")",
+      "Bash(dotnet list:*)"
+    ]
+  }
+}
