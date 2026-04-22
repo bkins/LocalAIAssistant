@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using CommunityToolkit.Maui;
 using CP.Client.Core.Common.ConnectivityToApi;
+using CP.Client.Core.Web;
 using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
 using LocalAIAssistant.CognitivePlatform.CpClients.Knowledge;
@@ -46,27 +47,25 @@ public static class MauiProgram
 		
 		var builder = MauiApp.CreateBuilder();
 		
-		builder.Services.AddSingleton<ApiEnvironmentDescriptor>();
-
 		builder.ConfigureFonts(fonts =>
 		{
 			fonts.AddFont("JetBrainsMono-Regular.ttf"
 			            , "JetBrainsMono");
 		});
 
-		builder.Services.AddTransient<EnvironmentGuardHandler>();
+		builder.Services.AddTransient<CP.Client.Core.Web.EnvironmentGuardHandler>();
 
 		builder.Services.AddHttpClient(HttpClientNames.CpApi
 		                             , client =>
 		                               {
 			                               client.BaseAddress = new Uri(BuildEnvironment.ApiBaseUrl);
-		                               }).AddHttpMessageHandler<EnvironmentGuardHandler>();
-		
+		                               }).AddHttpMessageHandler<CP.Client.Core.Web.EnvironmentGuardHandler>();
+
 		builder.Services.AddHttpClient(HttpClientNames.Ollama
 		                             , client =>
 		                               {
 			                               client.BaseAddress = new Uri(BuildEnvironment.OllamaBaseUrl);
-		                               }).AddHttpMessageHandler<EnvironmentGuardHandler>();
+		                               }).AddHttpMessageHandler<CP.Client.Core.Web.EnvironmentGuardHandler>();
 		
 		builder.Services.AddSingleton<ICognitivePlatformClientFactory, CognitivePlatformClientFactory>();
 		builder.Services.AddSingleton<IKnowledgeClientFactory, KnowledgeClientFactory>();
@@ -112,9 +111,12 @@ public static class MauiProgram
 		builder.Logging.AddSerilog();
 
 		// Environment Info and enforcement
-		builder.Services.AddSingleton(new ApiEnvironmentDescriptor(BuildEnvironment.Name
-		                                                         , BuildEnvironment.ApiBaseUrl
-		                                                         , BuildEnvironment.OllamaBaseUrl));
+		builder.Services.AddSingleton(new LocalAIAssistant.Services.ApiEnvironmentDescriptor(BuildEnvironment.Name
+		                                                                                  , BuildEnvironment.ApiBaseUrl
+		                                                                                  , BuildEnvironment.OllamaBaseUrl));
+		builder.Services.AddSingleton(new CP.Client.Core.Web.ApiEnvironmentDescriptor(BuildEnvironment.Name
+		                                                                             , BuildEnvironment.ApiBaseUrl
+		                                                                             , BuildEnvironment.OllamaBaseUrl));
 		
 		builder.Services.AddSingleton<EnvironmentHandshakeState>();
 		builder.Services.AddSingleton<StartupHandshakeService>();

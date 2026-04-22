@@ -166,7 +166,7 @@ public partial class KnowledgeInboxViewModel : ObservableObject
         switch (item.Kind)
         {
             case KnowledgeKind.Journal:
-                await Shell.Current.GoToAsync($"{nameof(JournalDetailPage)}?id={item.Id}&isEdited={item.IsEdited}");
+                await Shell.Current.GoToAsync($"{nameof(JournalDetailPage)}?id={item.Id}");
                 break;
             
             case KnowledgeKind.Task:

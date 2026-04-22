@@ -36,12 +36,6 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
         {
             _journalId = id;
         }
-
-        if (query.TryGetValue("isEdited", out var isEditedObj) &&
-            bool.TryParse(isEditedObj?.ToString(), out var isEdited))
-        {
-            IsEdited = isEdited;
-        }
     }
 
     [RelayCommand]
@@ -64,6 +58,7 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
                 Mood      = entry.Mood;
                 State     = entry.State;
                 MoodScore = entry.MoodScore;
+                IsEdited  = entry.IsEdited;
             }
         }
         catch (Exception e)
