@@ -26,6 +26,9 @@
               3  — Usage indicator (new)
               4  — Spacer
               5  — Offline queue badge
+              
+              TODO: Add a row to the grid and move the environment name and usage indicator below the title so 
+                    everything is visible on smaller device (e.g. a phone).
         -->
         <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto"
               Padding="8"
