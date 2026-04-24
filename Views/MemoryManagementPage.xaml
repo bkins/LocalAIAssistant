@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:converters="clr-namespace:LocalAIAssistant.Converters"
              x:Class="LocalAIAssistant.Views.MemoryManagementPage">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:UtcToLocalDateTimeConverter x:Key="UtcToLocalDateTimeConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
 
     <ScrollView>
     <VerticalStackLayout>
@@ -62,7 +69,7 @@
                                        FontSize="Small"/>
                                 <Label Text="{Binding Content}"
                                        FontSize="Small"/>
-                                <Label Text="{Binding Timestamp, StringFormat='{0:yyyy-MM-dd HH:mm:ss}'}"
+                                <Label Text="{Binding Timestamp, Converter={StaticResource UtcToLocalDateTimeConverter}, StringFormat='{0:yyyy-MM-dd HH:mm:ss}'}"
                                        FontSize="Micro"
                                        TextColor="Gray"/>
                             </VerticalStackLayout>
@@ -87,7 +94,7 @@
                                        FontSize="Small"/>
                                 <Label Text="{Binding Content}"
                                        FontSize="Small"/>
-                                <Label Text="{Binding Timestamp, StringFormat='{0:yyyy-MM-dd HH:mm:ss}'}"
+                                <Label Text="{Binding Timestamp, Converter={StaticResource UtcToLocalDateTimeConverter}, StringFormat='{0:yyyy-MM-dd HH:mm:ss}'}"
                                        FontSize="Micro"
                                        TextColor="Gray"/>
                             </VerticalStackLayout>

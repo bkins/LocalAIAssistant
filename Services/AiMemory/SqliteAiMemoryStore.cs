@@ -165,10 +165,14 @@ public class SqliteAiMemoryStore : IShortTermMemoryStore
         await connection.OpenAsync();
         
         using var cmd = connection.CreateCommand();
-        var sql = $"DELETE FROM {TableName} WHERE Timestamp < '{cutoffUtc}'";
-        cmd.CommandText = sql;
-        
-        // connection.Execute("DELETE FROM Messages WHERE Timestamp < ?", cutoffUtc);
+        // Match the file's binding idiom: Timestamp is stored as TEXT via
+        // DateTime.ToString("o"), so compare against the same lexicographic form.
+        // Binding a raw DateTime here would let the provider pick a different
+        // string format and silently break the < comparison.
+        cmd.CommandText = $"DELETE FROM {TableName} WHERE Timestamp < @cutoff;";
+        cmd.Parameters.AddWithValue("@cutoff"
+                                  , cutoffUtc.ToString("o"));
+
         try
         {
             await cmd.ExecuteNonQueryAsync();
