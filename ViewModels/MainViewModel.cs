@@ -66,7 +66,11 @@ public partial class MainViewModel : ObservableObject
             var prompt = PromptText?.Trim();
             if (string.IsNullOrEmpty(prompt)) return;
 
-            // Create and store user message immediately
+            // Create and store user message immediately.
+            // BUG-13: Message.Timestamp is persisted and filtered as UTC (see
+            // SqliteAiMemoryStore.DeleteMessagesOlderThanAsync / MemoryService recency
+            // window). Keep storage UTC; display-side conversion belongs at the XAML
+            // binding, tracked separately.
             var userPrompt = new Message
                              {
                                  Sender    = Senders.User
