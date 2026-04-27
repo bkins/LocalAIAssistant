@@ -1,4 +1,5 @@
 using CognitivePlatform.Api.Data;
+using LocalAIAssistant.Core.Data;
 
 namespace LocalAIAssistant.Knowledge.Inbox;
 
@@ -8,7 +9,9 @@ public sealed class SqliteLocalKnowledgeStore : ILocalKnowledgeStore
 
     public SqliteLocalKnowledgeStore(string localDbPath)
     {
-        _store = new SqliteObjectStore($"Data Source={localDbPath}");
+        // BACK-08: route via the shared helper instead of interpolating localDbPath
+        // into the connection string directly.
+        _store = new SqliteObjectStore(SqliteConnectionStrings.ForDataSource(localDbPath));
     }
 
     public void Save(KnowledgeItem item)

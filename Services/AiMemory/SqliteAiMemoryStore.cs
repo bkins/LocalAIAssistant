@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using LocalAIAssistant.Core.Data;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Services.Logging;
@@ -9,26 +10,31 @@ namespace LocalAIAssistant.Services.AiMemory;
 public class SqliteAiMemoryStore : IShortTermMemoryStore
 {
     private readonly ILoggingService _loggingService;
-    
+
     private readonly string _dbPath;
+    private readonly string _connectionString;
     private const    string TableName = StringConsts.AiMemoryTableName;
 
     public SqliteAiMemoryStore(ILoggingService loggingService
                              , string          dbPath)
     {
         _loggingService = loggingService;
-        
+
         // _dbPath = System.IO.Path.Combine(FileSystem.AppDataDirectory
         //                                , "AiMemory.db");
-        _dbPath   = dbPath;
-        
+        _dbPath = dbPath;
+
+        // BACK-08: route through the shared LAA.Core helper instead of
+        // interpolating _dbPath into the connection string directly.
+        _connectionString = SqliteConnectionStrings.ForDataSource(_dbPath);
+
         EnsureDatabase();
         _loggingService.LogInformation($"Database created at: {_dbPath}");
     }
 
     private void EnsureDatabase()
     {
-        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        using var connection = new SqliteConnection(_connectionString);
         connection.Open();
 
         using var command = connection.CreateCommand();
@@ -44,7 +50,7 @@ public class SqliteAiMemoryStore : IShortTermMemoryStore
 
     public async Task SaveMessagesAsync(IEnumerable<Message> messages)
     {
-        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync();
 
         using var transaction = connection.BeginTransaction();
@@ -69,7 +75,7 @@ public class SqliteAiMemoryStore : IShortTermMemoryStore
 
     public async Task SaveMessageAsync(Message message)
     {
-        await using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        await using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync();
 
         await using var transaction = connection.BeginTransaction();
@@ -94,7 +100,7 @@ public class SqliteAiMemoryStore : IShortTermMemoryStore
     {
         var messages = new List<Message>();
 
-        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync();
 
         using var cmd = connection.CreateCommand();
@@ -122,7 +128,7 @@ public class SqliteAiMemoryStore : IShortTermMemoryStore
     {
         var messages = new List<Message>();
 
-        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync();
 
         using var cmd = connection.CreateCommand();
@@ -161,7 +167,7 @@ public class SqliteAiMemoryStore : IShortTermMemoryStore
     }
     public async Task DeleteMessagesOlderThanAsync(DateTime cutoffUtc, [CallerMemberName] string caller = null)
     {
-        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync();
         
         using var cmd = connection.CreateCommand();
@@ -186,7 +192,7 @@ public class SqliteAiMemoryStore : IShortTermMemoryStore
     
     public async Task ClearMemoryAsync()
     {
-        using var connection = new SqliteConnection($"Data Source={_dbPath}");
+        using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync();
 
         using var cmd = connection.CreateCommand();
