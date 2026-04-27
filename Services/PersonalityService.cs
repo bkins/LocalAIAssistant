@@ -74,28 +74,28 @@ public class PersonalityService : IPersonalityService
                                , SystemPrompt = "You're a motivational coach. Be encouraging, positive, and supportive."
                              }
 
-                           , new Personality
-                             {
-                                 Name         = StringConsts.RoleplayName
-                               , Description  = StringConsts.RoleplayDescription
-                               , SystemPrompt = StringConsts.RoleplaySystemPrompt
-                               , OllamConfiguration = new OllamaConfig
-                                                      {
-                                                          Host        = StringConsts.OllamaServerUrl
-                                                        , Model       = "mistral-openorca"
-                                                        , Temperature = 0.9f // (0.6–0.9)
-                                                        , NumPredict  = 500  // 100–500 or -2
-                                                      }
-                                 /*
-                                  * General-purpose chatbot conversations
-                                  * Goal: Create engaging, balanced, and coherent conversational responses.
-                                  * temperature: Moderate (0.6–0.9).
-                                  * Effect: Strikes a balance between predictability and creativity, preventing repetitive replies while still sounding natural.
-                                  * num_predict: Moderate (e.g., 100–500).
-                                  * Effect: Limits the length of each turn in the conversation, keeping it concise and on-topic. Use -2 if you want the response to fill the available context in a long conversation.
-                                  * Example: Answering general questions, role-playing, or providing friendly advice.
-                                  */
-                             }
+                           // , new Personality
+                           //   {
+                           //       Name         = ExtraStrings.RoleplayName
+                           //     , Description  = ExtraStrings.RoleplayDescription
+                           //     , SystemPrompt = ExtraStrings.RoleplaySystemPrompt
+                           //     , OllamConfiguration = new OllamaConfig
+                           //                            {
+                           //                                Host        = StringConsts.OllamaServerUrl
+                           //                              , Model       = "mistral-openorca"
+                           //                              , Temperature = 0.9f // (0.6–0.9)
+                           //                              , NumPredict  = 500  // 100–500 or -2
+                           //                            }
+                           //       /*
+                           //        * General-purpose chatbot conversations
+                           //        * Goal: Create engaging, balanced, and coherent conversational responses.
+                           //        * temperature: Moderate (0.6–0.9).
+                           //        * Effect: Strikes a balance between predictability and creativity, preventing repetitive replies while still sounding natural.
+                           //        * num_predict: Moderate (e.g., 100–500).
+                           //        * Effect: Limits the length of each turn in the conversation, keeping it concise and on-topic. Use -2 if you want the response to fill the available context in a long conversation.
+                           //        * Example: Answering general questions, role-playing, or providing friendly advice.
+                           //        */
+                           //   }
                          };
 
         Current = _personalities[0];
