@@ -31,27 +31,23 @@
                     everything is visible on smaller device (e.g. a phone).
         -->
         <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto"
+              RowDefinitions="Auto, Auto"
               Padding="8"
               VerticalOptions="Center">
 
             <!-- Title -->
             <Label Grid.Column="0"
+                   Grid.Row="0"
                    Text="Cognitive Assistant"
                    FontSize="20"
                    FontAttributes="Bold"
                    TextColor="{x:Static local:EnvironmentTheme.PrimaryColor}"
-                   VerticalOptions="Center" />
-
-            <!-- Environment Name -->
-            <Label Grid.Column="1"
-                   Text="{Binding EnvironmentName}"
-                   FontSize="10"
-                   TextColor="Orange"
-                   Margin="8,0"
-                   VerticalOptions="Center"/>
+                   VerticalOptions="Center" 
+                   Margin="0,0,8,0"/>
 
             <!-- API Status Dot -->
-            <Border Grid.Column="2"
+            <Border Grid.Column="1"
+                    Grid.Row="0"
                     WidthRequest="10"
                     HeightRequest="10"
                     BackgroundColor="{Binding StatusColor}"
@@ -62,6 +58,16 @@
                     <TapGestureRecognizer Command="{Binding CheckStatusCommand}" />
                 </Border.GestureRecognizers>
             </Border>
+            
+            <!-- Environment Name -->
+            <Label Grid.Column="2"
+                   Grid.Row="0"
+                   Text="{Binding EnvironmentName}"
+                   FontSize="10"
+                   TextColor="Orange"
+                   Margin="8,0"
+                   VerticalOptions="Center"/>
+
 
             <!-- Usage Indicator -->
             <!--
@@ -70,7 +76,9 @@
                 Tapping refreshes usage on demand.
                 Hidden until the first Groq call has been made.
             -->
-            <Label Grid.Column="3"
+            <Label Grid.Column="0"
+                   Grid.Row="1"
+                   Grid.ColumnSpan="3"
                    Text="{Binding UsageViewModel.HeaderSummary}"
                    TextColor="{Binding UsageViewModel.HeaderColor}"
                    FontSize="10"
