@@ -12,6 +12,12 @@
 
 secrets.json
 
+# BACK-07: holds personality data extracted from StringConsts.cs.
+# Contains personal content; must not land in this public repo.
+# Will be replaced by a permanent appsettings.local.json / user-secrets
+# refactor — until then, the file stays local-only.
+Data/ExtraStrings.cs
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
