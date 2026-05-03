@@ -1,6 +1,7 @@
 using LocalAIAssistant.Services.AiMemory;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
 using LocalAIAssistant.Services.Logging;
+using LocalAIAssistant.Services.Logging.Interfaces;
 
 namespace LocalAIAssistant.Extensions;
 

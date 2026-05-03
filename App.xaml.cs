@@ -2,6 +2,7 @@
 using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.Interfaces;
 using LocalAIAssistant.Services.Logging;
+using LocalAIAssistant.Services.Logging.Interfaces;
 using LocalAIAssistant.ViewModels;
 
 namespace LocalAIAssistant;

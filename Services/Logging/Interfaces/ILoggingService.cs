@@ -1,5 +1,5 @@
 
-namespace LocalAIAssistant.Services.Logging;
+namespace LocalAIAssistant.Services.Logging.Interfaces;
 
 public interface ILoggingService
 {

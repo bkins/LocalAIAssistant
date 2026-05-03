@@ -19,7 +19,8 @@
 		<SingleProject>true</SingleProject>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		
 		<!-- Display name -->
 		<ApplicationTitle>LocalAIAssistant</ApplicationTitle>
 
@@ -203,8 +204,11 @@
 	     files. The Core DLL is already referenced via ProjectReference above — compiling
 	     the source files a second time causes CS0579 (duplicate assembly attributes) and
 	     CS0436 (type conflicts with the referenced assembly). -->
+	<!-- Also exclude LaaUnitTests — that project has xunit references that the MAUI
+	     app doesn't carry, and its obj/ generated files cause the same CS0579 issue. -->
 	<ItemGroup>
 	  <Compile Remove="LocalAIAssistant.Core\**\*.cs" />
+	  <Compile Remove="LaaUnitTests\**\*.cs" />
 	</ItemGroup>
 
 </Project>

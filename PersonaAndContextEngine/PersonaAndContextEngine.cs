@@ -4,6 +4,7 @@ using LocalAIAssistant.PersonaAndContextEngine.Models;
 using LocalAIAssistant.Services.AiMemory;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
 using LocalAIAssistant.Services.Logging;
+using LocalAIAssistant.Services.Logging.Interfaces;
 using Microsoft.Extensions.Options;
 
 namespace LocalAIAssistant.PersonaAndContextEngine;

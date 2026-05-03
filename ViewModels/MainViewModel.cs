@@ -9,6 +9,7 @@ using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
 using LocalAIAssistant.Services.Interfaces;
 using LocalAIAssistant.Services.Logging;
+using LocalAIAssistant.Services.Logging.Interfaces;
 
 namespace LocalAIAssistant.ViewModels;
 

@@ -3,6 +3,7 @@ using LocalAIAssistant.Core.Data;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Services.Logging;
+using LocalAIAssistant.Services.Logging.Interfaces;
 using Microsoft.Data.Sqlite;
 
 namespace LocalAIAssistant.Services.AiMemory;

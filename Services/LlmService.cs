@@ -13,6 +13,7 @@ using LocalAIAssistant.Services.AiMemory.Interfaces;
 using LocalAIAssistant.Services.Contracts;
 using LocalAIAssistant.Services.Interfaces;
 using LocalAIAssistant.Services.Logging;
+using LocalAIAssistant.Services.Logging.Interfaces;
 using Microsoft.Extensions.Options;
 
 namespace LocalAIAssistant.Services;

@@ -1,15 +1,97 @@
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
+using LocalAIAssistant.Personalities;
 using LocalAIAssistant.Services.Interfaces;
 
 namespace LocalAIAssistant.Services;
 
 public class PersonalityService : IPersonalityService
 {
-    private readonly List<Personality>   _personalities;
-    private readonly OllamaConfigService _ollamaConfigService;
+    private readonly List<Personality>                 _personalities;
+    private readonly OllamaConfigService               _ollamaConfigService;
+    private readonly IEnumerable<IPersonalityProvider> _personalityProviders;
+    public           Personality                       Current { get; private set; }
+    
+    public PersonalityService( IEnumerable<IPersonalityProvider> providers,
+                               OllamaConfigService               configService)
+    {
+        _ollamaConfigService = configService;
+        _personalityProviders = providers;
 
-    public Personality Current { get; private set; }
+        _personalities = new List<Personality>();
+        
+        foreach (var provider in _personalityProviders)
+        {
+            _personalities?.AddRange(provider.Load());
+
+            if (provider is JsonPersonalityProvider jsonProvider)
+            {
+                jsonProvider.OnReload += ReloadAll;
+            }
+        }
+
+        SetDefault();
+    }
+    private void SetDefault(Personality? previous = null)
+    {
+        if (_personalities?.Count == 0)
+        {
+            //throw new InvalidOperationException("No personalities available.");
+            var defaultPersonality= new Personality
+            {
+                    Name         = "Friendly Helper"
+                  , Description  = "Kind, casual, and helpful"
+                  , SystemPrompt = "You're a helpful assistant. Be friendly and warm."
+                  , IsDefault    = true
+            };
+            
+            _personalities.Add(defaultPersonality);
+            Current = defaultPersonality;
+            ApplyModelConfig(Current);
+            return;
+        }    
+
+        // Try to preserve current selection
+        if (previous != null)
+        {
+            var match = _personalities.FirstOrDefault(personality => personality.Id == previous.Id);
+
+            if (match != null)
+            {
+                Current = match;
+                ApplyModelConfig(Current);
+                return;
+            }
+        }
+
+        // Otherwise fallback to default
+        Current = _personalities.FirstOrDefault(personality => personality.IsDefault)
+               ?? _personalities.First();
+
+        ApplyModelConfig(Current);
+    }
+
+    private void ApplyModelConfig(Personality personality)
+    {
+        if (personality.ModelConfig == null)
+            return;
+
+        var ollamaConfig = ToOllamaConfig(personality.ModelConfig);
+
+        _ollamaConfigService.UpdateConfig(ollamaConfig);
+
+    }
+    
+    private OllamaConfig ToOllamaConfig(ModelConfig config)
+    {
+        return new OllamaConfig
+               {
+                       Host        = StringConsts.OllamaServerUrl, // or keep existing
+                       Model       = config.Model       ?? "default-model",
+                       Temperature = config.Temperature ?? 0.7f,
+                       NumPredict  = config.NumPredict  ?? 256
+               };
+    }
 
     public PersonalityService(OllamaConfigService ollamaConfigService)
     {
@@ -135,4 +217,16 @@ public class PersonalityService : IPersonalityService
         Current = found;
         _ollamaConfigService.UpdateConfig(Current.OllamConfiguration);
     }
+    
+    
+    private void ReloadAll()
+    {
+        _personalities.Clear();
+
+        foreach (var provider in _personalityProviders)
+            _personalities.AddRange(provider.Load());
+
+        SetDefault();
+    }
+
 }

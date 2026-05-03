@@ -53,19 +53,23 @@ public static class MauiProgram
 			            , "JetBrainsMono");
 		});
 
-		builder.Services.AddTransient<CP.Client.Core.Web.EnvironmentGuardHandler>();
+		builder.Services.AddTransient<EnvironmentGuardHandler>();
 
-		builder.Services.AddHttpClient(HttpClientNames.CpApi
-		                             , client =>
-		                               {
-			                               client.BaseAddress = new Uri(BuildEnvironment.ApiBaseUrl);
-		                               }).AddHttpMessageHandler<CP.Client.Core.Web.EnvironmentGuardHandler>();
+		builder.Services
+		       .AddHttpClient(HttpClientNames.CpApi
+		                    , client =>
+		                      {
+			                      client.BaseAddress = new Uri(BuildEnvironment.ApiBaseUrl);
+		                      })
+		       .AddHttpMessageHandler<EnvironmentGuardHandler>();
 
-		builder.Services.AddHttpClient(HttpClientNames.Ollama
-		                             , client =>
-		                               {
-			                               client.BaseAddress = new Uri(BuildEnvironment.OllamaBaseUrl);
-		                               }).AddHttpMessageHandler<CP.Client.Core.Web.EnvironmentGuardHandler>();
+		builder.Services
+		       .AddHttpClient(HttpClientNames.Ollama
+		                    , client =>
+		                      {
+			                      client.BaseAddress = new Uri(BuildEnvironment.OllamaBaseUrl);
+		                      })
+		       .AddHttpMessageHandler<EnvironmentGuardHandler>();
 		
 		builder.Services.AddSingleton<ICognitivePlatformClientFactory, CognitivePlatformClientFactory>();
 		builder.Services.AddSingleton<IKnowledgeClientFactory, KnowledgeClientFactory>();
@@ -111,7 +115,7 @@ public static class MauiProgram
 		builder.Logging.AddSerilog();
 
 		// Environment Info and enforcement
-		builder.Services.AddSingleton(new LocalAIAssistant.Services.ApiEnvironmentDescriptor(BuildEnvironment.Name
+		builder.Services.AddSingleton(new Services.ApiEnvironmentDescriptor(BuildEnvironment.Name
 		                                                                                  , BuildEnvironment.ApiBaseUrl
 		                                                                                  , BuildEnvironment.OllamaBaseUrl));
 		builder.Services.AddSingleton(new CP.Client.Core.Web.ApiEnvironmentDescriptor(BuildEnvironment.Name

@@ -6,6 +6,7 @@ using CP.Client.Core.Common.ConnectivityToApi;
 using LocalAIAssistant.CognitivePlatform.DTOs;
 using LocalAIAssistant.Core.Environment.Models;
 using LocalAIAssistant.Services.Logging;
+using LocalAIAssistant.Services.Logging.Interfaces;
 using static CP.Client.Core.Intent.FastPathIntentDetector;
 
 namespace LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;

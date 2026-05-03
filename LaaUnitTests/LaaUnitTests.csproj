@@ -5,6 +5,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <!-- Suppress generated assembly-info files. This project lives inside the
+         MAUI project's folder tree; without this, the SDK writes assembly
+         attribute files into obj/ and those files are swept up by the MAUI
+         project's implicit **/*.cs glob, producing CS0579 errors. -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
 
   <ItemGroup>

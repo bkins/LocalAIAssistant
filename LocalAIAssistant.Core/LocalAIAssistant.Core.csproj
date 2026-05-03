@@ -4,6 +4,14 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Suppress generated assembly-info files. This project lives inside the
+         MAUI project's folder tree; without this, the SDK writes
+         LocalAIAssistant.Core.AssemblyInfo.cs and
+         .NETCoreApp,Version=v9.0.AssemblyAttributes.cs into obj/ and those
+         files get swept up by the MAUI project's implicit **/*.cs glob,
+         producing CS0579 duplicate-attribute errors. -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
 
   <ItemGroup>

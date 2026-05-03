@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using LocalAIAssistant.Services.Logging;
 using LocalAIAssistant.Views;
 using CommunityToolkit.Mvvm.Messaging;
+using LocalAIAssistant.Services.Logging.Interfaces;
 
 namespace LocalAIAssistant.ViewModels;
 

@@ -1,6 +1,7 @@
 using CP.Client.Core.Common.ConnectivityToApi;
 using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.Logging;
+using LocalAIAssistant.Services.Logging.Interfaces;
 
 namespace LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 

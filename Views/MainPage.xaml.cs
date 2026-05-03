@@ -1,6 +1,7 @@
 ﻿using System.Collections.Specialized;
 using CP.Client.Core.Avails;
 using LocalAIAssistant.Services.Logging;
+using LocalAIAssistant.Services.Logging.Interfaces;
 using LocalAIAssistant.ViewModels;
 
 namespace LocalAIAssistant.Views;

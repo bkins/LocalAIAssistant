@@ -5,6 +5,7 @@ using LocalAIAssistant.PersonaAndContextEngine.Interfaces;
 using LocalAIAssistant.PersonaAndContextEngine.Models;
 using LocalAIAssistant.Services.Interfaces;
 using LocalAIAssistant.Services.Logging;
+using LocalAIAssistant.Services.Logging.Interfaces;
 
 namespace LocalAIAssistant.PersonaAndContextEngine;
 

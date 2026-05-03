@@ -58,6 +58,8 @@ if ($SolutionPath -xor $SolutionName)
     $UseCurrentFolder = $true
 }
 
+Write-Host "UseCurrentFolder $UseCurrentFolder"
+
 # If -UseCurrentFolder is provided or UseCurrentFolder is true, 
 # set SolutionPath and SolutionName based on the current folder
 if ($UseCurrentFolder) 

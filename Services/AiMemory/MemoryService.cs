@@ -4,6 +4,7 @@ using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Extensions;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
 using LocalAIAssistant.Services.Logging;
+using LocalAIAssistant.Services.Logging.Interfaces;
 using Microsoft.Extensions.Options;
 
 namespace LocalAIAssistant.Services.AiMemory;

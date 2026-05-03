@@ -17,5 +17,9 @@ public partial class Personality : ObservableObject
     [ObservableProperty] private bool    _isUserGenerated;
     [ObservableProperty] private bool    _isDefault;          // <-- moved here from Persona
 
-    public override string ToString() => Name;
+    [ObservableProperty] private List<string> _tags;
+    [ObservableProperty] private ModelConfig? _modelConfig;
+    
+    public override string       ToString()  => Name;
+    
 }
