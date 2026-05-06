@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using CP.Client.Core.Avails;
@@ -42,8 +42,6 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
 
             response = await _httpClient.PostAsJsonAsync("api/conversation/converse", request);
 
-            response.EnsureSuccessStatusCode();
-
             if (response.IsSuccessStatusCode)
             {
                 Connectivity.ReportOnline();
@@ -51,6 +49,9 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
                 return await response.Content.ReadFromJsonAsync<ConverseResponseDto>()
                     ?? new ConverseResponseDto { Message = "(empty response)" };
             }
+
+            // Server responded with an error status — not a connectivity failure
+            return new ConverseResponseDto { Message = await BuildServerErrorMessageAsync(response) };
         }
         catch (HttpRequestException ex)
         {
@@ -61,19 +62,35 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
             Connectivity.ReportOffline(ex);
         }
 
-        var errorResponse   = response.Content.ReadFromJsonAsync<ConverseResponseDto>();
-        if (errorResponse.Result?.Message.Contains("Rate limit reached", StringComparison.OrdinalIgnoreCase) ?? false)
-        {
-            var formattedMessage = MarkdownFormatter.Format(errorResponse.Result.Message);
-            return new ConverseResponseDto { Message = formattedMessage };
-        }
-        
+        // Only reached on genuine network failure / API offline
         var shortenTextBy   = userMessage.Length < 25 ? userMessage.Length : 25;
-        var responseMessage = $"Added to queued:{Environment.NewLine}{userMessage[..shortenTextBy]}...{Environment.NewLine}{conversationId}";
+        var responseMessage = $"Added to queued:{Environment.NewLine}{userMessage[..shortenTextBy]}...";
 
         Connectivity.ReportOffline(responseMessage);
 
         return new ConverseResponseDto { Message = responseMessage };
+    }
+
+    private static async Task<string> BuildServerErrorMessageAsync( HttpResponseMessage response )
+    {
+        var statusCode = (int)response.StatusCode;
+
+        try
+        {
+            var errorDto = await response.Content.ReadFromJsonAsync<ConverseResponseDto>();
+
+            if (errorDto?.Message.Contains("Rate limit reached", StringComparison.OrdinalIgnoreCase) ?? false)
+                return MarkdownFormatter.Format(errorDto.Message);
+
+            if (string.IsNullOrWhiteSpace(errorDto?.Message).Not())
+                return $"Server error ({statusCode}): {errorDto!.Message}";
+        }
+        catch
+        {
+            // Content not JSON or not parseable — fall through to generic message
+        }
+
+        return $"Server error: the API returned HTTP {statusCode} {response.ReasonPhrase}.";
     }
 
     public static class MarkdownFormatter

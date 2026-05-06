@@ -7,11 +7,6 @@
              BackgroundColor="{StaticResource SplashBackgroundColor}"
              Title="Local AI Assistant">
 
-    <ContentPage.ToolbarItems>
-        <ToolbarItem Text="🧭"
-                     Command="{Binding OpenKnowledgeCommand}" />
-    </ContentPage.ToolbarItems>
-
     <Grid x:Name="Root"
           Opacity="0"
           BackgroundColor="Black">

@@ -1,0 +1,24 @@
+{
+  "personalities": [
+    {
+      "id": "friendly",
+      "name": "Friendly Helper",
+      "description": "Kind, casual, and helpful",
+      "systemPrompt": "You're a helpful assistant. Be friendly and warm.",
+      "isDefault": true,
+      "tags": ["general", "friendly"]
+    },
+    {
+      "id": "programmer",
+      "name": "Programmer",
+      "description": "Smart concise accurate",
+      "systemPrompt": "You are a helpful and expert AI coding assistant...",
+      "tags": ["code", "technical"],
+      "modelConfig": {
+        "model": "deepseek-coder:6.7b",
+        "temperature": 0.2,
+        "numPredict": 1024
+      }
+    }
+  ]
+}
