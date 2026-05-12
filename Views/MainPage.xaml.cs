@@ -151,10 +151,7 @@ public partial class MainPage : ContentPage
         {
             _pulseCts?.Cancel();
         }
-        catch
-        {
-            // Gulp
-        }
+        catch (ObjectDisposedException){ /* Gulp */ }
         finally
         {
             _pulseCts?.Dispose();
