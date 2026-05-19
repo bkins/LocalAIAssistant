@@ -1,4 +1,5 @@
 using LocalAIAssistant.Core.Personalities;
+using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 
 namespace LocalAIAssistant.Personalities;
@@ -55,25 +56,38 @@ public class JsonPersonalityProvider : IPersonalityProvider, IDisposable
 
     private static Personality ToPersonality(PersonalityRecord record)
     {
+        ModelConfig? modelConfig = record.ModelConfig == null
+            ? null
+            : new ModelConfig
+              {
+                    Model       = record.ModelConfig.Model
+                  , Temperature = record.ModelConfig.Temperature
+                  , NumPredict  = record.ModelConfig.NumPredict
+              };
+
+        OllamaConfig? ollamaConfig = modelConfig == null
+            ? null
+            : new OllamaConfig
+              {
+                    Host        = StringConsts.OllamaServerUrl
+                  , Model       = modelConfig.Model       ?? "default-model"
+                  , Temperature = modelConfig.Temperature ?? 0.7f
+                  , NumPredict  = modelConfig.NumPredict  ?? 256
+              };
+
         return new Personality
                {
-                     Id                = record.Id
-                   , Name              = record.Name
-                   , Description       = record.Description
-                   , SystemPrompt      = record.SystemPrompt ?? string.Empty
-                   , IsDefault         = record.IsDefault
-                   , Tone              = record.Tone
-                   , UseCase           = record.UseCase
-                   , VoiceId           = record.VoiceId
-                   , Tags              = record.Tags
-                   , ModelConfig       = record.ModelConfig == null
-                                             ? null
-                                             : new ModelConfig
-                                               {
-                                                     Model       = record.ModelConfig.Model
-                                                   , Temperature = record.ModelConfig.Temperature
-                                                   , NumPredict  = record.ModelConfig.NumPredict
-                                               }
+                     Id                 = record.Id
+                   , Name               = record.Name
+                   , Description        = record.Description
+                   , SystemPrompt       = record.SystemPrompt ?? string.Empty
+                   , IsDefault          = record.IsDefault
+                   , Tone               = record.Tone
+                   , UseCase            = record.UseCase
+                   , VoiceId            = record.VoiceId
+                   , Tags               = record.Tags
+                   , ModelConfig        = modelConfig
+                   , OllamConfiguration = ollamaConfig
                };
     }
 

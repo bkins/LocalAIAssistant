@@ -40,9 +40,7 @@ public static class ServiceCollectionExtensions
             client.Timeout     = TimeSpan.FromSeconds(300);
             client.BaseAddress = new Uri(config.Host);
         });
-        services.AddSingleton<IPersonalityProvider>(static _ =>
-            new JsonPersonalityProvider(
-                Path.Combine(FileSystem.AppDataDirectory, StringConsts.PersonalitiesFileName)));
+        services.AddSingleton<IPersonalityProvider, BuiltInPersonalityProvider>();
 
         services.AddSingleton<IPersonalityProvider>(static _ =>
             new JsonPersonalityProvider(
