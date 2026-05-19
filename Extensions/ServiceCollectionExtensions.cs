@@ -1,4 +1,5 @@
 using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
+using LocalAIAssistant.Core.Personality;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Knowledge.Inbox;
@@ -31,7 +32,15 @@ public static class ServiceCollectionExtensions
                                                   , string memoryFilePath)
     {
         services.AddSingleton<IRoleInjectionService, RoleInjectionService>();
-        
+
+        services.AddSingleton<IPersonalityApiClient>(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            var client  = factory.CreateClient(HttpClientNames.CpApi);
+            return new PersonalityApiClient(client);
+        });
+        services.AddSingleton<IPersonalityProvider, ApiPersonalityProvider>();
+
         services.AddTransient<ILlmService, LlmService>();
         services.AddHttpClient<LlmService>((sp, client) =>
         {
