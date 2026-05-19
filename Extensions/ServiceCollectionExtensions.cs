@@ -8,6 +8,7 @@ using LocalAIAssistant.Knowledge.Tasks.ViewModels;
 using LocalAIAssistant.Knowledge.Tasks.Views;
 using LocalAIAssistant.PersonaAndContextEngine;
 using LocalAIAssistant.PersonaAndContextEngine.Interfaces;
+using LocalAIAssistant.Personalities;
 using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.AiMemory;
 using LocalAIAssistant.Services.Interfaces;
@@ -39,6 +40,14 @@ public static class ServiceCollectionExtensions
             client.Timeout     = TimeSpan.FromSeconds(300);
             client.BaseAddress = new Uri(config.Host);
         });
+        services.AddSingleton<IPersonalityProvider>(static _ =>
+            new JsonPersonalityProvider(
+                Path.Combine(FileSystem.AppDataDirectory, StringConsts.PersonalitiesFileName)));
+
+        services.AddSingleton<IPersonalityProvider>(static _ =>
+            new JsonPersonalityProvider(
+                Path.Combine(FileSystem.AppDataDirectory, StringConsts.PersonalitiesLocalFileName)));
+
         services.AddSingleton<IPersonalityService, PersonalityService>();
         services.AddSingleton<ApiHealthService>();
         services.AddSingleton<ILogger>(Log.Logger);

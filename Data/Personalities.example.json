@@ -1,0 +1,20 @@
+{
+  "personalities": [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "name": "My Custom Persona",
+      "description": "Short label shown in the persona picker",
+      "systemPrompt": "You are ... (full system prompt goes here)",
+      "isDefault": false,
+      "tone": "Supportive",
+      "useCase": "Creative writing",
+      "voiceId": null,
+      "tags": ["custom", "creative"],
+      "modelConfig": {
+        "model": "mistral-openorca",
+        "temperature": 0.8,
+        "numPredict": 500
+      }
+    }
+  ]
+}

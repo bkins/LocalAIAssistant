@@ -1,12 +1,12 @@
-using System.Text.Json;
+using LocalAIAssistant.Core.Personalities;
 using LocalAIAssistant.Data.Models;
 
 namespace LocalAIAssistant.Personalities;
 
 public class JsonPersonalityProvider : IPersonalityProvider, IDisposable
 {
-    private readonly string            _filePath;
-    private readonly FileSystemWatcher _watcher;
+    private readonly PersonalityCatalogLoader _loader;
+    private readonly FileSystemWatcher        _watcher;
 
     private List<Personality> _cache = new();
 
@@ -14,16 +14,16 @@ public class JsonPersonalityProvider : IPersonalityProvider, IDisposable
 
     public JsonPersonalityProvider(string filePath)
     {
-        _filePath = filePath;
+        _loader = new PersonalityCatalogLoader(filePath);
 
-        LoadFromFile();
+        RefreshCache();
 
         var directory = Path.GetDirectoryName(filePath)!;
         var file      = Path.GetFileName(filePath);
 
         _watcher = new FileSystemWatcher(directory, file)
                    {
-                           NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size
+                       NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size
                    };
 
         _watcher.Changed             += (_, _) => Reload();
@@ -36,31 +36,45 @@ public class JsonPersonalityProvider : IPersonalityProvider, IDisposable
     {
         try
         {
-            // small delay to avoid file lock issues
             Thread.Sleep(50);
-
-            LoadFromFile();
+            RefreshCache();
             OnReload?.Invoke();
         }
         catch
         {
-            // swallow for now (or log)
+            // swallow; a reload failure leaves the previous cache intact
         }
     }
 
-    private void LoadFromFile()
+    private void RefreshCache()
     {
-        if (!File.Exists(_filePath))
-        {
-            _cache = new List<Personality>();
-            return;
-        }
+        _cache = _loader.Load()
+                        .Select(ToPersonality)
+                        .ToList();
+    }
 
-        var json = File.ReadAllText(_filePath);
-
-        var wrapper = JsonSerializer.Deserialize<PersonalityFile>(json);
-
-        _cache = wrapper?.Personalities ?? new List<Personality>();
+    private static Personality ToPersonality(PersonalityRecord record)
+    {
+        return new Personality
+               {
+                     Id                = record.Id
+                   , Name              = record.Name
+                   , Description       = record.Description
+                   , SystemPrompt      = record.SystemPrompt ?? string.Empty
+                   , IsDefault         = record.IsDefault
+                   , Tone              = record.Tone
+                   , UseCase           = record.UseCase
+                   , VoiceId           = record.VoiceId
+                   , Tags              = record.Tags
+                   , ModelConfig       = record.ModelConfig == null
+                                             ? null
+                                             : new ModelConfig
+                                               {
+                                                     Model       = record.ModelConfig.Model
+                                                   , Temperature = record.ModelConfig.Temperature
+                                                   , NumPredict  = record.ModelConfig.NumPredict
+                                               }
+               };
     }
 
     public void Dispose() => _watcher.Dispose();
