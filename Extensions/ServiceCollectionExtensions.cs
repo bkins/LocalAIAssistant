@@ -1,4 +1,5 @@
 using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
+using LocalAIAssistant.Core.Personality;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Knowledge.Inbox;
@@ -8,6 +9,7 @@ using LocalAIAssistant.Knowledge.Tasks.ViewModels;
 using LocalAIAssistant.Knowledge.Tasks.Views;
 using LocalAIAssistant.PersonaAndContextEngine;
 using LocalAIAssistant.PersonaAndContextEngine.Interfaces;
+using LocalAIAssistant.Personalities;
 using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.AiMemory;
 using LocalAIAssistant.Services.Interfaces;
@@ -30,7 +32,15 @@ public static class ServiceCollectionExtensions
                                                   , string memoryFilePath)
     {
         services.AddSingleton<IRoleInjectionService, RoleInjectionService>();
-        
+
+        services.AddSingleton<IPersonalityApiClient>(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            var client  = factory.CreateClient(HttpClientNames.CpApi);
+            return new PersonalityApiClient(client);
+        });
+        services.AddSingleton<IPersonalityProvider, ApiPersonalityProvider>();
+
         services.AddTransient<ILlmService, LlmService>();
         services.AddHttpClient<LlmService>((sp, client) =>
         {
@@ -39,6 +49,12 @@ public static class ServiceCollectionExtensions
             client.Timeout     = TimeSpan.FromSeconds(300);
             client.BaseAddress = new Uri(config.Host);
         });
+        services.AddSingleton<IPersonalityProvider, BuiltInPersonalityProvider>();
+
+        services.AddSingleton<IPersonalityProvider>(static _ =>
+            new JsonPersonalityProvider(
+                Path.Combine(FileSystem.AppDataDirectory, StringConsts.PersonalitiesLocalFileName)));
+
         services.AddSingleton<IPersonalityService, PersonalityService>();
         services.AddSingleton<ApiHealthService>();
         services.AddSingleton<ILogger>(Log.Logger);
