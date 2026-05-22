@@ -114,12 +114,16 @@ public partial class MainPage : ContentPage
 
     // Both the Editor's Completed event and the Entry's Completed event
     // funnel through here — one path, one command.
-    // UX-01: guard _isPageActive so that keyboard-dismiss events fired during
-    // navigation (app going to background, shell page change) don't submit
-    // whatever text is sitting in the editor.
+    // UX-01: _isPageActive guard — keyboard-dismiss events fired during navigation
+    //        (app going to background, shell page change) must not submit text.
+    // BUG-27: IsFocused guard — on Windows, Editor.Completed fires from LostFocus,
+    //         so alt-tabbing away would otherwise submit the in-progress prompt.
+    //         When the Return key triggers Completed the editor is still focused;
+    //         when focus-loss triggers it the editor is already unfocused.
     private void OnEntryCompleted(object? sender, EventArgs e)
     {
         if (!_isPageActive) return;
+        if (sender is VisualElement element && !element.IsFocused) return;
         if (ChatViewModel.SendCommand.CanExecute(null))
             ChatViewModel.SendCommand.Execute(null);
     }
