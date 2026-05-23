@@ -1,3 +1,5 @@
+using System.Threading;
+using System.Threading.Tasks;
 using LocalAIAssistant.Data.Models;
 
 namespace LocalAIAssistant.Avails.ThinkingAnimation;
