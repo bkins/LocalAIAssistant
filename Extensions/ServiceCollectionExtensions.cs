@@ -1,4 +1,5 @@
 using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
+using LocalAIAssistant.Core.ConversationHistory;
 using LocalAIAssistant.Core.Personality;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
@@ -40,6 +41,13 @@ public static class ServiceCollectionExtensions
             return new PersonalityApiClient(client);
         });
         services.AddSingleton<IPersonalityProvider, ApiPersonalityProvider>();
+
+        services.AddSingleton<IConversationHistoryClient>(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            var client  = factory.CreateClient(HttpClientNames.CpApi);
+            return new ConversationHistoryClient(client);
+        });
 
         services.AddTransient<ILlmService, LlmService>();
         services.AddHttpClient<LlmService>((sp, client) =>
