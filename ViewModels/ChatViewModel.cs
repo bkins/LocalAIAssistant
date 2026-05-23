@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CP.Client.Core.Common.ConnectivityToApi;
 using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
+using LocalAIAssistant.Core.ConversationHistory;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Extensions;
@@ -33,6 +34,7 @@ public partial class ChatViewModel : ObservableObject
     private readonly IOfflineQueueService             _offlineQueueService;
     private readonly ApiHealthService                 _apiHealthService;
     private readonly AppShellMasterViewModel          _appShellMasterViewModel;
+    private readonly IConversationHistoryClient       _historyClient;
 
     // ── Connectivity ──────────────────────────────────────────────────────────
     [ObservableProperty] private bool _isOffline;
@@ -51,7 +53,7 @@ public partial class ChatViewModel : ObservableObject
     public ObservableCollection<Message>     Messages      { get; } = new();
     public ObservableCollection<Personality> Personalities { get; } = new();
 
-    public string ConversationId { get; } = Guid.NewGuid().ToString();
+    public string ConversationId { get; }
 
     public ChatViewModel( ILlmService                      llmService
                         , IConversationMemory              conversationMemory
@@ -64,7 +66,8 @@ public partial class ChatViewModel : ObservableObject
                         , IConnectivityState               apiState
                         , IOfflineQueueService             offlineQueueService
                         , ApiHealthService                 apiHealthService
-                        , AppShellMasterViewModel          appShellMasterViewModel )
+                        , AppShellMasterViewModel          appShellMasterViewModel
+                        , IConversationHistoryClient       historyClient )
     {
         _llmService              = llmService;
         _conversationMemory      = conversationMemory;
@@ -78,18 +81,57 @@ public partial class ChatViewModel : ObservableObject
         _offlineQueueService     = offlineQueueService;
         _apiHealthService        = apiHealthService;
         _appShellMasterViewModel = appShellMasterViewModel;
+        _historyClient           = historyClient;
+
+        // ENH-20: persist ConversationId across app restarts so server history can be retrieved.
+        var savedConversationId = Preferences.Get(StringConsts.ActiveConversationIdKey, string.Empty);
+        if (string.IsNullOrEmpty(savedConversationId))
+        {
+            savedConversationId = Guid.NewGuid().ToString();
+            Preferences.Set(StringConsts.ActiveConversationIdKey, savedConversationId);
+        }
+        ConversationId = savedConversationId;
 
         _apiState.ConnectivityChanged += (_, _) => IsOffline = _apiState.IsOffline;
     }
 
     public async Task InitializeAsync()
     {
-        var stm = await _conversationMemory.LoadShortTermAsync();
-
         Messages.Clear();
 
-        foreach (var message in stm.OrderBy(message => message.Timestamp))
-            Messages.Add(message);
+        // ENH-20: server-first rehydration. On any exception fall back to local STM silently.
+        var serverLoaded = false;
+
+        try
+        {
+            var turns = await _historyClient.GetHistoryAsync(ConversationId);
+            if (turns.Count > 0)
+            {
+                foreach (var turn in turns)
+                {
+                    Messages.Add(new Message
+                                 {
+                                         Sender         = turn.Role
+                                       , Content        = turn.Content
+                                       , Timestamp      = turn.Timestamp.LocalDateTime
+                                       , ConversationId = ConversationId
+                                 });
+                }
+                serverLoaded = true;
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // Server history unavailable — fall through to local STM.
+            _log.LogError(ex, "Failed to load conversation history from server; falling back to local STM");
+        }
+
+        if (!serverLoaded)
+        {
+            var stm = await _conversationMemory.LoadShortTermAsync();
+            foreach (var message in stm.OrderBy(message => message.Timestamp))
+                Messages.Add(message);
+        }
 
         Personalities.Clear();
 

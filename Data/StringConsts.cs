@@ -13,7 +13,8 @@ public static class StringConsts
     public const string OllamaConfigJsonFileName   = "OllamaConfig.json";
     public const string PersonalitiesFileName      = "Personalities.json";
     public const string PersonalitiesLocalFileName = "Personalities.local.json";
-    public const string SelectedPersonalityPrefKey = "SelectedPersonalityName";
+    public const string SelectedPersonalityPrefKey  = "SelectedPersonalityName";
+    public const string ActiveConversationIdKey     = "ActiveConversationId";
 
     public static string ApplicationJsonMediaType = "application/json";
 
