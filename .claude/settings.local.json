@@ -7,9 +7,17 @@
       "Bash(grep -v \"\\\\.cs$\")",
       "Bash(grep -v \"/obj/\\\\|/bin/\\\\|\\\\.cs$\")",
       "Bash(dotnet list:*)",
-      "Bash(ls \"/c/Users/benho/source/repos/LocalAIAssistant/\" 2>&1 | head -40)",
-      "Bash(ls \"/c/Users/benho/source/Application Documentation/The CP Universe/Natural Language Command System/\" 2>&1 | head -20)",
-      "PowerShell(dotnet build LocalAIAssistant.sln -c Debug -f net9.0-windows10.0.19041.0 /p:WarningLevel=4 2>&1)"
+      "mcp__Desktop_Commander__read_file",
+      "Bash(dotnet test *)",
+      "Bash(dotnet build *)",
+      "Bash(dotnet msbuild *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(gh pr create --title 'ENH-11 Phase 2: ApiPersonalityProvider — load personalities from CP API' --body ' *)",
+      "Bash(git fetch *)",
+      "Bash(git rebase *)",
+      "Bash(git stash *)"
     ]
   }
 }
