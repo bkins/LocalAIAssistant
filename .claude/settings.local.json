@@ -6,7 +6,10 @@
       "Read(//c/Users/benho/.claude/projects/C--Users-benho-source-repos-LocalAIAssistant/memory/**)",
       "Bash(grep -v \"\\\\.cs$\")",
       "Bash(grep -v \"/obj/\\\\|/bin/\\\\|\\\\.cs$\")",
-      "Bash(dotnet list:*)"
+      "Bash(dotnet list:*)",
+      "Bash(ls \"/c/Users/benho/source/repos/LocalAIAssistant/\" 2>&1 | head -40)",
+      "Bash(ls \"/c/Users/benho/source/Application Documentation/The CP Universe/Natural Language Command System/\" 2>&1 | head -20)",
+      "PowerShell(dotnet build LocalAIAssistant.sln -c Debug -f net9.0-windows10.0.19041.0 /p:WarningLevel=4 2>&1)"
     ]
   }
 }

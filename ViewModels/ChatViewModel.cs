@@ -142,14 +142,20 @@ public partial class ChatViewModel : ObservableObject
         var text = PromptText?.Trim();
         if (text.HasNoValue()) return;
 
-        Messages.Add(new Message
-                     {
-                             Sender    = "user"
-                           , Content   = text
-                           , Timestamp = DateTime.Now
-                     });
+        var userMessage = new Message
+                          {
+                                  Sender         = "user"
+                                , Content        = text
+                                , Timestamp      = DateTime.Now
+                                , ConversationId = ConversationId
+                          };
+        Messages.Add(userMessage);
 
         PromptText = string.Empty;
+
+        // BUG-32: persist user message to client-side STM so the conversation survives app restart.
+        // Done before the API call so a network failure doesn't lose the user's typed input.
+        await PersistToShortTermAsync(userMessage);
 
         var modelToUse = "qwen2.5:14b";
 
@@ -157,9 +163,10 @@ public partial class ChatViewModel : ObservableObject
 
         var assistantMsg = new Message
                            {
-                                   Sender    = "assistant"
-                                 , Content   = "thinking"
-                                 , Timestamp = DateTime.Now
+                                   Sender         = "assistant"
+                                 , Content        = "thinking"
+                                 , Timestamp      = DateTime.Now
+                                 , ConversationId = ConversationId
                            };
         Messages.Add(assistantMsg);
 
@@ -168,6 +175,10 @@ public partial class ChatViewModel : ObservableObject
         // Tracks whether the API was actually reached so we only
         // refresh usage when a real Groq call may have been made.
         var reachedApi = false;
+
+        // BUG-32: only persist the assistant message on real success branches.
+        // 429, exception, and offline-enqueue paths leave assistantMsg as transient UI ephemera.
+        var assistantSucceeded = false;
 
         try
         {
@@ -204,16 +215,17 @@ public partial class ChatViewModel : ObservableObject
                                            , Content   = $"⚠ API rate limit reached:\n{response.Message}"
                                            , Timestamp = DateTime.Now
                                      });
-                        
+
                     });
                 }
                 else
                 {
-                    MainThread.BeginInvokeOnMainThread(() =>
+                    await MainThread.InvokeOnMainThreadAsync(() =>
                     {
                         assistantMsg.Content     = response.Message;
                         assistantMsg.WasFastPath = response.WasFastPath;
-                    });    
+                    });
+                    assistantSucceeded = true;
                 }
             }
             else
@@ -235,6 +247,12 @@ public partial class ChatViewModel : ObservableObject
                         assistantMsg.Content += chunk;
                     });
                 }
+
+                // Flush queued chunk callbacks so assistantMsg.Content reflects the final stream state
+                // before persisting. BeginInvokeOnMainThread runs FIFO on the dispatcher — awaiting an
+                // empty InvokeOnMainThreadAsync ensures all prior chunks have been applied.
+                await MainThread.InvokeOnMainThreadAsync(() => { });
+                assistantSucceeded = true;
             }
         }
         catch (Exception ex)
@@ -266,6 +284,9 @@ public partial class ChatViewModel : ObservableObject
             if (reachedApi)
                 _ = _appShellMasterViewModel.OnConversationTurnCompletedAsync();
         }
+
+        if (assistantSucceeded)
+            await PersistToShortTermAsync(assistantMsg);
     }
 
     // ── Ancillary commands ────────────────────────────────────────────────────
@@ -290,12 +311,19 @@ public partial class ChatViewModel : ObservableObject
     private async Task RefreshQueueStatusAsync()
         => PendingQueueCount = await _offlineQueueService.GetPendingCountAsync();
 
-    private async Task RememberEntryAsync(Message message)
+    private async Task PersistToShortTermAsync(Message message)
     {
-        await _conversationMemory.AddAsync(message);
-        await _memory.SaveEntryAsync(message.Sender
-                                   , message.Content
-                                   , message.Timestamp);
+        try
+        {
+            await _conversationMemory.AddAsync(message);
+        }
+        catch (Exception ex)
+        {
+            // STM persistence is non-fatal — the message is still in the in-memory
+            // Messages collection for the current session. Log and continue so a
+            // SQLite hiccup doesn't break the chat UX.
+            _log.LogError(ex, "Failed to persist message to short-term memory");
+        }
     }
 
     // ── Thinking animation ────────────────────────────────────────────────────
