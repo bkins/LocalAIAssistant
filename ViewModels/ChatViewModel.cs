@@ -53,7 +53,7 @@ public partial class ChatViewModel : ObservableObject
     public ObservableCollection<Message>     Messages      { get; } = new();
     public ObservableCollection<Personality> Personalities { get; } = new();
 
-    public string ConversationId { get; }
+    public string ConversationId { get; private set; }
 
     public ChatViewModel( ILlmService                      llmService
                         , IConversationMemory              conversationMemory
@@ -345,7 +345,13 @@ public partial class ChatViewModel : ObservableObject
 
         Messages.Clear();
 
-        _log.LogInformation("Started new chat (STM cleared).");
+        // ENH-20 fix: rotate the ConversationId so subsequent sends and the next
+        // InitializeAsync load start a fresh server-side thread, not the old one.
+        var newConversationId = Guid.NewGuid().ToString();
+        Preferences.Set(StringConsts.ActiveConversationIdKey, newConversationId);
+        ConversationId = newConversationId;
+
+        _log.LogInformation("Started new chat (STM cleared, ConversationId rotated).");
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
