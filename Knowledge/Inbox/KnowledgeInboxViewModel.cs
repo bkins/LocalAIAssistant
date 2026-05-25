@@ -174,6 +174,7 @@ public partial class KnowledgeInboxViewModel : ObservableObject
 
         // Optimistic UI update
         Items.Remove(item);
+        RebuildGroups();
     }
 
     
