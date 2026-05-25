@@ -366,6 +366,22 @@ public partial class ChatViewModel : ObservableObject
         _log.LogInformation("Started new chat (STM cleared, ConversationId rotated).");
     }
 
+    public async Task SwitchConversationAsync(string conversationId)
+    {
+        Messages.Clear();
+
+        Preferences.Set(StringConsts.ActiveConversationIdKey, conversationId);
+        ConversationId = conversationId;
+
+        // InitializeAsync falls back to STM when the server is unreachable. Clear STM
+        // only after the load so offline users see their locally-persisted history
+        // rather than an empty chat.
+        await InitializeAsync();
+
+        await _conversationMemory.ClearShortTermAsync();
+        await _conversationMemory.ClearAsync();
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private async Task RefreshQueueStatusAsync()
