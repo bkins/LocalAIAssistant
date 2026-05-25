@@ -366,6 +366,19 @@ public partial class ChatViewModel : ObservableObject
         _log.LogInformation("Started new chat (STM cleared, ConversationId rotated).");
     }
 
+    public async Task SwitchConversationAsync(string conversationId)
+    {
+        await _conversationMemory.ClearShortTermAsync();
+        await _conversationMemory.ClearAsync();
+
+        Messages.Clear();
+
+        Preferences.Set(StringConsts.ActiveConversationIdKey, conversationId);
+        ConversationId = conversationId;
+
+        await InitializeAsync();
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private async Task RefreshQueueStatusAsync()

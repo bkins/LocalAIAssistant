@@ -1,6 +1,7 @@
 using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
 using LocalAIAssistant.Core.ConversationHistory;
 using LocalAIAssistant.Core.Personality;
+using LocalAIAssistant.Views;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Knowledge.Inbox;
@@ -47,6 +48,13 @@ public static class ServiceCollectionExtensions
             var factory = sp.GetRequiredService<IHttpClientFactory>();
             var client  = factory.CreateClient(HttpClientNames.CpApi);
             return new ConversationHistoryClient(client);
+        });
+
+        services.AddSingleton<IConversationApiClient>(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            var client  = factory.CreateClient(HttpClientNames.CpApi);
+            return new ConversationApiClient(client);
         });
 
         services.AddTransient<ILlmService, LlmService>();
@@ -129,10 +137,12 @@ public static class ServiceCollectionExtensions
         services.AddTransient<JournalRevisionHistoryViewModel>();
         
         services.AddTransient<TaskDetailViewModel>();
-        
+
+        services.AddTransient<ConversationsViewModel>();
+
         return services;
     }
-    
+
     public static IServiceCollection AddViews(this IServiceCollection services)
     {
         services.AddTransient<MainPage>();
@@ -140,16 +150,18 @@ public static class ServiceCollectionExtensions
         services.AddTransient<MemoryManagementPage>();
         services.AddTransient<AppShell>();
         services.AddSingleton<SettingsPage>();
-        
+
         // Knowledge and Knowledge Clients
         services.AddTransient<KnowledgeInboxPage>();
-        
+
         services.AddTransient<JournalDetailPage>();
         services.AddTransient<EditJournalEntryPage>();
         services.AddTransient<JournalRevisionHistoryPage>();
-        
+
         services.AddTransient<TaskDetailPage>();
-        
+
+        services.AddTransient<ConversationsPage>();
+
         return services;
     }
 }

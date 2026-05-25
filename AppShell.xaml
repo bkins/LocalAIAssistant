@@ -116,6 +116,9 @@
         <Tab Title="Chat">
             <ShellContent ContentTemplate="{DataTemplate views:MainPage}"/>
         </Tab>
+        <Tab Title="Chats">
+            <ShellContent ContentTemplate="{DataTemplate views:ConversationsPage}"/>
+        </Tab>
         <Tab Title="Inbox">
             <ShellContent ContentTemplate="{DataTemplate inbox:KnowledgeInboxPage}"/>
         </Tab>
