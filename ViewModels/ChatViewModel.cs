@@ -266,6 +266,18 @@ public partial class ChatViewModel : ObservableObject
                     {
                         assistantMsg.Content     = response.Message;
                         assistantMsg.WasFastPath = response.WasFastPath;
+
+                        foreach (var insight in response.Insights)
+                        {
+                            Messages.Add(new Message
+                                         {
+                                                 Sender         = "assistant"
+                                               , Content        = insight.Message
+                                               , IsInsight      = true
+                                               , Timestamp      = DateTime.Now
+                                               , ConversationId = ConversationId
+                                         });
+                        }
                     });
                     assistantSucceeded = true;
                 }

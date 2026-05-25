@@ -7,6 +7,7 @@ public sealed class KnowledgeItem
 
     public KnowledgeKind   Kind   { get; init; }
     public KnowledgeStatus Status { get; init; }
+    public string          Domain => Kind.ToString();
 
     public string  Title   { get; init; } = string.Empty;
     public string? Summary { get; init; }

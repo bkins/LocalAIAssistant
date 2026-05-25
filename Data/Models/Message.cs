@@ -15,6 +15,7 @@ public partial class Message : ObservableObject
     [ObservableProperty] private int          _importance     = 1;     // 1..5
     [ObservableProperty] private double       _score;
     [ObservableProperty] private bool         _wasFastPath;
+    [ObservableProperty] private bool         _isInsight;
 
     public Message()
     {

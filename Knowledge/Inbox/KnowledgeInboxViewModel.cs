@@ -18,8 +18,11 @@ public partial class KnowledgeInboxViewModel : ObservableObject
     private readonly ILocalKnowledgeStore      _localStore;
     private readonly LocalAiAssistantDbContext _db;
 
-    public ObservableCollection<KnowledgeItem> Items => _items;
-    private readonly ObservableCollection<KnowledgeItem> _items = new();
+    public ObservableCollection<KnowledgeItem>      Items        => _items;
+    public ObservableCollection<KnowledgeItemGroup> GroupedItems => _groupedItems;
+
+    private readonly ObservableCollection<KnowledgeItem>      _items        = new();
+    private readonly ObservableCollection<KnowledgeItemGroup> _groupedItems = new();
 
     [ObservableProperty] private bool           _isLoading;
     [ObservableProperty] private bool           _isOffline;
@@ -74,6 +77,7 @@ public partial class KnowledgeInboxViewModel : ObservableObject
         }
         finally
         {
+            RebuildGroups();
             IsLoading = false;
         }
     }
@@ -123,6 +127,19 @@ public partial class KnowledgeInboxViewModel : ObservableObject
                .ToList();
     }
 
+    private void RebuildGroups()
+    {
+        _groupedItems.Clear();
+
+        var domainGroups = _items
+            .GroupBy(item => item.Kind)
+            .OrderBy(group => group.Key)
+            .Select(group => new KnowledgeItemGroup(group.Key, group));
+
+        foreach (var domainGroup in domainGroups)
+            _groupedItems.Add(domainGroup);
+    }
+
     private static string BuildPendingTitle(string input)
     {
         const int maxLength = 60;
@@ -157,6 +174,7 @@ public partial class KnowledgeInboxViewModel : ObservableObject
 
         // Optimistic UI update
         Items.Remove(item);
+        RebuildGroups();
     }
 
     

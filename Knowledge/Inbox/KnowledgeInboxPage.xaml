@@ -8,9 +8,10 @@
 
     <ContentPage.Resources>
         <ResourceDictionary>
-            <converters1:TagsToTextConverter         x:Key="TagsToTextConverter" />
-            <converters1:IntGreaterThanZeroConverter x:Key="IntGtZero" />
-            <converters1:NullToBoolConverter         x:Key="NullToBool" />
+            <converters1:TagsToTextConverter            x:Key="TagsToTextConverter" />
+            <converters1:IntGreaterThanZeroConverter    x:Key="IntGtZero" />
+            <converters1:NullToBoolConverter            x:Key="NullToBool" />
+            <converters1:KnowledgeKindToColorConverter  x:Key="KindToColorConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -31,9 +32,25 @@
 
         <CollectionView
             Grid.Row="1"
-            ItemsSource="{Binding Items}"
+            ItemsSource="{Binding GroupedItems}"
+            IsGrouped="True"
             SelectionMode="Single"
             SelectedItem="{Binding SelectedItem}">
+
+            <CollectionView.GroupHeaderTemplate>
+                <DataTemplate>
+                    <Border Padding="12,6"
+                            Margin="6,10,6,2"
+                            BackgroundColor="#1E1E1E"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 6">
+                        <Label Text="{Binding DomainLabel}"
+                               FontSize="13"
+                               FontAttributes="Bold"
+                               TextColor="{Binding Kind, Converter={StaticResource KindToColorConverter}}" />
+                    </Border>
+                </DataTemplate>
+            </CollectionView.GroupHeaderTemplate>
 
             <CollectionView.ItemTemplate>
                 <DataTemplate>

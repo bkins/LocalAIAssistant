@@ -15,6 +15,7 @@ public sealed class Thinker
     }
 
     public void Start()
+    
     {
         _cts = new CancellationTokenSource();
         _    = RunAsync(_cts.Token);
