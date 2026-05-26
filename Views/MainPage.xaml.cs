@@ -115,13 +115,19 @@ public partial class MainPage : ContentPage
     // UX-01: _isPageActive guard — keyboard-dismiss events fired during navigation must not submit.
     // On Windows, Editor.Completed fires from LostFocus, making IsFocused checks unreliable.
     // TextChanged is used instead: Return key inserts \n; focus loss does not.
+    // The delta check (newText == oldText + '\n') restricts submission to the Return-at-end-of-input
+    // path only — paste operations add more than one character or insert at a different position.
     private void OnEditorTextChanged(object? sender, TextChangedEventArgs e)
     {
         if (!_isPageActive) return;
-        if (e.NewTextValue?.Contains('\n') != true) return;
+
+        var oldText = e.OldTextValue ?? string.Empty;
+        var newText = e.NewTextValue ?? string.Empty;
+
+        if (newText != oldText + '\n') return;
 
         if (sender is Editor editor)
-            editor.Text = e.NewTextValue.Replace("\n", string.Empty);
+            editor.Text = oldText;
 
         if (ChatViewModel.SendCommand.CanExecute(null))
             ChatViewModel.SendCommand.Execute(null);
