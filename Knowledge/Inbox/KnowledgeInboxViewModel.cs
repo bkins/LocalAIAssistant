@@ -18,11 +18,12 @@ public partial class KnowledgeInboxViewModel : ObservableObject
     private readonly ILocalKnowledgeStore      _localStore;
     private readonly LocalAiAssistantDbContext _db;
 
-    public ObservableCollection<KnowledgeItem>      Items        => _items;
-    public ObservableCollection<KnowledgeItemGroup> GroupedItems => _groupedItems;
+    public ObservableCollection<KnowledgeItem> Items => _items;
 
-    private readonly ObservableCollection<KnowledgeItem>      _items        = new();
-    private readonly ObservableCollection<KnowledgeItemGroup> _groupedItems = new();
+    private readonly ObservableCollection<KnowledgeItem> _items = new();
+
+    [ObservableProperty]
+    private ObservableCollection<KnowledgeItemGroup> _groupedItems = new();
 
     [ObservableProperty] private bool           _isLoading;
     [ObservableProperty] private bool           _isOffline;
@@ -129,15 +130,13 @@ public partial class KnowledgeInboxViewModel : ObservableObject
 
     private void RebuildGroups()
     {
-        _groupedItems.Clear();
-
-        var domainGroups = _items
+        var rebuilt = _items
             .GroupBy(item => item.Kind)
             .OrderBy(group => group.Key)
-            .Select(group => new KnowledgeItemGroup(group.Key, group));
+            .Select(group => new KnowledgeItemGroup(group.Key, group))
+            .ToList();
 
-        foreach (var domainGroup in domainGroups)
-            _groupedItems.Add(domainGroup);
+        GroupedItems = new ObservableCollection<KnowledgeItemGroup>(rebuilt);
     }
 
     private static string BuildPendingTitle(string input)
