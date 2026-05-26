@@ -17,6 +17,13 @@ public partial class ConversationsPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await _viewModel.LoadAsync();
+        try
+        {
+            await _viewModel.LoadAsync();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            await DisplayAlert("Error", "Could not load conversations.", "OK");
+        }
     }
 }

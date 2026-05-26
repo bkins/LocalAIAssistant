@@ -51,24 +51,48 @@ public partial class ConversationsViewModel : ObservableObject
     [RelayCommand]
     private async Task SelectConversation(ConversationSummaryDto conversation)
     {
-        await _chatViewModel.SwitchConversationAsync(conversation.ConversationId);
-        await Shell.Current.GoToAsync("//Chat");
+        try
+        {
+            await _chatViewModel.SwitchConversationAsync(conversation.ConversationId);
+            await Shell.Current.GoToAsync("//Chat");
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _log.LogError(ex, "Failed to open conversation");
+            await Shell.Current.DisplayAlert("Error", "Could not open that conversation. Please try again.", "OK");
+        }
     }
 
     [RelayCommand]
     private async Task DeleteConversation(ConversationSummaryDto conversation)
     {
-        var deleted = await _conversationClient.DeleteConversationAsync(conversation.ConversationId);
-        if (deleted)
-            Conversations.Remove(conversation);
+        try
+        {
+            var deleted = await _conversationClient.DeleteConversationAsync(conversation.ConversationId);
+            if (deleted)
+                Conversations.Remove(conversation);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _log.LogError(ex, "Failed to delete conversation");
+            await Shell.Current.DisplayAlert("Error", "Could not delete that conversation. Please try again.", "OK");
+        }
     }
 
     [RelayCommand]
     private async Task NewConversation()
     {
-        var newId = Guid.NewGuid().ToString();
-        Preferences.Set(StringConsts.ActiveConversationIdKey, newId);
-        await _chatViewModel.SwitchConversationAsync(newId);
-        await Shell.Current.GoToAsync("//Chat");
+        try
+        {
+            var newId = Guid.NewGuid().ToString();
+            Preferences.Set(StringConsts.ActiveConversationIdKey, newId);
+            await _chatViewModel.SwitchConversationAsync(newId);
+            await Shell.Current.GoToAsync("//Chat");
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _log.LogError(ex, "Failed to start new conversation");
+            await Shell.Current.DisplayAlert("Error", "Could not start a new chat. Please try again.", "OK");
+        }
     }
 }
