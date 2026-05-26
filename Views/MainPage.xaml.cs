@@ -112,18 +112,23 @@ public partial class MainPage : ContentPage
 
     // ── Input handlers ────────────────────────────────────────────────────────
 
-    // Both the Editor's Completed event and the Entry's Completed event
-    // funnel through here — one path, one command.
-    // UX-01: _isPageActive guard — keyboard-dismiss events fired during navigation
-    //        (app going to background, shell page change) must not submit text.
-    // BUG-27: IsFocused guard — on Windows, Editor.Completed fires from LostFocus,
-    //         so alt-tabbing away would otherwise submit the in-progress prompt.
-    //         When the Return key triggers Completed the editor is still focused;
-    //         when focus-loss triggers it the editor is already unfocused.
-    private void OnEntryCompleted(object? sender, EventArgs e)
+    // UX-01: _isPageActive guard — keyboard-dismiss events fired during navigation must not submit.
+    // On Windows, Editor.Completed fires from LostFocus, making IsFocused checks unreliable.
+    // TextChanged is used instead: Return key inserts \n; focus loss does not.
+    // The delta check (newText == oldText + '\n') restricts submission to the Return-at-end-of-input
+    // path only — paste operations add more than one character or insert at a different position.
+    private void OnEditorTextChanged(object? sender, TextChangedEventArgs e)
     {
         if (!_isPageActive) return;
-        if (sender is VisualElement element && !element.IsFocused) return;
+
+        var oldText = e.OldTextValue ?? string.Empty;
+        var newText = e.NewTextValue ?? string.Empty;
+
+        if (newText != oldText + '\n') return;
+
+        if (sender is Editor editor)
+            editor.Text = oldText;
+
         if (ChatViewModel.SendCommand.CanExecute(null))
             ChatViewModel.SendCommand.Execute(null);
     }

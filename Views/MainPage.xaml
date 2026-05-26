@@ -170,7 +170,7 @@
                         TextColor="White"
                         Margin="0,0,8,0"
                         IsEnabled="{Binding IsTyping, Converter={StaticResource InverseBoolConverter}}"
-                        Completed="OnEntryCompleted" />
+                        TextChanged="OnEditorTextChanged" />
 
                 <Button Grid.Column="1"
                         Text="Send"
