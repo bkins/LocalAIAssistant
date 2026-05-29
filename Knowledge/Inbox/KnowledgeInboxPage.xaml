@@ -17,18 +17,31 @@
 
     <Grid RowDefinitions="Auto,*">
 
-        <!-- Offline banner -->
-        <Border
-            Grid.Row="0"
-            Padding="10,6"
-            BackgroundColor="#553300"
-            IsVisible="{Binding IsOffline}">
-            <Label
-                Text="Offline — showing last synced data and queued items"
-                FontSize="12"
-                TextColor="#FFCC88"
-                HorizontalOptions="Center" />
-        </Border>
+        <VerticalStackLayout Grid.Row="0">
+
+            <!-- Offline banner -->
+            <Border
+                Padding="10,6"
+                BackgroundColor="#553300"
+                IsVisible="{Binding IsOffline}">
+                <Label Text="Offline — showing last synced data and queued items"
+                       FontSize="12"
+                       TextColor="#FFCC88"
+                       HorizontalOptions="Center" />
+            </Border>
+
+            <!-- Error banner -->
+            <Border
+                Padding="10,6"
+                BackgroundColor="#4D0000"
+                IsVisible="{Binding HasError}">
+                <Label Text="{Binding ErrorMessage}"
+                       FontSize="12"
+                       TextColor="#FF8888"
+                       HorizontalOptions="Center" />
+            </Border>
+
+        </VerticalStackLayout>
 
         <CollectionView
             Grid.Row="1"
