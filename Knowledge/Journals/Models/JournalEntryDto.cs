@@ -1,11 +1,15 @@
+using LocalAIAssistant.Data.Models;
+
 namespace LocalAIAssistant.Knowledge.Journals.Models;
 
 public sealed class JournalEntryDto
 {
-    public  Guid                  Id   { get; init; }
-    public  string                Text { get; init; } = string.Empty;
+    public Guid      Id    { get; init; }
+    public string    Text  { get; init; } = string.Empty;
+    public DtoError? Error { get; init; } = null;
+    
     private DateTimeOffset        _createAt;
-
+    
     public DateTimeOffset CreatedAt
     {
         get

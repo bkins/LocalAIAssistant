@@ -1,6 +1,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="LocalAIAssistant.Knowledge.Journals.Views.JournalDetailPage"
+             xmlns:controls="clr-namespace:LocalAIAssistant.Views.Controls"
              xmlns:converters1="clr-namespace:LocalAIAssistant.Converters"
              Title="Journal">
 
@@ -16,7 +17,15 @@
 
         <!-- Header / Metadata / Actions -->
         <VerticalStackLayout Grid.Row="0" Padding="16" Spacing="8">
-
+            <Border Padding="10,6"
+                    BackgroundColor="#553300"
+                    IsVisible="{Binding HasError}">
+                <Label Text="Offline — Data will not be displayed or saved until connection is restored"
+                       FontSize="12"
+                       TextColor="#FFCC88"
+                       HorizontalOptions="Center" />
+            </Border>
+            
             <Label Text="{Binding CreatedAt, StringFormat='{0:MMMM d, yyyy · h:mm tt}'}"
                    FontSize="12"
                    TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" />
@@ -54,7 +63,15 @@
                     FontSize="12"
                     BackgroundColor="Transparent"
                     Command="{Binding EditEntryCommand}" />
-
+            
+            <HorizontalStackLayout Spacing="8">
+                <Switch IsToggled="{Binding ShowAsMarkdown}" />
+                <Label Text="Show as Markdown"
+                       FontSize="13"
+                       VerticalOptions="Center"
+                       TextColor="{AppThemeBinding Light=#555, Dark=#BBB}" />
+            </HorizontalStackLayout>
+            
         </VerticalStackLayout>
 
         <!-- Divider -->
@@ -68,7 +85,11 @@
             <VerticalStackLayout Padding="16">
                 <Label Text="{Binding Text}"
                        FontSize="16"
-                       LineBreakMode="WordWrap" />
+                       LineBreakMode="WordWrap"
+                       IsVisible="{Binding ShowAsMarkdown, Converter={StaticResource InverseBoolConverter}}" />
+                <controls:NativeMarkdownView Markdown="{Binding Text}"
+                                             IsVisible="{Binding ShowAsMarkdown}"
+                                             TextColor="{AppThemeBinding Light=Black, Dark=White}" />
             </VerticalStackLayout>
         </ScrollView>
 

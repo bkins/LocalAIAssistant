@@ -15,7 +15,14 @@ public partial class AppShell : Shell
 	public AppShell(AppShellMasterViewModel masterViewModel)
 	{
 		InitializeComponent();
-
+		
+//Main / Chat		
+		Routing.RegisterRoute(nameof(MainPage)
+		                    , typeof(MainPage));
+// Settings		
+		Routing.RegisterRoute(nameof(SettingsPage)
+		                    , typeof(SettingsPage));
+// Logs
 		Routing.RegisterRoute(nameof(LogDetailPage)
 		                    , typeof(LogDetailPage));
 		

@@ -10,6 +10,8 @@ public partial class JournalDetailPage : ContentPage
     public JournalDetailPage(JournalDetailViewModel viewModel)
     {
         InitializeComponent();
+        
+        viewModel.ShowAsMarkdown = true; // Default to markdown view
         BindingContext = viewModel;
     }
 

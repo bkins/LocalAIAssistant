@@ -1,3 +1,5 @@
+using LocalAIAssistant.Data.Models;
+
 namespace LocalAIAssistant.Knowledge.Tasks.Models;
 
 /// <summary>
@@ -17,6 +19,7 @@ public sealed class TasksDto
     public DateTimeOffset?       DueDate          { get; init; }
     public DateTimeOffset?       CompletedAt      { get; init; }
     public IReadOnlyList<string> Tags             { get; init; } = [];
+    public DtoError?             Error            { get; init; } = null;
 
     public bool IsCompleted => CompletedAt is not null;
 }

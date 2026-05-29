@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
+using LocalAIAssistant.Knowledge.Journals.Models;
 
 namespace LocalAIAssistant.Knowledge.Journals.ViewModels;
 
@@ -23,7 +24,9 @@ public sealed partial class EditJournalEntryViewModel : ObservableObject
     public int? MoodScore { get; set; }
 
     public bool IsLoading { get; private set; }
-
+    public bool HasError   { get; private set; }
+    public string ErrorMessage { get; private set; } = string.Empty;
+    
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
         if (query.TryGetValue("id", out var idObj)
@@ -51,15 +54,26 @@ public sealed partial class EditJournalEntryViewModel : ObservableObject
                        ? string.Join(", ", entry.Tags)
                        : string.Empty;
 
+        SetDtoError(entry);
+        
         OnPropertyChanged(string.Empty); // refresh all bindings
         IsLoading = false;
         OnPropertyChanged(nameof(IsLoading));
     }
 
+    private void SetDtoError( JournalEntryDto? entry )
+    {
+        if (entry?.Error is null) return;
+        
+        HasError     = true;
+        ErrorMessage = entry.Error.Message;
+    }
+    
     [RelayCommand]
     private async Task SaveAsync()
     {
-        var client =  _clientFactory.Create();
+        var client = _clientFactory.Create();
+        
         await client.EditEntryAsync(_journalId
                                  , Text
                                  , ParseTags(Tags)

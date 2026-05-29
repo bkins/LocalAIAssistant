@@ -23,6 +23,9 @@ public partial class TaskDetailViewModel : ObservableObject, IQueryAttributable
     [ObservableProperty] private bool            _isCompleted;
     [ObservableProperty] private string          _tags = string.Empty;
     [ObservableProperty] private string          _id   = string.Empty;
+    [ObservableProperty] private bool            _showAsMarkdown;
+    [ObservableProperty] private bool            _hasError;
+    [ObservableProperty] private string          _errorMessage;
 
     public TaskDetailViewModel(ITaskApiClientFactory clientFactory)
     {
@@ -73,13 +76,22 @@ public partial class TaskDetailViewModel : ObservableObject, IQueryAttributable
         Priority         = item.Priority;
         IsImportant      = item.IsImportant;
         IsUrgent         = item.IsUrgent;
-        CreatedAt        = item.CreatedAt;
-        UpdatedAt        = item.UpdatedAt;
-        DueDate          = item.DueDate;
-        CompletedAt      = item.CompletedAt;
+        CreatedAt        = item.CreatedAt.LocalDateTime;
+        UpdatedAt        = item.UpdatedAt.LocalDateTime;
+        DueDate          = item.DueDate?.LocalDateTime;
+        CompletedAt      = item.CompletedAt?.LocalDateTime;
         IsCompleted      = item.IsCompleted;
         Tags             = item.Tags.Count > 0
                                    ? string.Join(", ", item.Tags)
                                    : string.Empty;
+        SetDtoError(item);
+    }
+    
+    private void SetDtoError( TasksDto? item )
+    {
+        if (item?.Error is null) return;
+        
+        HasError     = true;
+        ErrorMessage = item.Error.Message;
     }
 }
