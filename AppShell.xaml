@@ -114,7 +114,7 @@
 
     <TabBar>
         <Tab Title="Chat">
-            <ShellContent ContentTemplate="{DataTemplate views:MainPage}"/>
+            <ShellContent Route="Chat" ContentTemplate="{DataTemplate views:MainPage}"/>
         </Tab>
         <Tab Title="Chats">
             <ShellContent ContentTemplate="{DataTemplate views:ConversationsPage}"/>

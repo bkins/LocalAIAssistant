@@ -54,7 +54,7 @@ public partial class ConversationsViewModel : ObservableObject
         try
         {
             await _chatViewModel.SwitchConversationAsync(conversation.ConversationId);
-            await Shell.Current.GoToAsync("nameof(MainPage)");
+            await Shell.Current.GoToAsync("//Chat");
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -87,7 +87,7 @@ public partial class ConversationsViewModel : ObservableObject
             var newId = Guid.NewGuid().ToString();
             Preferences.Set(StringConsts.ActiveConversationIdKey, newId);
             await _chatViewModel.SwitchConversationAsync(newId);
-            await Shell.Current.GoToAsync("nameof(MainPage)");
+            await Shell.Current.GoToAsync("//Chat");
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
