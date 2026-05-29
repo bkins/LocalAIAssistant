@@ -27,54 +27,44 @@ public partial class KnowledgeInboxViewModel : ObservableObject
 
     [ObservableProperty] private bool           _isLoading;
     [ObservableProperty] private bool           _isOffline;
+    [ObservableProperty] private bool           _hasError;
+    [ObservableProperty] private string         _errorMessage = string.Empty;
     [ObservableProperty] private KnowledgeItem? _selectedItem;
-    
-    //TODO: Implement later
-    // public string KindDisplay => Kind.ToString();
 
-    private Exception _caughtException;
-    
     public KnowledgeInboxViewModel(IKnowledgeClientFactory   clientFactory
                                  , IKnowledgeSyncService     syncService
                                  , ILocalKnowledgeStore      localStore
                                  , LocalAiAssistantDbContext db )
     {
-        _clientFactory   = clientFactory;
-        _syncService     = syncService;
-        _localStore      = localStore;
-        _db              = db;
-        _caughtException = new Exception();
+        _clientFactory = clientFactory;
+        _syncService   = syncService;
+        _localStore    = localStore;
+        _db            = db;
     }
 
     [RelayCommand]
     public async Task LoadAsync()
     {
-        
         if (IsLoading) return;
 
-        IsLoading = true;
-        IsOffline = !_syncService.IsOnline;
-        
+        IsLoading    = true;
+        IsOffline    = !_syncService.IsOnline;
+        HasError     = false;
+        ErrorMessage = string.Empty;
+
         try
         {
             Items.Clear();
-            
+
             if (_syncService.IsOnline)
                 await LoadOnlineAsync();
             else
                 await LoadOfflineAsync();
-            
-            // var client = _clientFactory.Create();
-            // var items  = await client.GetKnowledgeAsync();
-            //
-            // foreach (var item in items)
-            // {
-            //     Items.Add(item);
-            // }
         }
-        catch(Exception e)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _caughtException = e;
+            HasError     = true;
+            ErrorMessage = $"Failed to load inbox: {ex.Message}";
         }
         finally
         {
@@ -86,8 +76,7 @@ public partial class KnowledgeInboxViewModel : ObservableObject
     {
         await _syncService.SyncAsync();
 
-        var client = _clientFactory.Create();
-        var items  = await client.GetKnowledgeAsync();
+        var items = _localStore.List();
 
         foreach (var item in items)
             _items.Add(item);
@@ -114,27 +103,25 @@ public partial class KnowledgeInboxViewModel : ObservableObject
                               .OrderBy(q => q.CreatedUtc)
                               .ToListAsync();
 
-        return queued
-               .Select(q => new KnowledgeItem
-                            {
-                                    Id             = q.Id
-                                  , Kind           = KnowledgeKind.Pending
-                                  , Status         = KnowledgeStatus.Active
-                                  , Title          = BuildPendingTitle(q.Input)
-                                  , CreatedAt      = new DateTimeOffset(q.CreatedUtc, TimeSpan.Zero)
-                                  , LastModifiedAt = new DateTimeOffset(q.CreatedUtc, TimeSpan.Zero)
-                                  , IsQueued       = true
-                            })
-               .ToList();
+        return queued.Select(queueItem => new KnowledgeItem
+                                          {
+                                                  Id             = queueItem.Id
+                                                , Kind           = KnowledgeKind.Pending
+                                                , Status         = KnowledgeStatus.Active
+                                                , Title          = BuildPendingTitle(queueItem.Input)
+                                                , CreatedAt      = new DateTimeOffset(queueItem.CreatedUtc, TimeSpan.Zero)
+                                                , LastModifiedAt = new DateTimeOffset(queueItem.CreatedUtc, TimeSpan.Zero)
+                                                , IsQueued       = true
+                                          })
+                     .ToList();
     }
 
     private void RebuildGroups()
     {
-        var rebuilt = _items
-            .GroupBy(item => item.Kind)
-            .OrderBy(group => group.Key)
-            .Select(group => new KnowledgeItemGroup(group.Key, group))
-            .ToList();
+        var rebuilt = _items.GroupBy(item => item.Kind)
+                            .OrderBy(group => group.Key)
+                            .Select(group => new KnowledgeItemGroup(group.Key, group))
+                            .ToList();
 
         GroupedItems = new ObservableCollection<KnowledgeItemGroup>(rebuilt);
     }

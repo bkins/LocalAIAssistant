@@ -30,6 +30,8 @@ public sealed class KnowledgeSyncService : IKnowledgeSyncService
 
         ct.ThrowIfCancellationRequested();
 
+        if (items.Count == 0) return;
+
         _localStore.Clear();
 
         foreach (var item in items)
