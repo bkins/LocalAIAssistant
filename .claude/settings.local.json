@@ -25,7 +25,8 @@
       "Bash(awk '{print $1}')",
       "Bash(git worktree *)",
       "Bash(git branch *)",
-      "Bash(gh pr create --title 'fix\\(BUG-38\\): fix missing inbox items and guard against cache data loss' --body ' *)"
+      "Bash(gh pr create --title 'fix\\(BUG-38\\): fix missing inbox items and guard against cache data loss' --body ' *)",
+      "Bash(gh pr create --title 'fix\\(BUG-41+BUG-42\\): fix broken Chat navigation and re-init on back-navigation' --body ' *)"
     ]
   }
 }
