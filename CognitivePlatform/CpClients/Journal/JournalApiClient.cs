@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Knowledge.Journals.Models;
 
 namespace LocalAIAssistant.CognitivePlatform.CpClients.Journal;
@@ -34,10 +35,29 @@ public sealed class JournalApiClient : IJournalApiClient
         {
             throw;
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException hre)
         {
             // Offline, DNS failure, server unreachable, etc.
-            return null;
+            // return null;
+            return new JournalEntryDto
+                   {
+                           Error = new DtoError
+                                   {
+                                           Message       = hre.Message
+                                         , ExceptionType = hre.GetType().FullName
+                                         , Source        = hre.Source
+                                         , StackTrace    = hre.StackTrace
+                                         , InnerException = hre.InnerException is not null
+                                                                    ? new DtoError
+                                                                      {
+                                                                              Message       = hre.InnerException.Message
+                                                                            , ExceptionType = hre.InnerException.GetType().FullName
+                                                                            , Source        = hre.InnerException.Source
+                                                                            , StackTrace    = hre.InnerException.StackTrace
+                                                                      }
+                                                                    : null
+                                   }
+                   };
         }
     }
 

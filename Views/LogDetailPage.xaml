@@ -14,10 +14,15 @@
                    FontAttributes="Bold"
                    FontSize="14"
                    TextColor="DarkRed" />
-
+            <!-- LineBreakMode="WordWrap" -->
             <Label Text="{Binding PrettifiedFullText}"
                    FontSize="14"
-                   LineBreakMode="WordWrap" />
+                   LineBreakMode="WordWrap">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnLogTapped" />
+                </Label.GestureRecognizers>
+            </Label>
+            
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

@@ -60,7 +60,8 @@ public partial class MainPage : ContentPage
 
         await Root.FadeTo(1, 250, Easing.Linear);
 
-        await ChatViewModel.InitializeAsync();
+        if (!ChatViewModel.HasBeenInitialized)
+            await ChatViewModel.InitializeAsync();
 
         // The view owns scroll behaviour — wire up here, tear down in
         // OnDisappearing to avoid double-subscription on re-navigation.

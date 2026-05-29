@@ -1,4 +1,4 @@
-namespace LocalAIAssistant.Knowledge.Journals.Models;
+namespace LocalAIAssistant.Data.Models;
 
 public class DtoError
 {

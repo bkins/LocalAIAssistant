@@ -53,7 +53,8 @@ public partial class ChatViewModel : ObservableObject
     public ObservableCollection<Message>     Messages      { get; } = new();
     public ObservableCollection<Personality> Personalities { get; } = new();
 
-    public string ConversationId { get; private set; }
+    public string ConversationId    { get; private set; }
+    public bool   HasBeenInitialized { get; private set; }
 
     public ChatViewModel( ILlmService                      llmService
                         , IConversationMemory              conversationMemory
@@ -97,6 +98,7 @@ public partial class ChatViewModel : ObservableObject
 
     public async Task InitializeAsync()
     {
+        HasBeenInitialized = false;
         Messages.Clear();
 
         // ENH-20: server-first rehydration. On any exception fall back to local STM silently.
@@ -159,6 +161,8 @@ public partial class ChatViewModel : ObservableObject
 
         await _offlineQueueService.ResetProcessingItemsAsync();
         await _appShellMasterViewModel.RefreshQueueCountAsync();
+
+        HasBeenInitialized = true;
     }
 
     partial void OnSelectedPersonalityChanged(Personality newValue)

@@ -17,7 +17,15 @@
       "Bash(gh pr create --title 'ENH-11 Phase 2: ApiPersonalityProvider — load personalities from CP API' --body ' *)",
       "Bash(git fetch *)",
       "Bash(git rebase *)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(gh pr create --title 'feat: EPIC-01 LAA UI Overhaul — Insights rendering + Knowledge Inbox grouping' --base master --body ' *)",
+      "Bash(dotnet restore *)",
+      "Bash(gh pr create --title 'BUG-33 — Fix Knowledge Inbox showing only last-added domain type' --body ' *)",
+      "Bash(gh pr create --title 'BUG-34 + BUG-40 — Fix Conversations crashes and prompt auto-send regression' --body ' *)",
+      "Bash(awk '{print $1}')",
+      "Bash(git worktree *)",
+      "Bash(git branch *)",
+      "Bash(gh pr create --title 'fix\\(BUG-38\\): fix missing inbox items and guard against cache data loss' --body ' *)"
     ]
   }
 }

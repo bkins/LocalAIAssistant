@@ -18,6 +18,9 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
     [ObservableProperty] private int?                  _moodScore;
     [ObservableProperty] private JournalEntryState     _state;
     [ObservableProperty] private Guid                  _journalId;
+    [ObservableProperty] private bool                  _showAsMarkdown;
+    [ObservableProperty] private bool                  _hasError;
+    [ObservableProperty] private string                _errorMessage;
 
     private Exception _caughtException;
     
@@ -53,12 +56,14 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
             if (entry is not null)
             {
                 Text      = entry.Text;
-                CreatedAt = entry.CreatedAt;
+                CreatedAt = entry.CreatedAt.LocalDateTime;
                 Tags      = entry.Tags;
                 Mood      = entry.Mood;
                 State     = entry.State;
                 MoodScore = entry.MoodScore;
                 IsEdited  = entry.IsEdited;
+                
+                SetDtoError(entry);
             }
         }
         catch (Exception e)
@@ -70,7 +75,13 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
             IsLoading = false;
         }
     }
-    
+    private void SetDtoError( JournalEntryDto? entry )
+    {
+        if (entry?.Error is null) return;
+        
+        HasError     = true;
+        ErrorMessage = entry.Error.Message;
+    }
     [RelayCommand]
     private async Task ViewRevisionHistoryAsync()
     {
