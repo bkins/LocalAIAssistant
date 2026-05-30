@@ -19,6 +19,7 @@ using LocalAIAssistant.Knowledge.Journals.ViewModels;
 using LocalAIAssistant.Knowledge.Tasks.ViewModels;
 using LocalAIAssistant.MarkdownFormatter;
 using LocalAIAssistant.Services;
+using LocalAIAssistant.Services.Health;
 using LocalAIAssistant.Services.Interfaces;
 using LocalAIAssistant.ViewModels;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +29,9 @@ using Microsoft.Extensions.Options;
 using Microsoft.Maui.LifecycleEvents;
 using Serilog;
 using Serilog.Formatting.Compact;
+#if ANDROID
+using LocalAIAssistant.Platforms.Android.Health;
+#endif
 
 namespace LocalAIAssistant;
 
@@ -50,7 +54,7 @@ public static class MauiProgram
 		Debug.WriteLine($"Configuring Serilog to log to: {logPath}");
 		
 		var builder = MauiApp.CreateBuilder();
-		
+
 		builder.ConfigureFonts(fonts =>
 		{
 			fonts.AddFont("JetBrainsMono-Regular.ttf"
@@ -204,6 +208,15 @@ public static class MauiProgram
 		// IOptionsMonitor lets you subscribe to change notifications:
 		//builder.Services.AddSingleton<LlmService>();
 		
+		// Health Connect gateway
+		builder.Services
+		       .AddOptions<HealthGatewayConfig>()
+		       .Bind(builder.Configuration.GetSection("HealthGateway"));
+#if ANDROID
+		builder.Services.AddSingleton<IHealthConnectManager, HealthConnectManager>();
+#endif
+		builder.Services.AddHostedService<HealthApiService>();
+
 		builder.Services.AddAllServices(logPath, memoryFilePath);
 		builder.Services.AddAiMemoryServices(Path.Combine(FileSystem.AppDataDirectory, "Memory.db")
 		                                   , memoryFilePath
