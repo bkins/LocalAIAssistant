@@ -1,9 +1,11 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CP.Client.Core.Common.ConnectivityToApi;
 using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 using LocalAIAssistant.Core.ConversationHistory;
+using LocalAIAssistant.Core.Tts;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Extensions;
@@ -35,6 +37,7 @@ public partial class ChatViewModel : ObservableObject
     private readonly ApiHealthService                 _apiHealthService;
     private readonly AppShellMasterViewModel          _appShellMasterViewModel;
     private readonly IConversationHistoryClient       _historyClient;
+    private readonly ITtsService                      _ttsService;
 
     // ── Connectivity ──────────────────────────────────────────────────────────
     [ObservableProperty] private bool _isOffline;
@@ -47,6 +50,13 @@ public partial class ChatViewModel : ObservableObject
     [ObservableProperty] private Personality _selectedPersonality;
     [ObservableProperty] private int         _pendingQueueCount;
     [ObservableProperty] private bool        _showStreamingOption = false;
+
+    // ── TTS state ─────────────────────────────────────────────────────────────
+    [ObservableProperty] private bool   _ttsIsAvailable;
+    [ObservableProperty] private bool   _ttsIsEnabled;
+    [ObservableProperty] private string _ttsSelectedVoice = string.Empty;
+
+    public ObservableCollection<string> TtsVoices { get; } = new();
 
     public string SuggestedModelToUse { get; set; } = "phi-3:mini";
 
@@ -68,7 +78,8 @@ public partial class ChatViewModel : ObservableObject
                         , IOfflineQueueService             offlineQueueService
                         , ApiHealthService                 apiHealthService
                         , AppShellMasterViewModel          appShellMasterViewModel
-                        , IConversationHistoryClient       historyClient )
+                        , IConversationHistoryClient       historyClient
+                        , ITtsService                      ttsService )
     {
         _llmService              = llmService;
         _conversationMemory      = conversationMemory;
@@ -83,6 +94,7 @@ public partial class ChatViewModel : ObservableObject
         _apiHealthService        = apiHealthService;
         _appShellMasterViewModel = appShellMasterViewModel;
         _historyClient           = historyClient;
+        _ttsService              = ttsService;
 
         // ENH-20: persist ConversationId across app restarts so server history can be retrieved.
         var savedConversationId = Preferences.Get(StringConsts.ActiveConversationIdKey, string.Empty);
@@ -162,7 +174,36 @@ public partial class ChatViewModel : ObservableObject
         await _offlineQueueService.ResetProcessingItemsAsync();
         await _appShellMasterViewModel.RefreshQueueCountAsync();
 
+        await InitializeTtsAsync();
+
         HasBeenInitialized = true;
+    }
+
+    private async Task InitializeTtsAsync()
+    {
+        TtsIsAvailable = _ttsService.IsTtsAvailable;
+        if (!TtsIsAvailable) return;
+
+        TtsIsEnabled = _ttsService.IsEnabled;
+
+        var voices = await _ttsService.GetVoicesAsync();
+        TtsVoices.Clear();
+        foreach (var voice in voices)
+            TtsVoices.Add(voice.Name);
+
+        var preferred = _ttsService.PreferredVoiceName;
+        if (preferred is not null && TtsVoices.Contains(preferred))
+        {
+            TtsSelectedVoice = preferred;
+        }
+        else
+        {
+            var currentLanguage = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+            var bestVoice       = VoiceSelector.SelectVoice(voices, null, currentLanguage);
+
+            TtsSelectedVoice                = bestVoice?.Name ?? TtsVoices.FirstOrDefault() ?? string.Empty;
+            _ttsService.PreferredVoiceName  = TtsSelectedVoice;
+        }
     }
 
     partial void OnSelectedPersonalityChanged(Personality newValue)
@@ -176,9 +217,20 @@ public partial class ChatViewModel : ObservableObject
         
         if (oldName != newValue.Name)
         {
-            _log.LogInformation($"Personality switched from {oldName} to {newValue.Name}");    
+            _log.LogInformation($"Personality switched from {oldName} to {newValue.Name}");
         }
     }
+
+    partial void OnTtsIsEnabledChanged(bool value)
+        => _ttsService.IsEnabled = value;
+
+    partial void OnTtsSelectedVoiceChanged(string value)
+    {
+        if (!string.IsNullOrEmpty(value))
+            _ttsService.PreferredVoiceName = value;
+    }
+
+    public Task StopSpeakingAsync() => _ttsService.StopAsync();
 
     // ── Send ──────────────────────────────────────────────────────────────────
 
@@ -344,7 +396,10 @@ public partial class ChatViewModel : ObservableObject
         }
 
         if (assistantSucceeded)
+        {
             await PersistToShortTermAsync(assistantMsg);
+            _ = _ttsService.SpeakAsync(assistantMsg.Content);
+        }
     }
 
     // ── Ancillary commands ────────────────────────────────────────────────────

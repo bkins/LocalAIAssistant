@@ -1,6 +1,7 @@
 using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
 using LocalAIAssistant.Core.ConversationHistory;
 using LocalAIAssistant.Core.Personality;
+using LocalAIAssistant.Core.Tts;
 using LocalAIAssistant.Views;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
@@ -93,6 +94,7 @@ public static class ServiceCollectionExtensions
         });
         
         services.AddSingleton<OllamaConfigService>();
+        services.AddSingleton<ITtsService, MauiTtsService>();
         services.AddSingleton<IOrchestratorService, OrchestratorService>();
         services.AddSingleton<IPersonaAndContextEngine, PersonaAndContextEngine.PersonaAndContextEngine>();
         services.AddSingleton<IPersonaRepository, InMemoryPersonaRepository>();

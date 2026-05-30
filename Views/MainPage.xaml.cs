@@ -75,6 +75,7 @@ public partial class MainPage : ContentPage
         ChatViewModel.Messages.CollectionChanged -= OnMessagesCollectionChanged;
         ChatViewModel.PropertyChanged            -= OnChatViewModelPropertyChanged;
         StopBackgroundPulse();
+        _ = ChatViewModel.StopSpeakingAsync();
         base.OnDisappearing();
     }
 
