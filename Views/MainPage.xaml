@@ -104,29 +104,31 @@
                                         <Setter Property="HorizontalOptions" Value="Center" />
                                     </DataTrigger>
 
-                                    <!-- Insight override: always left-aligned, subdued background -->
+                                    <!-- Insight override: amber card, left-aligned -->
                                     <DataTrigger TargetType="Border"
                                                  Binding="{Binding IsInsight}"
                                                  Value="True">
-                                        <Setter Property="BackgroundColor"   Value="#1C1826" />
+                                        <Setter Property="BackgroundColor"   Value="#1F1600" />
                                         <Setter Property="HorizontalOptions" Value="Start" />
+                                        <Setter Property="Stroke"            Value="#C89618" />
+                                        <Setter Property="StrokeThickness"   Value="1" />
                                     </DataTrigger>
 
                                 </Border.Triggers>
 
                                 <VerticalStackLayout Spacing="4">
 
-                                    <!-- Insight badge — only visible for insight messages -->
-                                    <Label Text="💡 Insight"
+                                    <!-- Insight header label — only visible for insight messages -->
+                                    <Label Text="Insight"
                                            FontSize="11"
-                                           FontAttributes="Italic"
-                                           TextColor="#A89EC9"
+                                           FontAttributes="Bold,Italic"
+                                           TextColor="#C89618"
                                            IsVisible="{Binding IsInsight}" />
 
                                     <Grid ColumnDefinitions="*" VerticalOptions="Start">
                                         <controls:NativeMarkdownView
                                             Grid.Column="0"
-                                            Markdown="{Binding Content}"
+                                            Markdown="{Binding DisplayContent}"
                                             HorizontalOptions="Fill"
                                             VerticalOptions="Start" />
                                         <Label Text="⚡"
@@ -135,6 +137,20 @@
                                                VerticalOptions="Start"
                                                Margin="0,-8,-4,0"
                                                IsVisible="{Binding WasFastPath}"
+                                               InputTransparent="True">
+                                            <Label.Shadow>
+                                                <Shadow Brush="Black"
+                                                        Offset="1,1"
+                                                        Radius="2"
+                                                        Opacity="0.5" />
+                                            </Label.Shadow>
+                                        </Label>
+                                        <Label Text="💡"
+                                               FontSize="14"
+                                               HorizontalOptions="End"
+                                               VerticalOptions="Start"
+                                               Margin="0,-8,-4,0"
+                                               IsVisible="{Binding IsInsight}"
                                                InputTransparent="True">
                                             <Label.Shadow>
                                                 <Shadow Brush="Black"
