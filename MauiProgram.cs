@@ -5,7 +5,10 @@ using CP.Client.Core.Web;
 using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
 using LocalAIAssistant.CognitivePlatform.CpClients.Knowledge;
+using LocalAIAssistant.CognitivePlatform.CpClients.Notifications;
 using LocalAIAssistant.CognitivePlatform.CpClients.Tasks;
+using Plugin.LocalNotification;
+using Plugin.LocalNotification.AndroidOption;
 using LocalAIAssistant.Core.Environment;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
@@ -75,6 +78,8 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IKnowledgeClientFactory, KnowledgeClientFactory>();
 		builder.Services.AddSingleton<IJournalApiClientFactory, JournalApiClientFactory>();
 		builder.Services.AddSingleton<ITaskApiClientFactory, TaskApiClientFactory>();
+		builder.Services.AddSingleton<INotificationApiClientFactory, NotificationApiClientFactory>();
+		builder.Services.AddSingleton<NotificationSyncService>();
 
 		//Markdown formatters:
 		builder.Services.AddSingleton<IMarkdownFormatter<TaskDetailViewModel>, TaskMarkdownFormatter>();
@@ -88,6 +93,20 @@ public static class MauiProgram
 
 		builder.UseMauiApp<App>()
 		       .UseMauiCommunityToolkit()
+		       .UseLocalNotification(config =>
+		       {
+#if ANDROID
+			       config.AddAndroid(android =>
+			       {
+				       android.AddChannel(new NotificationChannelRequest
+				              {
+				                  Id         = "cp-reminders"
+				                , Name       = "CP Reminders"
+				                , Importance = AndroidImportance.Default
+				              });
+			       });
+#endif
+		       })
 		       .ConfigureFonts(fonts =>
 		       {
 			       fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
