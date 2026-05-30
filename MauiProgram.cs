@@ -19,6 +19,7 @@ using LocalAIAssistant.Knowledge.Journals.ViewModels;
 using LocalAIAssistant.Knowledge.Tasks.ViewModels;
 using LocalAIAssistant.MarkdownFormatter;
 using LocalAIAssistant.Services;
+using LocalAIAssistant.Services.FileSync;
 using LocalAIAssistant.Services.Health;
 using LocalAIAssistant.Services.Interfaces;
 using LocalAIAssistant.ViewModels;
@@ -216,6 +217,26 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IHealthConnectManager, HealthConnectManager>();
 #endif
 		builder.Services.AddHostedService<HealthApiService>();
+
+		// Load bundled appsettings.json (FileGateway defaults and other sections)
+		try
+		{
+			using var bundledStream = FileSystem.OpenAppPackageFileAsync("appsettings.json").GetAwaiter().GetResult();
+			var       memoryStream  = new MemoryStream();
+			bundledStream.CopyTo(memoryStream);
+			memoryStream.Position = 0;
+			builder.Configuration.AddJsonStream(memoryStream);
+		}
+		catch (Exception ex)
+		{
+			Debug.WriteLine($"[MauiProgram] Could not load bundled appsettings.json: {ex.Message}");
+		}
+
+		builder.Services
+		       .AddOptions<FileGatewayConfig>()
+		       .Bind(builder.Configuration.GetSection("FileGateway"));
+
+		builder.Services.AddHostedService<FileGatewayService>();
 
 		builder.Services.AddAllServices(logPath, memoryFilePath);
 		builder.Services.AddAiMemoryServices(Path.Combine(FileSystem.AppDataDirectory, "Memory.db")
