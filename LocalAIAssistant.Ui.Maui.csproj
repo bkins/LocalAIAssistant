@@ -131,6 +131,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Maui" Version="12.3.0" />
+		<!-- v12.x = .NET 9 MAUI. v9.x targets Xamarin; v13+ conflicts with CommunityToolkit.Maui 12.3; v14+ targets .NET 10. -->
 		<PackageReference Include="Plugin.LocalNotification" Version="12.0.2" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="CP.Client.Core" Version="0.1.51" />
