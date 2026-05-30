@@ -7,7 +7,7 @@
 //        AndroidX.Health.Connect.Client.HealthConnectClient.GetOrCreate(Platform.CurrentActivity)
 //        ReadRecordsRequest / ReadRecordsResponse
 //        Record types: StepsRecord, SleepSessionRecord, HeartRateRecord, DistanceRecord
-//   3. Replace each method body with real async SDK calls (see commented examples below).
+//   3. Replace each method body below with real async SDK calls (see commented examples).
 //   4. Request permissions before the first call — use HealthConnectClient.RequestPermissionsActivityContract
 //      launched from MainActivity (Health Connect permissions cannot use the standard ActivityCompat flow).
 
@@ -42,8 +42,8 @@ public sealed class HealthConnectManager : IHealthConnectManager
         // TODO (real): read SleepSessionRecord, sum session durations, count sessions
         return Task.FromResult(new SleepResult
                                {
-                                   DurationMinutes = 427
-                                 , Sessions        = 1
+                                   TotalMinutes = 427
+                                 , Sessions     = 1
                                });
     }
 
@@ -62,7 +62,7 @@ public sealed class HealthConnectManager : IHealthConnectManager
     public Task<DistanceResult> GetDistanceAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken ct = default)
     {
         // TODO (real): read DistanceRecord, sum Distance.InMeters
-        return Task.FromResult(new DistanceResult { Meters = 5_920.0 });
+        return Task.FromResult(new DistanceResult { Metres = 5_920.0 });
     }
 }
 #endif
