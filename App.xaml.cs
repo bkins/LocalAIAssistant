@@ -14,25 +14,28 @@ public partial class App : Application
 	private readonly ApiHealthViewModel              _apiHealthViewModel;
 	private readonly ILoggingService                 _loggingService;
 	private readonly AppShellMasterViewModel         _masterViewModel;
+	private readonly NotificationSyncService         _notificationSyncService;
 
-	public App (ILlmService             ollamaApiService
-	          , ApiHealthService        apiHealthService
-	          , ApiHealthViewModel      apiHealthViewModel
-	          , ILoggingService         loggingService
-	          , AppShellMasterViewModel masterViewModel)
+	public App (ILlmService               ollamaApiService
+	          , ApiHealthService          apiHealthService
+	          , ApiHealthViewModel        apiHealthViewModel
+	          , ILoggingService           loggingService
+	          , AppShellMasterViewModel   masterViewModel
+	          , NotificationSyncService   notificationSyncService)
 	{
 		InitializeComponent();
 
-		_ollamaApiService   = ollamaApiService;
-		_apiHealthService   = apiHealthService;
-		_apiHealthViewModel = apiHealthViewModel;
-		_loggingService     = loggingService;
-		_masterViewModel    = masterViewModel;
-		
+		_ollamaApiService        = ollamaApiService;
+		_apiHealthService        = apiHealthService;
+		_apiHealthViewModel      = apiHealthViewModel;
+		_loggingService          = loggingService;
+		_masterViewModel         = masterViewModel;
+		_notificationSyncService = notificationSyncService;
+
 		RegisterGlobalExceptionHandlers();
-		
+
 		AppDomain.CurrentDomain.UnhandledException += OnCurrentDomainOnUnhandledException;
-		
+
 	}
 
 	private void OnCurrentDomainOnUnhandledException(object                      sender
@@ -80,6 +83,18 @@ public partial class App : Application
 		}
 	}
 	
+	protected override async void OnResume()
+	{
+		try
+		{
+			await _notificationSyncService.SyncAsync();
+		}
+		catch (Exception ex)
+		{
+			_loggingService.LogError(ex, "OnResume notification sync failed", Category.App);
+		}
+	}
+
 	private void RegisterGlobalExceptionHandlers()
 	{
 		// .NET unhandled exceptions (non-UI thread)
