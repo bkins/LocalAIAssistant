@@ -1,4 +1,4 @@
-namespace LocalAIAssistant.CognitivePlatform.CpClients.Notifications;
+namespace LocalAIAssistant.Core.Notifications;
 
 public sealed record NotificationSchedule
 {
