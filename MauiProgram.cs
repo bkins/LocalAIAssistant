@@ -6,6 +6,7 @@ using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
 using LocalAIAssistant.CognitivePlatform.CpClients.Knowledge;
 using LocalAIAssistant.CognitivePlatform.CpClients.Notifications;
+using LocalAIAssistant.Core.Notifications;
 using LocalAIAssistant.CognitivePlatform.CpClients.Tasks;
 using Plugin.LocalNotification;
 using Plugin.LocalNotification.AndroidOption;
@@ -79,6 +80,9 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IJournalApiClientFactory, JournalApiClientFactory>();
 		builder.Services.AddSingleton<ITaskApiClientFactory, TaskApiClientFactory>();
 		builder.Services.AddSingleton<INotificationApiClientFactory, NotificationApiClientFactory>();
+		// Guard rules (MaxPerDay, MinGapMinutes, QuietHoursStart/End) are server-side.
+		// Change them in CognitivePlatform/appsettings.json under "Notifications".
+		builder.Services.AddSingleton<INotificationScheduler, PluginLocalNotificationScheduler>();
 		builder.Services.AddSingleton<NotificationSyncService>();
 
 		//Markdown formatters:

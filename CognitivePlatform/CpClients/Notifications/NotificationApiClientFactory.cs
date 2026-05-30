@@ -1,3 +1,4 @@
+using LocalAIAssistant.Core.Notifications;
 using LocalAIAssistant.Services;
 
 namespace LocalAIAssistant.CognitivePlatform.CpClients.Notifications;
