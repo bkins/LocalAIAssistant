@@ -16,6 +16,9 @@ public static class StringConsts
     public const string SelectedPersonalityPrefKey  = "SelectedPersonalityName";
     public const string ActiveConversationIdKey     = "ActiveConversationId";
 
+    public const string TtsEnabledPrefKey            = "TtsEnabled";
+    public const string TtsPreferredVoiceNamePrefKey = "TtsPreferredVoiceName";
+
     public static string ApplicationJsonMediaType = "application/json";
 
     // Grog key: stored in: %APPDATA%\Microsoft\UserSecrets\

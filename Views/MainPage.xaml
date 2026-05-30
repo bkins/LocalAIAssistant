@@ -13,25 +13,57 @@
 
         <Grid RowDefinitions="Auto,*,Auto">
 
-            <!-- Streaming toggle header — only visible when ShowStreamingOption is true -->
-            <Grid Padding="16"
-                  BackgroundColor="{StaticResource SurfaceAltColor}"
-                  Row="0"
-                  IsVisible="{Binding ShowStreamingOption}">
+            <!-- Toolbars row: TTS (always shown when available) + streaming (debug only) -->
+            <VerticalStackLayout Grid.Row="0" Spacing="0">
 
-                <HorizontalStackLayout Spacing="40"
-                                       VerticalOptions="Center">
+                <!-- TTS toolbar — hidden when TTS hardware/OS feature is unavailable -->
+                <Grid Padding="12,8"
+                      BackgroundColor="{StaticResource SurfaceAltColor}"
+                      IsVisible="{Binding TtsIsAvailable}">
 
-                    <Label Text="Streaming"
-                           TextColor="{StaticResource SecondaryTextColor}"
-                           VerticalTextAlignment="Center" />
+                    <HorizontalStackLayout Spacing="12"
+                                           VerticalOptions="Center">
 
-                    <Switch IsToggled="{Binding UseStreaming}"
-                            VerticalOptions="Center"
-                            HorizontalOptions="End" />
+                        <Label Text="Read aloud"
+                               FontSize="13"
+                               TextColor="{StaticResource SecondaryTextColor}"
+                               VerticalTextAlignment="Center" />
 
-                </HorizontalStackLayout>
-            </Grid>
+                        <Switch IsToggled="{Binding TtsIsEnabled, Mode=TwoWay}"
+                                VerticalOptions="Center" />
+
+                        <Picker ItemsSource="{Binding TtsVoices}"
+                                SelectedItem="{Binding TtsSelectedVoice, Mode=TwoWay}"
+                                Title="Voice"
+                                IsVisible="{Binding TtsIsEnabled}"
+                                MinimumWidthRequest="160"
+                                VerticalOptions="Center"
+                                FontSize="13"
+                                TextColor="{StaticResource PrimaryTextColor}" />
+
+                    </HorizontalStackLayout>
+                </Grid>
+
+                <!-- Streaming toggle — debug feature, hidden by default -->
+                <Grid Padding="16"
+                      BackgroundColor="{StaticResource SurfaceAltColor}"
+                      IsVisible="{Binding ShowStreamingOption}">
+
+                    <HorizontalStackLayout Spacing="40"
+                                           VerticalOptions="Center">
+
+                        <Label Text="Streaming"
+                               TextColor="{StaticResource SecondaryTextColor}"
+                               VerticalTextAlignment="Center" />
+
+                        <Switch IsToggled="{Binding UseStreaming}"
+                                VerticalOptions="Center"
+                                HorizontalOptions="End" />
+
+                    </HorizontalStackLayout>
+                </Grid>
+
+            </VerticalStackLayout>
 
             <!-- Message list -->
             <Grid Grid.Row="1"
