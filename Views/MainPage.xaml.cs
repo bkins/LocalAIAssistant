@@ -223,6 +223,17 @@ public partial class MainPage : ContentPage
         }
     }
     
+    private async void OnClearButtonClicked(object sender, EventArgs e)
+    {
+        var confirmed = await DisplayAlert( "Clear messages"
+                                          , "Clear all messages? This cannot be undone."
+                                          , "Clear"
+                                          , "Cancel" );
+        if (!confirmed) return;
+
+        await ChatViewModel.ClearMessagesAsync();
+    }
+
     private async void OnMessageTapped(object sender, TappedEventArgs e)
     {
         if (sender is not Border border)

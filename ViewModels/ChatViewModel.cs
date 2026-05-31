@@ -405,6 +405,13 @@ public partial class ChatViewModel : ObservableObject
     // ── Ancillary commands ────────────────────────────────────────────────────
 
     [RelayCommand]
+    public async Task ClearMessagesAsync()
+    {
+        await _ttsService.StopAsync();
+        Messages.Clear();
+    }
+
+    [RelayCommand]
     private async Task OpenKnowledge()
         => await Shell.Current.GoToAsync(nameof(KnowledgeInboxPage));
 
