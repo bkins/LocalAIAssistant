@@ -2,6 +2,8 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LocalAIAssistant.Core.Tts;
+using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.Interfaces;
@@ -20,7 +22,27 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private int    _numPredict;
     [ObservableProperty] private float  _temperature;
     [ObservableProperty] private string _environment;
-    
+
+    // ── TTS ───────────────────────────────────────────────────────────────────
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsAzureSelected))]
+    [NotifyPropertyChangedFor(nameof(IsElevenLabsSelected))]
+    private string _selectedTtsProvider;
+
+    [ObservableProperty] private string _ttsAzureKey;
+    [ObservableProperty] private string _ttsAzureRegion;
+    [ObservableProperty] private string _ttsElevenLabsKey;
+
+    public IReadOnlyList<string> TtsProviders { get; } = new[]
+    {
+        TtsProvider.Maui
+      , TtsProvider.Azure
+      , TtsProvider.ElevenLabs
+    };
+
+    public bool IsAzureSelected      => SelectedTtsProvider == TtsProvider.Azure;
+    public bool IsElevenLabsSelected  => SelectedTtsProvider == TtsProvider.ElevenLabs;
+
     private string _selectedEnvironment;
     public string SelectedEnvironment
     {
@@ -59,6 +81,11 @@ public partial class SettingsViewModel : ObservableObject
         _endpoint    = cfg.Host;
 
         _appShellMasterViewModel = appShellMasterViewModel;
+
+        _selectedTtsProvider  = Preferences.Default.Get(StringConsts.TtsProviderPrefKey,      TtsProvider.Maui);
+        _ttsAzureKey          = Preferences.Default.Get(StringConsts.TtsAzureKeyPrefKey,      string.Empty);
+        _ttsAzureRegion       = Preferences.Default.Get(StringConsts.TtsAzureRegionPrefKey,   "eastus");
+        _ttsElevenLabsKey     = Preferences.Default.Get(StringConsts.TtsElevenLabsKeyPrefKey, string.Empty);
     }
 
     [RelayCommand]
@@ -90,5 +117,10 @@ public partial class SettingsViewModel : ObservableObject
                         };
 
         _configService.UpdateConfig(newConfig);
+
+        Preferences.Default.Set(StringConsts.TtsProviderPrefKey,      SelectedTtsProvider);
+        Preferences.Default.Set(StringConsts.TtsAzureKeyPrefKey,      TtsAzureKey);
+        Preferences.Default.Set(StringConsts.TtsAzureRegionPrefKey,   TtsAzureRegion);
+        Preferences.Default.Set(StringConsts.TtsElevenLabsKeyPrefKey, TtsElevenLabsKey);
     }
 }

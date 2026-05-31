@@ -3,6 +3,7 @@ using LocalAIAssistant.Core.ConversationHistory;
 using LocalAIAssistant.Core.Personality;
 using LocalAIAssistant.Core.Tts;
 using LocalAIAssistant.Views;
+using Plugin.Maui.Audio;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Knowledge.Inbox;
@@ -94,7 +95,23 @@ public static class ServiceCollectionExtensions
         });
         
         services.AddSingleton<OllamaConfigService>();
-        services.AddSingleton<ITtsService, MauiTtsService>();
+
+        services.AddSingleton<IAudioManager>(AudioManager.Current);
+        services.AddSingleton<MauiTtsService>();
+        services.AddSingleton<AzureTtsService>();
+        services.AddHttpClient("ElevenLabs", client =>
+        {
+            client.BaseAddress = new Uri("https://api.elevenlabs.io");
+        });
+        services.AddSingleton<ElevenLabsTtsService>(serviceProvider =>
+        {
+            var factory   = serviceProvider.GetRequiredService<IHttpClientFactory>();
+            var audio     = serviceProvider.GetRequiredService<IAudioManager>();
+            var mauiFallback = serviceProvider.GetRequiredService<MauiTtsService>();
+            return new ElevenLabsTtsService(factory.CreateClient("ElevenLabs"), audio, mauiFallback);
+        });
+        services.AddSingleton<ITtsService, TtsServiceProxy>();
+
         services.AddSingleton<IOrchestratorService, OrchestratorService>();
         services.AddSingleton<IPersonaAndContextEngine, PersonaAndContextEngine.PersonaAndContextEngine>();
         services.AddSingleton<IPersonaRepository, InMemoryPersonaRepository>();
