@@ -28,8 +28,6 @@ public class MainActivity : MauiAppCompatActivity
     {
         base.OnCreate(savedInstanceState);
 
-        Window?.SetSoftInputMode(SoftInput.AdjustResize);
-
         // Match status bar to app dark theme
         Window.SetStatusBarColor(Android.Graphics.Color.ParseColor("#000000"));
         Window.SetNavigationBarColor(Android.Graphics.Color.ParseColor("#000000"));
