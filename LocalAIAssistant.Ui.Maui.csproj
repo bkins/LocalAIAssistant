@@ -35,7 +35,11 @@
 		
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
+		<!-- Raised from 21 → 26: Health Connect SDK (androidx.health.connect.client) requires
+		     minSdkVersion 26 (Android 8.0 Oreo). The app gracefully degrades on devices below API 26
+		     because any real HC call is guarded by HealthConnectClient.GetSdkStatus() returning
+		     SdkUnavailable. API 26 still covers ~99% of active Android devices. -->
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">26.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
@@ -201,19 +205,20 @@
 	  <PackageReference Include="MarkdView" Version="1.0.11" />
 	</ItemGroup>
 
-	<!-- NOTE: Xamarin.AndroidX.Health.Connect.ConnectClient (v1.1.0.2) was evaluated but
-	     is incompatible with this project's current configuration:
-	       1. NuGet conflict — HC pulls Lifecycle.LiveData.Core >= 2.10.0.2; CommunityToolkit.Maui
-	          constrains it to < 2.8.8. Pinning 2.10.0.2 directly suppresses NU1107 but …
-	       2. minSdk cascade — Lifecycle.Runtime 2.10.0.2 requires API 23; the HC AAR itself
-	          requires API 26. Project targets API 21.
-	       3. GMS duplicate namespace — HC transitively pulls multiple GMS AARs (gms.base,
-	          gms.common, gms.location, gms.tasks) that each bundle each other, causing
-	          "Namespace used in: X, X" XAAMM0000 build errors that tools:overrideLibrary
-	          cannot suppress.
-	       4. Binding API — all read/permission suspend fns expose raw IContinuation (not Task<T>).
-	     All four issues must be resolved before the package can be added.
-	     See Platforms/Android/Health/HealthConnectManager.cs for the detailed TODO per metric. -->
+	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0-android'">
+	  <!-- Health Connect SDK — Android 8+ (API 26+) only. -->
+	  <PackageReference Include="Xamarin.AndroidX.Health.Connect.ConnectClient" Version="1.1.0.2" />
+	  <!-- Pins Lifecycle.LiveData.Core to resolve NU1107 conflict: HC requires >= 2.10.0.2
+	       but CommunityToolkit.Maui 12.3.0 constrains it to < 2.8.8. The newer version wins;
+	       both paths are backward-compatible at runtime. -->
+	  <PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData.Core" Version="2.10.0.2" />
+	  <!-- Pins SavedState.Ktx to 1.5.0 to resolve D8 duplicate-class error for ViewKt:
+	       HC 1.1.0.2 transitively pulls SavedState.Ktx 1.2.1.16 whose savedstate-ktx.aar
+	       still contains ViewKt; SavedState 1.4.0.2+ also includes ViewKt in savedstate-android.aar.
+	       SavedState.Ktx 1.5.0 ships an empty savedstate-ktx.aar (ViewKt was merged upstream). -->
+	  <PackageReference Include="Xamarin.AndroidX.SavedState.SavedState.Ktx" Version="1.5.0" />
+	  <PackageReference Include="Xamarin.AndroidX.SavedState" Version="1.5.0" />
+	</ItemGroup>
 
 	<ItemGroup>
 	  <ProjectReference Include="LocalAIAssistant.Core\LocalAIAssistant.Core.csproj" />
