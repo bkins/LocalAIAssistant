@@ -156,6 +156,8 @@
 		<PackageReference Include="System.IO.Abstractions" Version="22.0.16" />
 		<PackageReference Include="xunit.assert" Version="2.9.3" />
 		<PackageReference Include="xunit.extensibility.core" Version="2.9.2" />
+		<PackageReference Include="Microsoft.CognitiveServices.Speech" Version="1.50.0" />
+		<PackageReference Include="Plugin.Maui.Audio" Version="4.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -197,6 +199,15 @@
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0-windows10.0.19041.0'">
 	  <PackageReference Include="MarkdView" Version="1.0.11" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0-android'">
+	  <!-- Health Connect SDK — Android 9+ (API 28+) only. -->
+	  <PackageReference Include="Xamarin.AndroidX.Health.Connect.ConnectClient" Version="1.1.0.2" />
+	  <!-- Force Lifecycle.LiveData.Core 2.10.0.2 to resolve NU1107 conflict between
+	       Health Connect's transitive dependency (>= 2.10.0.2) and CommunityToolkit.Maui's
+	       indirect constraint (< 2.8.8). Both are backward-compatible; the newer version wins. -->
+	  <PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData.Core" Version="2.10.0.2" />
 	</ItemGroup>
 
 	<ItemGroup>

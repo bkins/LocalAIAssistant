@@ -154,6 +154,81 @@
             </Border>
 
             <!-- ═══════════════════════════════════════════ -->
+            <!-- Section: Text-to-Speech                     -->
+            <!-- ═══════════════════════════════════════════ -->
+            <Label Text="TEXT-TO-SPEECH"
+                   FontSize="11"
+                   FontAttributes="Bold"
+                   TextColor="{StaticResource SecondaryTextColor}"
+                   Margin="20,20,20,6"
+                   CharacterSpacing="1.5" />
+
+            <Border Margin="12,0"
+                    Padding="16"
+                    StrokeThickness="0"
+                    BackgroundColor="{StaticResource SurfaceColor}">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="10" />
+                </Border.StrokeShape>
+                <VerticalStackLayout Spacing="12">
+
+                    <Label Text="Provider"
+                           FontSize="13"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource PrimaryTextColor}" />
+                    <Picker Title="Select provider"
+                            ItemsSource="{Binding TtsProviders}"
+                            SelectedItem="{Binding SelectedTtsProvider}" />
+
+                    <!-- Azure settings -->
+                    <BoxView HeightRequest="1"
+                             BackgroundColor="{StaticResource SurfaceAltColor}"
+                             Margin="0,4"
+                             IsVisible="{Binding IsAzureSelected}" />
+
+                    <Label Text="Azure Subscription Key"
+                           FontSize="13"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource PrimaryTextColor}"
+                           IsVisible="{Binding IsAzureSelected}" />
+                    <Entry Text="{Binding TtsAzureKey}"
+                           Placeholder="Paste your Azure Speech key here"
+                           IsPassword="True"
+                           IsVisible="{Binding IsAzureSelected}" />
+
+                    <Label Text="Azure Region"
+                           FontSize="13"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource PrimaryTextColor}"
+                           IsVisible="{Binding IsAzureSelected}" />
+                    <Entry Text="{Binding TtsAzureRegion}"
+                           Placeholder="e.g. eastus"
+                           IsVisible="{Binding IsAzureSelected}" />
+
+                    <!-- ElevenLabs settings -->
+                    <BoxView HeightRequest="1"
+                             BackgroundColor="{StaticResource SurfaceAltColor}"
+                             Margin="0,4"
+                             IsVisible="{Binding IsElevenLabsSelected}" />
+
+                    <Label Text="ElevenLabs API Key"
+                           FontSize="13"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource PrimaryTextColor}"
+                           IsVisible="{Binding IsElevenLabsSelected}" />
+                    <Entry Text="{Binding TtsElevenLabsKey}"
+                           Placeholder="Paste your ElevenLabs API key here"
+                           IsPassword="True"
+                           IsVisible="{Binding IsElevenLabsSelected}" />
+
+                    <Label Text="Voice selection is available in the chat screen voice picker."
+                           FontSize="11"
+                           TextColor="{StaticResource SecondaryTextColor}" />
+
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- ═══════════════════════════════════════════ -->
             <!-- Save                                        -->
             <!-- ═══════════════════════════════════════════ -->
             <Button Text="Save"

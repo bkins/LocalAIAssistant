@@ -18,6 +18,10 @@ public static class StringConsts
 
     public const string TtsEnabledPrefKey            = "TtsEnabled";
     public const string TtsPreferredVoiceNamePrefKey = "TtsPreferredVoiceName";
+    public const string TtsProviderPrefKey           = "TtsProvider";
+    public const string TtsAzureKeyPrefKey           = "TtsAzureKey";
+    public const string TtsAzureRegionPrefKey        = "TtsAzureRegion";
+    public const string TtsElevenLabsKeyPrefKey      = "TtsElevenLabsKey";
 
     public static string ApplicationJsonMediaType = "application/json";
 
