@@ -203,7 +203,7 @@
             <!-- Input bar -->
             <Grid Grid.Row="2"
                   Padding="12"
-                  ColumnDefinitions="*,Auto"
+                  ColumnDefinitions="*,Auto,Auto"
                   BackgroundColor="{StaticResource SurfaceColor}">
 
                 <Editor Grid.Column="0"
@@ -227,6 +227,15 @@
                         HeightRequest="44"
                         Padding="16,0"
                         BackgroundColor="#4CAF50" />
+
+                <Button Grid.Column="2"
+                        Text="Clear"
+                        Clicked="OnClearButtonClicked"
+                        IsEnabled="{Binding IsTyping, Converter={StaticResource InverseBoolConverter}}"
+                        HeightRequest="44"
+                        Padding="12,0"
+                        Margin="8,0,0,0"
+                        BackgroundColor="#C62828" />
 
             </Grid>
         </Grid>
