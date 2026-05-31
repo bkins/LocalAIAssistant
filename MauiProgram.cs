@@ -32,6 +32,7 @@ using Serilog;
 using Serilog.Formatting.Compact;
 #if ANDROID
 using LocalAIAssistant.Platforms.Android.Health;
+using LocalAIAssistant.Platforms.Android.Handlers;
 #endif
 
 namespace LocalAIAssistant;
@@ -121,7 +122,12 @@ public static class MauiProgram
 			       fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
 			       fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 		       })
-		       .ConfigureMauiHandlers(handlers => { })
+		       .ConfigureMauiHandlers(handlers =>
+		       {
+#if ANDROID
+			       handlers.AddHandler(typeof(Editor), typeof(MinHeightEditorHandler));
+#endif
+		       })
 		       .ConfigureLifecycleEvents(lifecycle =>
 		       {
 #if ANDROID
