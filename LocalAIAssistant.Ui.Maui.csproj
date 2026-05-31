@@ -201,14 +201,19 @@
 	  <PackageReference Include="MarkdView" Version="1.0.11" />
 	</ItemGroup>
 
-	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0-android'">
-	  <!-- Health Connect SDK — Android 9+ (API 28+) only. -->
-	  <PackageReference Include="Xamarin.AndroidX.Health.Connect.ConnectClient" Version="1.1.0.2" />
-	  <!-- Force Lifecycle.LiveData.Core 2.10.0.2 to resolve NU1107 conflict between
-	       Health Connect's transitive dependency (>= 2.10.0.2) and CommunityToolkit.Maui's
-	       indirect constraint (< 2.8.8). Both are backward-compatible; the newer version wins. -->
-	  <PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData.Core" Version="2.10.0.2" />
-	</ItemGroup>
+	<!-- NOTE: Xamarin.AndroidX.Health.Connect.ConnectClient (v1.1.0.2) was evaluated but
+	     is incompatible with this project's current configuration:
+	       1. NuGet conflict — HC pulls Lifecycle.LiveData.Core >= 2.10.0.2; CommunityToolkit.Maui
+	          constrains it to < 2.8.8. Pinning 2.10.0.2 directly suppresses NU1107 but …
+	       2. minSdk cascade — Lifecycle.Runtime 2.10.0.2 requires API 23; the HC AAR itself
+	          requires API 26. Project targets API 21.
+	       3. GMS duplicate namespace — HC transitively pulls multiple GMS AARs (gms.base,
+	          gms.common, gms.location, gms.tasks) that each bundle each other, causing
+	          "Namespace used in: X, X" XAAMM0000 build errors that tools:overrideLibrary
+	          cannot suppress.
+	       4. Binding API — all read/permission suspend fns expose raw IContinuation (not Task<T>).
+	     All four issues must be resolved before the package can be added.
+	     See Platforms/Android/Health/HealthConnectManager.cs for the detailed TODO per metric. -->
 
 	<ItemGroup>
 	  <ProjectReference Include="LocalAIAssistant.Core\LocalAIAssistant.Core.csproj" />
