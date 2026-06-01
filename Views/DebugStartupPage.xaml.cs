@@ -161,13 +161,8 @@ public partial class DebugStartupPage : ContentPage
         GoToAppButton.IsVisible = true;
     }
 
-    private void OnGoToAppClicked(object sender, EventArgs e)
+    private async void OnGoToAppClicked(object sender, EventArgs e)
     {
-        var services        = IPlatformApplication.Current?.Services
-                           ?? Application.Current?.Handler?.MauiContext?.Services;
-        var masterViewModel = services?.GetService<AppShellMasterViewModel>();
-        if (masterViewModel == null) return;
-
-        Application.Current!.MainPage = new AppShell(masterViewModel);
+        await Navigation.PopModalAsync(animated: false);
     }
 }

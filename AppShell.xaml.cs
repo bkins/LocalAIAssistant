@@ -9,50 +9,60 @@ namespace LocalAIAssistant;
 
 public partial class AppShell : Shell
 {
-	private readonly ApiHealthService        _apiHealthService;
 	private readonly AppShellMasterViewModel _viewModel;
-	
+#if ANDROID
+	private bool _debugPageShown;
+#endif
+
 	public AppShell(AppShellMasterViewModel masterViewModel)
 	{
+		BindingContext = masterViewModel;
+		_viewModel     = masterViewModel;
+
 		InitializeComponent();
-		
-//Main / Chat		
+
+//Main / Chat
 		Routing.RegisterRoute(nameof(MainPage)
 		                    , typeof(MainPage));
-// Settings		
+// Settings
 		Routing.RegisterRoute(nameof(SettingsPage)
 		                    , typeof(SettingsPage));
 // Logs
 		Routing.RegisterRoute(nameof(LogDetailPage)
 		                    , typeof(LogDetailPage));
-		
-// Knowledge Inbox		
+
+// Knowledge Inbox
 		Routing.RegisterRoute(nameof(KnowledgeInboxPage)
 		                    , typeof(KnowledgeInboxPage));
-    // Jounrals
+// Journals
 		Routing.RegisterRoute(nameof(JournalDetailPage)
 		                    , typeof(JournalDetailPage));
-		
+
 		Routing.RegisterRoute(nameof(JournalRevisionHistoryPage)
-		                      , typeof(JournalRevisionHistoryPage));
+		                    , typeof(JournalRevisionHistoryPage));
 
 		Routing.RegisterRoute(nameof(EditJournalEntryPage)
 		                    , typeof(EditJournalEntryPage));
-		
-	// Tasks	
+
+// Tasks
 		Routing.RegisterRoute(nameof(TaskDetailPage)
 		                    , typeof(TaskDetailPage));
-
-		BindingContext = masterViewModel;
-		_viewModel     = masterViewModel;
-		
-		// Trigger the initial API status check via the master view model's property
-		//_ = _viewModel.ApiHealthViewModel.CheckApiStatusAsync();
 	}
+
 	protected override async void OnAppearing()
 	{
 		base.OnAppearing();
 		await _viewModel.InitializeAsync();
+
+#if ANDROID
+		// Show startup diagnostics as a modal so AppShell is always the window root.
+		// Avoids the ContentPage→Shell platform transition that breaks Android touch dispatch.
+		if (!_debugPageShown)
+		{
+			_debugPageShown = true;
+			await Navigation.PushModalAsync(new Views.DebugStartupPage(), animated: false);
+		}
+#endif
 	}
 
 }
