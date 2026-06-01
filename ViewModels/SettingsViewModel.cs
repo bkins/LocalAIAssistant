@@ -6,6 +6,7 @@ using LocalAIAssistant.Core.Tts;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Services;
+using LocalAIAssistant.Services.Health;
 using LocalAIAssistant.Services.Interfaces;
 
 namespace LocalAIAssistant.ViewModels;
@@ -16,6 +17,7 @@ public partial class SettingsViewModel : ObservableObject
     private readonly IPersonalityService      _personalityService;
     private readonly ApiEnvironmentDescriptor _apiEnvironment;
     private readonly AppShellMasterViewModel  _appShellMasterViewModel;
+    private readonly IHealthConnectManager?   _healthConnect;
     
     [ObservableProperty] private string _model;
     [ObservableProperty] private string _endpoint;
@@ -43,6 +45,11 @@ public partial class SettingsViewModel : ObservableObject
     public bool IsAzureSelected      => SelectedTtsProvider == TtsProvider.Azure;
     public bool IsElevenLabsSelected  => SelectedTtsProvider == TtsProvider.ElevenLabs;
 
+    // ── Health Connect (Android-only) ─────────────────────────────────────────
+    [ObservableProperty] private string _healthStatusText = "Checking…";
+
+    public bool IsHealthConnectAvailable => _healthConnect is not null;
+
     private string _selectedEnvironment;
     public string SelectedEnvironment
     {
@@ -62,7 +69,8 @@ public partial class SettingsViewModel : ObservableObject
     public SettingsViewModel (OllamaConfigService      configService
                             , IPersonalityService      personalityService
                             , ApiEnvironmentDescriptor apiEnvironment
-                            , AppShellMasterViewModel  appShellMasterViewModel)
+                            , AppShellMasterViewModel  appShellMasterViewModel
+                            , IServiceProvider         services)
     {
         _apiEnvironment = apiEnvironment;
 
@@ -82,10 +90,33 @@ public partial class SettingsViewModel : ObservableObject
 
         _appShellMasterViewModel = appShellMasterViewModel;
 
+        _healthConnect = services.GetService<IHealthConnectManager>();
+        if (_healthConnect is not null)
+            _ = RefreshHealthStatus();
+
         _selectedTtsProvider  = Preferences.Default.Get(StringConsts.TtsProviderPrefKey,      TtsProvider.Maui);
         _ttsAzureKey          = Preferences.Default.Get(StringConsts.TtsAzureKeyPrefKey,      string.Empty);
         _ttsAzureRegion       = Preferences.Default.Get(StringConsts.TtsAzureRegionPrefKey,   "eastus");
         _ttsElevenLabsKey     = Preferences.Default.Get(StringConsts.TtsElevenLabsKeyPrefKey, string.Empty);
+    }
+
+    public Task RefreshHealthStatusAsync() => RefreshHealthStatus();
+
+    [RelayCommand]
+    private async Task RefreshHealthStatus()
+    {
+        if (_healthConnect is null) return;
+        HealthStatusText = await _healthConnect.CheckPermissionsAsync()
+            ? "Connected — permissions granted"
+            : "Not connected";
+    }
+
+    [RelayCommand]
+    private async Task ConnectHealth()
+    {
+        if (_healthConnect is null) return;
+        await _healthConnect.RequestPermissionsAsync();
+        await RefreshHealthStatus();
     }
 
     [RelayCommand]

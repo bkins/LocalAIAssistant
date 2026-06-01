@@ -6,7 +6,7 @@
 //   - Android 8.0+ (API 26) — HC AAR declares minSdkVersion 26.
 //   - Health Connect app installed — GetSdkStatus() guards every call.
 //   - Permissions granted — HasPermissionsAsync() guards every call.
-//     Permission dialog is triggered from MainActivity.OnResume().
+//     Permission dialog is triggered from SettingsPage via RequestPermissionsAsync().
 //
 // Binding notes (Xamarin.AndroidX.Health.Connect.ConnectClient v1.1.0.2):
 //   - HealthConnectClient.GetOrCreate() returns IHealthConnectClient (not HealthConnectClient).
@@ -37,6 +37,31 @@ public sealed class HealthConnectManager : IHealthConnectManager
         , "android.permission.health.READ_HEART_RATE"
         , "android.permission.health.READ_DISTANCE"
     ];
+
+    public async Task<bool> CheckPermissionsAsync(CancellationToken ct = default)
+    {
+        var client = GetClientOrNull();
+        return client is not null && await HasPermissionsAsync(client);
+    }
+
+    public async Task RequestPermissionsAsync(CancellationToken ct = default)
+    {
+        var client = GetClientOrNull();
+        if (client is null) return;
+
+        if (await HasPermissionsAsync(client)) return;
+
+        // Build the Java Set<String> the HC contract expects, then launch via the
+        // ActivityResultLauncher registered in MainActivity.OnCreate.  Using the HC
+        // PermissionController contract (not ActivityCompat.RequestPermissions) is required
+        // on all API levels because HC permissions live in HC's own permission store, not
+        // the framework's runtime-permission store.
+        var permSet = new Java.Util.HashSet();
+        foreach (var perm in RequiredPermissions)
+            permSet.Add(new Java.Lang.String(perm));
+
+        MainActivity.HealthPermissionLauncher?.Launch(permSet);
+    }
 
     public async Task<StepCountResult> GetStepCountAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken ct = default)
     {

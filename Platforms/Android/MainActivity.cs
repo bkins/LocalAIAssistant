@@ -1,8 +1,8 @@
 using Android.App;
 using Android.Content.PM;
 using Android.OS;
-using AndroidX.Core.App;
-using LocalAIAssistant.Platforms.Android.Health;
+using AndroidX.Activity.Result;
+using AndroidX.Health.Connect.Client;
 
 namespace LocalAIAssistant;
 
@@ -20,8 +20,11 @@ namespace LocalAIAssistant;
                                | ConfigChanges.Density)]
 public class MainActivity : MauiAppCompatActivity
 {
-    // Request code for Health Connect permissions result callback.
-    private const int HealthPermissionsRequestCode = 1001;
+    // Registered in OnCreate so it is available before the user reaches the Health settings.
+    // HealthConnectManager.RequestPermissionsAsync() calls Launch() on this.
+    // Must be registered here (not on demand) per ComponentActivity.registerForActivityResult
+    // lifecycle rules: the launcher must be registered before the Activity reaches STARTED.
+    internal static ActivityResultLauncher? HealthPermissionLauncher { get; private set; }
 
     protected override void OnCreate(Bundle savedInstanceState)
     {
@@ -34,31 +37,19 @@ public class MainActivity : MauiAppCompatActivity
         // which breaks MAUI's inset math and makes all touch targets misaligned.
         Window.SetStatusBarColor(Android.Graphics.Color.ParseColor("#000000"));
         Window.SetNavigationBarColor(Android.Graphics.Color.ParseColor("#000000"));
+
+        // Use the HC-specific contract so the Health Connect permission screen is shown
+        // on all supported API levels (26+), not the standard runtime-permission dialog
+        // which cannot reach HC's own permission store.
+        HealthPermissionLauncher = RegisterForActivityResult(
+            PermissionController.CreateRequestPermissionResultContract()
+          , new NoOpPermissionCallback());
     }
 
-    protected override void OnResume()
+    // The granted-permission set returned by the HC dialog is ignored here.
+    // SettingsViewModel re-checks status via CheckPermissionsAsync() on OnAppearing.
+    private sealed class NoOpPermissionCallback : Java.Lang.Object, IActivityResultCallback
     {
-        base.OnResume();
-        RequestHealthPermissionsIfNeeded();
-    }
-
-    private void RequestHealthPermissionsIfNeeded()
-    {
-        // Health Connect requires Android 9+ (API 28).
-        if (Build.VERSION.SdkInt < BuildVersionCodes.P)
-            return;
-
-        // On Android 13+ (API 33) health permissions are standard runtime permissions and
-        // the system routes them through the Health Connect permission UI automatically.
-        //
-        // TODO: On Android 9–12 (API 28–32) the permission dialog must be launched via
-        //       IPermissionController.CreateRequestPermissionResultContract() registered in
-        //       OnCreate() as an ActivityResultLauncher. This requires HealthConnect SDK to
-        //       be resolvable (see HealthConnectManager.cs Blocker 1-3) and a
-        //       KotlinContinuationBridge to first check which permissions are still missing.
-        ActivityCompat.RequestPermissions(
-            this
-          , HealthConnectManager.RequiredPermissions
-          , HealthPermissionsRequestCode);
+        public void OnActivityResult(Java.Lang.Object result) { }
     }
 }
