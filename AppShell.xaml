@@ -9,6 +9,7 @@
     x:DataType="viewModels:AppShellMasterViewModel"
     Title="LocalAIAssistant"
     x:Name="AppShellRoot"
+    FlyoutBehavior="Disabled"
 
     BackgroundColor="{StaticResource SurfaceColor}"
     Shell.ForegroundColor="{StaticResource PrimaryTextColor}"

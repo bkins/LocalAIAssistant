@@ -65,28 +65,34 @@
 
             </VerticalStackLayout>
 
-            <!-- Message list -->
-            <Grid Grid.Row="1"
-                  Margin="12">
+            <!-- Message list — children placed directly in the * row so the
+                 CollectionView receives an EXACTLY-bounded height from the row.
+                 A single-cell wrapper Grid would pass an unconstrained measure to
+                 CollectionView, letting it report its full content height and
+                 overflow the row's touch area on Android. -->
+            <BoxView Grid.Row="1"
+                     Color="Black"
+                     Margin="12" />
 
-                <!-- Dark overlay to keep contrast -->
-                <BoxView Color="Black" />
+            <!-- Background glyph — animated from code-behind -->
+            <Image Grid.Row="1"
+                   x:Name="BackgroundGlyph"
+                   Source="appicon_background.png"
+                   Aspect="Center"
+                   Scale="0.5"
+                   Opacity="0.5"
+                   Margin="12" />
 
-                <!-- Background glyph — animated from code-behind -->
-                <Image x:Name="BackgroundGlyph"
-                       Source="appicon_background.png"
-                       Aspect="Center"
-                       Scale="0.5"
-                       Opacity="0.5" />
-                <!-- ItemsUpdatingScrollMode="KeepLastItemInView" -->
-                <!-- Scrolled="OnCollectionViewScrolled" -->
-                <CollectionView x:Name="MessagesView"
-                                
-                                ItemsSource="{Binding Messages}"
-                                ItemSizingStrategy="MeasureAllItems"
-                                BackgroundColor="Transparent"
-                                VerticalOptions="Fill">
-                    
+            <!-- ItemsUpdatingScrollMode="KeepLastItemInView" -->
+            <!-- Scrolled="OnCollectionViewScrolled" -->
+            <CollectionView Grid.Row="1"
+                            x:Name="MessagesView"
+                            Margin="12"
+                            ItemsSource="{Binding Messages}"
+                            ItemSizingStrategy="MeasureAllItems"
+                            BackgroundColor="Transparent"
+                            VerticalOptions="Fill">
+
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
                             <!--
@@ -197,8 +203,7 @@
                             </Border>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
-                </CollectionView>
-            </Grid>
+            </CollectionView>
 
             <!-- Input bar -->
             <Grid Grid.Row="2"
