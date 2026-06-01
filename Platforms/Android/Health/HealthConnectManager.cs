@@ -16,7 +16,6 @@
 //     Obtain via: Kotlin.Jvm.JvmClassMappingKt.GetKotlinClass(Java.Lang.Class.FromType(typeof(T))).
 //   - ReadRecordsResponse is in AndroidX.Health.Connect.Client.Response (not .Request).
 
-using AndroidX.Core.App;
 using AndroidX.Health.Connect.Client;
 using AndroidX.Health.Connect.Client.Records;
 using AndroidX.Health.Connect.Client.Request;
@@ -45,9 +44,6 @@ public sealed class HealthConnectManager : IHealthConnectManager
         return client is not null && await HasPermissionsAsync(client);
     }
 
-    // On Android 13+ (API 33) HC permissions are routed through the standard runtime
-    // permission dialog via ActivityCompat.RequestPermissions. On API 28–32 the dialog
-    // may not appear; a full ActivityResultLauncher contract is needed for those versions.
     public async Task RequestPermissionsAsync(CancellationToken ct = default)
     {
         var client = GetClientOrNull();
@@ -55,10 +51,16 @@ public sealed class HealthConnectManager : IHealthConnectManager
 
         if (await HasPermissionsAsync(client)) return;
 
-        var activity = Platform.CurrentActivity;
-        if (activity is null) return;
+        // Build the Java Set<String> the HC contract expects, then launch via the
+        // ActivityResultLauncher registered in MainActivity.OnCreate.  Using the HC
+        // PermissionController contract (not ActivityCompat.RequestPermissions) is required
+        // on all API levels because HC permissions live in HC's own permission store, not
+        // the framework's runtime-permission store.
+        var permSet = new Java.Util.HashSet();
+        foreach (var perm in RequiredPermissions)
+            permSet.Add(new Java.Lang.String(perm));
 
-        ActivityCompat.RequestPermissions(activity, RequiredPermissions, 0);
+        MainActivity.HealthPermissionLauncher?.Launch(permSet);
     }
 
     public async Task<StepCountResult> GetStepCountAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken ct = default)
