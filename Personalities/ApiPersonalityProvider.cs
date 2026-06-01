@@ -17,7 +17,9 @@ public class ApiPersonalityProvider : IPersonalityProvider
     {
         try
         {
-            var dtos = Task.Run(() => _apiClient.GetPersonalitiesAsync()).GetAwaiter().GetResult();
+            // Without a timeout this blocks the main thread (during DI construction) for up to the 100-second HttpClient default.
+            using var cts  = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            var       dtos = Task.Run(() => _apiClient.GetPersonalitiesAsync(cts.Token)).GetAwaiter().GetResult();
 
             return dtos.Select(Map).ToList();
         }
