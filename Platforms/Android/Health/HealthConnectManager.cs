@@ -6,7 +6,7 @@
 //   - Android 8.0+ (API 26) — HC AAR declares minSdkVersion 26.
 //   - Health Connect app installed — GetSdkStatus() guards every call.
 //   - Permissions granted — HasPermissionsAsync() guards every call.
-//     Permission dialog is triggered from MainActivity.OnResume().
+//     Permission dialog is triggered from SettingsPage via RequestPermissionsAsync().
 //
 // Binding notes (Xamarin.AndroidX.Health.Connect.ConnectClient v1.1.0.2):
 //   - HealthConnectClient.GetOrCreate() returns IHealthConnectClient (not HealthConnectClient).
@@ -16,6 +16,7 @@
 //     Obtain via: Kotlin.Jvm.JvmClassMappingKt.GetKotlinClass(Java.Lang.Class.FromType(typeof(T))).
 //   - ReadRecordsResponse is in AndroidX.Health.Connect.Client.Response (not .Request).
 
+using AndroidX.Core.App;
 using AndroidX.Health.Connect.Client;
 using AndroidX.Health.Connect.Client.Records;
 using AndroidX.Health.Connect.Client.Request;
@@ -37,6 +38,28 @@ public sealed class HealthConnectManager : IHealthConnectManager
         , "android.permission.health.READ_HEART_RATE"
         , "android.permission.health.READ_DISTANCE"
     ];
+
+    public async Task<bool> CheckPermissionsAsync(CancellationToken ct = default)
+    {
+        var client = GetClientOrNull();
+        return client is not null && await HasPermissionsAsync(client);
+    }
+
+    // On Android 13+ (API 33) HC permissions are routed through the standard runtime
+    // permission dialog via ActivityCompat.RequestPermissions. On API 28–32 the dialog
+    // may not appear; a full ActivityResultLauncher contract is needed for those versions.
+    public async Task RequestPermissionsAsync(CancellationToken ct = default)
+    {
+        var client = GetClientOrNull();
+        if (client is null) return;
+
+        if (await HasPermissionsAsync(client)) return;
+
+        var activity = Platform.CurrentActivity;
+        if (activity is null) return;
+
+        ActivityCompat.RequestPermissions(activity, RequiredPermissions, 0);
+    }
 
     public async Task<StepCountResult> GetStepCountAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken ct = default)
     {

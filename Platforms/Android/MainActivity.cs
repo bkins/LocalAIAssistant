@@ -1,8 +1,6 @@
 using Android.App;
 using Android.Content.PM;
 using Android.OS;
-using AndroidX.Core.App;
-using LocalAIAssistant.Platforms.Android.Health;
 
 namespace LocalAIAssistant;
 
@@ -20,9 +18,6 @@ namespace LocalAIAssistant;
                                | ConfigChanges.Density)]
 public class MainActivity : MauiAppCompatActivity
 {
-    // Request code for Health Connect permissions result callback.
-    private const int HealthPermissionsRequestCode = 1001;
-
     protected override void OnCreate(Bundle savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
@@ -36,29 +31,7 @@ public class MainActivity : MauiAppCompatActivity
         Window.SetNavigationBarColor(Android.Graphics.Color.ParseColor("#000000"));
     }
 
-    protected override void OnResume()
-    {
-        base.OnResume();
-        RequestHealthPermissionsIfNeeded();
-    }
-
-    private void RequestHealthPermissionsIfNeeded()
-    {
-        // Health Connect requires Android 9+ (API 28).
-        if (Build.VERSION.SdkInt < BuildVersionCodes.P)
-            return;
-
-        // On Android 13+ (API 33) health permissions are standard runtime permissions and
-        // the system routes them through the Health Connect permission UI automatically.
-        //
-        // TODO: On Android 9–12 (API 28–32) the permission dialog must be launched via
-        //       IPermissionController.CreateRequestPermissionResultContract() registered in
-        //       OnCreate() as an ActivityResultLauncher. This requires HealthConnect SDK to
-        //       be resolvable (see HealthConnectManager.cs Blocker 1-3) and a
-        //       KotlinContinuationBridge to first check which permissions are still missing.
-        ActivityCompat.RequestPermissions(
-            this
-          , HealthConnectManager.RequiredPermissions
-          , HealthPermissionsRequestCode);
-    }
+    // Health Connect permissions are requested lazily from the Health section in
+    // SettingsPage when the user intentionally taps "Connect Health".
+    // See HealthConnectManager.RequestPermissionsAsync() for the implementation.
 }
