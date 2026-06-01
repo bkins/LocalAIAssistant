@@ -409,3 +409,25 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+/.idea
+/.idea/.idea.LocalAIAssistant/.idea/libraries/androidx_health_connect_connect_client.xml
+/.idea/.idea.LocalAIAssistant/.idea/libraries/androidx_health_connect_connect_client_external_protobuf.xml
+/.idea/.idea.LocalAIAssistant/.idea/libraries/androidx_health_connect_connect_client_proto.xml
+/.idea/.idea.LocalAIAssistant/.idea/libraries/androidx_lifecycle_lifecycle_viewmodel_savedstate_android.xml
+/.idea/.idea.LocalAIAssistant/.idea/libraries/androidx_navigationevent_navigationevent_android.xml
+/.idea/.idea.LocalAIAssistant/.idea/libraries/androidx_savedstate_savedstate_android.xml
+/.idea/.idea.LocalAIAssistant/.idea/libraries/androidx_tracing_tracing_android.xml
+/.idea/.idea.LocalAIAssistant/.idea/copilot.data.migration.ask2agent.xml
+/CognitivePlatform/CpClients.zip
+/.idea/.idea.LocalAIAssistant/.idea/db-forest-config.xml
+/.idea/.idea.LocalAIAssistant/.idea/libraries/j2objc_annotations.xml
+/.idea/.idea.LocalAIAssistant/.idea/libraries/play_services_base.xml
+/.idea/.idea.LocalAIAssistant/.idea/libraries/play_services_basement.xml
+/.idea/.idea.LocalAIAssistant/.idea/libraries/play_services_location.xml
+/.idea/.idea.LocalAIAssistant/.idea/libraries/play_services_tasks.xml
+/.idea/.idea.LocalAIAssistant/.idea/libraries/playservicesbase_18_5_0.xml
+/.idea/.idea.LocalAIAssistant/.idea/libraries/playservicesbasement_18_4_0.xml
+/.idea/.idea.LocalAIAssistant/.idea/libraries/playserviceslocation_21_3_0.xml
+/.idea/.idea.LocalAIAssistant/.idea/libraries/playservicestasks_18_2_0.xml
+/.idea/.idea.LocalAIAssistant/.idea/libraries/runtime_annotation.xml
+/.idea/.idea.LocalAIAssistant/.idea/libraries/runtime_annotation_android.xml

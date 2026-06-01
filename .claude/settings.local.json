@@ -44,7 +44,10 @@
       "Bash(Select-Object -First 20)",
       "Bash(dotnet sln *)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\benho\\\\source\\\\repos\\\\LocalAIAssistant\\\\LaaUnitTests\" -Filter \"*.cs\" -Exclude \"obj\" -File)",
-      "Bash(Select-Object FullName)"
+      "Bash(Select-Object FullName)",
+      "PowerShell(Select-String -Path \"C:\\\\Users\\\\benho\\\\.claude\\\\projects\\\\C--Users-benho-source-repos-LocalAIAssistant\\\\af4da578-01ce-42e4-b098-8b5bbe9cbc9c\\\\tool-results\\\\bevl71359.txt\" -Pattern \" error | Build succeeded| Build FAILED\" | Select-Object -Last 20 | ForEach-Object { $_.Line })",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\benho\\\\source\\\\repos\\\\LocalAIAssistant\" -Recurse -Filter \"*.xaml\" -o BasicFileInfo)",
+      "Bash(Select-Object -First 30)"
     ]
   }
 }
