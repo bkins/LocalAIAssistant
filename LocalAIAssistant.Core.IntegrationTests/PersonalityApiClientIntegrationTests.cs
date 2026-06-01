@@ -1,6 +1,6 @@
 using LocalAIAssistant.Core.Personality;
 
-namespace LocalAIAssistant.Core.IntegrationTests;
+namespace LocalAIAssistant.LocalAIAssistant.Core.IntegrationTests;
 
 /// <summary>
 /// Contract tests for <see cref="PersonalityApiClient"/> against the live CP dev API.

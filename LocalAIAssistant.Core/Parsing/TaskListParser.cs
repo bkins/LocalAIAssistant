@@ -12,6 +12,9 @@ public static class TaskListParser
     {
         tasks = new();
 
+        if (string.IsNullOrEmpty(text))
+            return false;
+
         var lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
         foreach (var line in lines)

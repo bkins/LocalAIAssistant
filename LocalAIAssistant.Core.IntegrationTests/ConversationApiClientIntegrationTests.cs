@@ -1,6 +1,6 @@
 using LocalAIAssistant.Core.ConversationHistory;
 
-namespace LocalAIAssistant.Core.IntegrationTests;
+namespace LocalAIAssistant.LocalAIAssistant.Core.IntegrationTests;
 
 /// <summary>
 /// Contract tests for <see cref="ConversationApiClient"/> against the live CP dev API.

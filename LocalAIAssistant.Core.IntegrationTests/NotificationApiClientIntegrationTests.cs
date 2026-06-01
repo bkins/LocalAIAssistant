@@ -1,6 +1,6 @@
 using LocalAIAssistant.Core.Notifications;
 
-namespace LocalAIAssistant.Core.IntegrationTests;
+namespace LocalAIAssistant.LocalAIAssistant.Core.IntegrationTests;
 
 /// <summary>
 /// Contract tests for <see cref="NotificationApiClient"/> against the live CP dev API.

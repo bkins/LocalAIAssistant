@@ -26,7 +26,25 @@
       "Bash(git worktree *)",
       "Bash(git branch *)",
       "Bash(gh pr create --title 'fix\\(BUG-38\\): fix missing inbox items and guard against cache data loss' --body ' *)",
-      "Bash(gh pr create --title 'fix\\(BUG-41+BUG-42\\): fix broken Chat navigation and re-init on back-navigation' --body ' *)"
+      "Bash(gh pr create --title 'fix\\(BUG-41+BUG-42\\): fix broken Chat navigation and re-init on back-navigation' --body ' *)",
+      "Bash(git checkout *)",
+      "Bash(dotnet tool *)",
+      "Bash(dotnet-script --version)",
+      "Bash(dotnet package *)",
+      "Bash(gh pr create --title 'feat\\(tts\\): TTS V.2 — Azure Cognitive Services + ElevenLabs upgrade path' --body ' *)",
+      "Bash(gh pr *)",
+      "Bash(Start-Sleep -Seconds 10)",
+      "Bash(dotnet script *)",
+      "Bash(which dotnet-ildasm *)",
+      "Bash(dotnet-ildasm __TRACKED_VAR__/.nuget/packages/xamarin.androidx.health.connect.connectclient/1.1.0.2/lib/net9.0-android35.0/Xamarin.AndroidX.Health.Connect.ConnectClient.dll --types)",
+      "Bash(dotnet-ildasm __TRACKED_VAR__/.nuget/packages/xamarin.androidx.health.connect.connectclient/1.1.0.2/lib/net9.0-android35.0/Xamarin.AndroidX.Health.Connect.ConnectClient.dll)",
+      "Bash(file __TRACKED_VAR__/.nuget/packages/xamarin.androidx.health.connect.connectclient/1.1.0.2/lib/net9.0-android35.0/Xamarin.AndroidX.Health.Connect.ConnectClient.dll)",
+      "Bash(node -e ' *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\benho\\\\source\\\\repos\\\\LocalAIAssistant\" -Directory)",
+      "Bash(Select-Object -First 20)",
+      "Bash(dotnet sln *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\benho\\\\source\\\\repos\\\\LocalAIAssistant\\\\LaaUnitTests\" -Filter \"*.cs\" -Exclude \"obj\" -File)",
+      "Bash(Select-Object FullName)"
     ]
   }
 }
