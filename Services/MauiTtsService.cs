@@ -99,7 +99,8 @@ public sealed class MauiTtsService : ITtsService
 
         try
         {
-            var locales = await TextToSpeech.GetLocalesAsync();
+            // Android TTS init can block the calling thread; run on thread pool to keep the UI responsive.
+            var locales = await Task.Run(async () => await TextToSpeech.GetLocalesAsync());
             _cachedLocales = locales.ToList();
 
             return _cachedLocales
