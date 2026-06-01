@@ -1,7 +1,6 @@
 using Android.App;
 using Android.Content.PM;
 using Android.OS;
-using Android.Views;
 using AndroidX.Core.App;
 using LocalAIAssistant.Platforms.Android.Health;
 
@@ -28,23 +27,13 @@ public class MainActivity : MauiAppCompatActivity
     {
         base.OnCreate(savedInstanceState);
 
-        // Match status bar to app dark theme
+        // Match status bar and navigation bar to the app's dark theme.
+        // Do NOT set DecorView.SystemUiVisibility here — MAUI .NET 9 owns those flags
+        // (edge-to-edge layout via WindowCompat.SetDecorFitsSystemWindows).  Overwriting
+        // them after base.OnCreate strips LAYOUT_FULLSCREEN / LAYOUT_HIDE_NAVIGATION,
+        // which breaks MAUI's inset math and makes all touch targets misaligned.
         Window.SetStatusBarColor(Android.Graphics.Color.ParseColor("#000000"));
         Window.SetNavigationBarColor(Android.Graphics.Color.ParseColor("#000000"));
-
-        // Ensure status bar icons are light (important!)
-        if (Build.VERSION.SdkInt >= BuildVersionCodes.R)
-        {
-            var decorView = Window.DecorView;
-            decorView.SystemUiVisibility =
-                    (StatusBarVisibility)(SystemUiFlags.LayoutStable);
-
-        }
-        else
-        {
-            Window.DecorView.SystemUiVisibility =
-                    (StatusBarVisibility)SystemUiFlags.Visible;
-        }
     }
 
     protected override void OnResume()
