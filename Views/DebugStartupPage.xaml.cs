@@ -26,10 +26,11 @@ public partial class DebugStartupPage : ContentPage
 
     private async Task RunDiagnosticsAsync()
     {
-        var services = Handler?.MauiContext?.Services;
+        var services = IPlatformApplication.Current?.Services
+                    ?? Application.Current?.Handler?.MauiContext?.Services;
         if (services == null)
         {
-            StatusLabel.Text  = "Error: MauiContext not available";
+            StatusLabel.Text  = "Error: Could not resolve services. Try tapping the page first.";
             Spinner.IsRunning = false;
             return;
         }
@@ -162,7 +163,9 @@ public partial class DebugStartupPage : ContentPage
 
     private void OnGoToAppClicked(object sender, EventArgs e)
     {
-        var masterViewModel = Handler?.MauiContext?.Services.GetService<AppShellMasterViewModel>();
+        var services        = IPlatformApplication.Current?.Services
+                           ?? Application.Current?.Handler?.MauiContext?.Services;
+        var masterViewModel = services?.GetService<AppShellMasterViewModel>();
         if (masterViewModel == null) return;
 
         Application.Current!.MainPage = new AppShell(masterViewModel);
