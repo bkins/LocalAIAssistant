@@ -229,6 +229,47 @@
             </Border>
 
             <!-- ═══════════════════════════════════════════ -->
+            <!-- Section: Health Connect (Android-only)      -->
+            <!-- ═══════════════════════════════════════════ -->
+            <Label Text="HEALTH"
+                   FontSize="11"
+                   FontAttributes="Bold"
+                   TextColor="{StaticResource SecondaryTextColor}"
+                   Margin="20,20,20,6"
+                   CharacterSpacing="1.5"
+                   IsVisible="{Binding IsHealthConnectAvailable}" />
+
+            <Border Margin="12,0"
+                    Padding="16"
+                    StrokeThickness="0"
+                    BackgroundColor="{StaticResource SurfaceColor}"
+                    IsVisible="{Binding IsHealthConnectAvailable}">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="10" />
+                </Border.StrokeShape>
+                <VerticalStackLayout Spacing="12">
+
+                    <Label Text="Health Connect"
+                           FontSize="13"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource PrimaryTextColor}" />
+
+                    <Label Text="{Binding HealthStatusText}"
+                           FontSize="13"
+                           TextColor="{StaticResource SecondaryTextColor}" />
+
+                    <Button Text="Connect Health"
+                            Command="{Binding ConnectHealthCommand}"
+                            Margin="0,4,0,0" />
+
+                    <Label Text="Grants read access to steps, sleep, heart rate, and distance from Health Connect."
+                           FontSize="11"
+                           TextColor="{StaticResource SecondaryTextColor}" />
+
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- ═══════════════════════════════════════════ -->
             <!-- Save                                        -->
             <!-- ═══════════════════════════════════════════ -->
             <Button Text="Save"
