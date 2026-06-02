@@ -22,6 +22,10 @@ public partial class AppShellMasterViewModel : ObservableObject
 
     [ObservableProperty] private int _pendingQueueCount;
 
+    // Pending persona-memory confirmations (Provisional → Reinforced → Canonical).
+    // Populated by the memory confirmation service once that pipeline is wired.
+    [ObservableProperty] private int _pendingMemoryConfirmationCount;
+
     public static bool IsOffline => _connectivity.IsOffline;
 
     public ApiHealthViewModel ApiHealthViewModel { get; }
@@ -135,6 +139,13 @@ public partial class AppShellMasterViewModel : ObservableObject
     public async Task RefreshQueueCountAsync()
     {
         PendingQueueCount = await _offlineQueueService.GetPendingCountAsync();
+    }
+
+    [RelayCommand]
+    private async Task GoToMemory()
+    {
+        try { await Shell.Current.GoToAsync("//Memory"); }
+        catch { /* navigation is best-effort from the title bar */ }
     }
 
     public string TimeSinceLastCheck => ApiHealthViewModel.TimeSinceLastCheck;

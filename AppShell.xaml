@@ -39,6 +39,7 @@
             <!-- Title -->
             <Label Grid.Column="0"
                    Grid.Row="0"
+                   AutomationId="AppTitle"
                    Text="Cognitive Assistant"
                    FontSize="20"
                    FontAttributes="Bold"
@@ -96,19 +97,44 @@
                      Grid.Row="0"
                      BackgroundColor="Transparent"/>
 
-            <!-- Offline Queue Badge -->
-            <Frame Grid.Column="3"
-                   Grid.Row="0"
-                   BackgroundColor="Red"
-                   Padding="4"
-                   CornerRadius="20"
-                   HasShadow="False"
-                   IsVisible="{Binding PendingQueueCount, Converter={StaticResource IntGreaterThanZeroConverter}}"
-                   VerticalOptions="Center">
-                <Label Text="{Binding PendingQueueCount}"
-                       TextColor="White"
-                       FontSize="10"/>
-            </Frame>
+            <!-- Badges: memory confirmation + offline queue -->
+            <HorizontalStackLayout Grid.Column="3"
+                                   Grid.Row="0"
+                                   Spacing="4"
+                                   VerticalOptions="Center">
+
+                <!-- Memory confirmation badge — tapping navigates to the Memory tab -->
+                <Frame BackgroundColor="#7C5CE6"
+                       Padding="4,2"
+                       CornerRadius="20"
+                       HasShadow="False"
+                       IsVisible="{Binding PendingMemoryConfirmationCount, Converter={StaticResource IntGreaterThanZeroConverter}}">
+                    <Frame.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding GoToMemoryCommand}" />
+                    </Frame.GestureRecognizers>
+                    <HorizontalStackLayout Spacing="2">
+                        <Label Text="🧠"
+                               FontSize="9"
+                               VerticalOptions="Center" />
+                        <Label Text="{Binding PendingMemoryConfirmationCount}"
+                               TextColor="White"
+                               FontSize="10"
+                               VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                </Frame>
+
+                <!-- Offline Queue Badge -->
+                <Frame BackgroundColor="Red"
+                       Padding="4"
+                       CornerRadius="20"
+                       HasShadow="False"
+                       IsVisible="{Binding PendingQueueCount, Converter={StaticResource IntGreaterThanZeroConverter}}">
+                    <Label Text="{Binding PendingQueueCount}"
+                           TextColor="White"
+                           FontSize="10"/>
+                </Frame>
+
+            </HorizontalStackLayout>
 
         </Grid>
     </Shell.TitleView>
@@ -125,6 +151,7 @@
         </Tab>
         <Tab Title="Memory">
             <ShellContent x:Name="MemoryShellContent"
+                          Route="Memory"
                           ContentTemplate="{DataTemplate views:MemoryManagementPage}"/>
         </Tab>
         <Tab Title="Logs">
