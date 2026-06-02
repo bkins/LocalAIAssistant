@@ -3,15 +3,20 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CP.Client.Core.Common.ConnectivityToApi;
+using LocalAIAssistant.CognitivePlatform.CpClients.Coco;
 using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
+using LocalAIAssistant.Core.Coco;
 using LocalAIAssistant.Core.ConversationHistory;
 using LocalAIAssistant.Core.Tts;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Extensions;
 using LocalAIAssistant.Core.BrainDump;
+using LocalAIAssistant.Core.Media;
+using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
 using LocalAIAssistant.Knowledge.Inbox;
 using LocalAIAssistant.Services;
+using LocalAIAssistant.Core.Conversation;
 using LocalAIAssistant.Services.AiMemory;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
 using LocalAIAssistant.Services.Interfaces;
@@ -40,18 +45,34 @@ public partial class ChatViewModel : ObservableObject
     private readonly IConversationHistoryClient       _historyClient;
     private readonly ITtsService                      _ttsService;
     private readonly IGuidedBrainDumpFlow             _brainDumpFlow;
+    private readonly IJournalApiClientFactory         _journalFactory;
+    private readonly IMediaAttachmentApiClient        _mediaClient;
+    private readonly ICocoApiClientFactory            _cocoFactory;
+    private readonly IClipboardMonitorService         _clipboardMonitor;
+    private readonly IGlobalHotkeyService             _hotkeyService;
 
     // ── Connectivity ──────────────────────────────────────────────────────────
     [ObservableProperty] private bool _isOffline;
 
     // ── UI state ──────────────────────────────────────────────────────────────
-    [ObservableProperty] private bool        _useStreaming      = false;
-    [ObservableProperty] private string      _promptText        = string.Empty;
+    [ObservableProperty] private bool        _useStreaming        = true;
+    [ObservableProperty] private string      _promptText          = string.Empty;
     [ObservableProperty] private bool        _isBusy;
     [ObservableProperty] private bool        _isTyping;
     [ObservableProperty] private Personality _selectedPersonality;
     [ObservableProperty] private int         _pendingQueueCount;
     [ObservableProperty] private bool        _showStreamingOption = false;
+    [ObservableProperty] private bool        _isCocoMode;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasClipboardNotice))]
+    private string _clipboardNoticeText = string.Empty;
+
+    public bool HasClipboardNotice => !string.IsNullOrEmpty(_clipboardNoticeText);
+
+    public bool IsCocoToggleVisible =>
+        DeviceInfo.Current.Platform == DevicePlatform.WinUI
+     && Preferences.Default.Get(StringConsts.CocoEnabledPrefKey, false);
 
     // ── TTS state ─────────────────────────────────────────────────────────────
     [ObservableProperty] private bool   _ttsIsAvailable;
@@ -82,7 +103,12 @@ public partial class ChatViewModel : ObservableObject
                         , AppShellMasterViewModel          appShellMasterViewModel
                         , IConversationHistoryClient       historyClient
                         , ITtsService                      ttsService
-                        , IGuidedBrainDumpFlow             brainDumpFlow )
+                        , IGuidedBrainDumpFlow             brainDumpFlow
+                        , IJournalApiClientFactory         journalFactory
+                        , IMediaAttachmentApiClient        mediaClient
+                        , ICocoApiClientFactory            cocoFactory
+                        , IClipboardMonitorService         clipboardMonitor
+                        , IGlobalHotkeyService             hotkeyService )
     {
         _llmService              = llmService;
         _conversationMemory      = conversationMemory;
@@ -99,6 +125,14 @@ public partial class ChatViewModel : ObservableObject
         _historyClient           = historyClient;
         _ttsService              = ttsService;
         _brainDumpFlow           = brainDumpFlow;
+        _journalFactory          = journalFactory;
+        _mediaClient             = mediaClient;
+        _cocoFactory             = cocoFactory;
+        _clipboardMonitor        = clipboardMonitor;
+        _hotkeyService           = hotkeyService;
+
+        _clipboardMonitor.CodeDetected += OnCodeDetectedInClipboard;
+        _hotkeyService.HotkeyPressed   += OnCocoHotkeyPressed;
 
         // ENH-20: persist ConversationId across app restarts so server history can be retrieved.
         var savedConversationId = Preferences.Get(StringConsts.ActiveConversationIdKey, string.Empty);
@@ -179,8 +213,25 @@ public partial class ChatViewModel : ObservableObject
         await _appShellMasterViewModel.RefreshQueueCountAsync();
 
         await InitializeTtsAsync();
+        InitializeCocoSidecar();
 
         HasBeenInitialized = true;
+    }
+
+    private void InitializeCocoSidecar()
+    {
+        var cocoEnabled             = Preferences.Default.Get(StringConsts.CocoEnabledPrefKey, false);
+        var clipboardMonitorEnabled = Preferences.Default.Get(StringConsts.CocoClipboardMonitorEnabledPrefKey, true);
+
+        _clipboardMonitor.IsEnabled = cocoEnabled && clipboardMonitorEnabled;
+        if (cocoEnabled && clipboardMonitorEnabled)
+            _clipboardMonitor.Start();
+
+        if (cocoEnabled)
+        {
+            var hotkey = Preferences.Default.Get(StringConsts.CocoHotkeyPrefKey, StringConsts.CocoDefaultHotkey);
+            _hotkeyService.Register(hotkey);
+        }
     }
 
     private async Task InitializeTtsAsync()
@@ -307,6 +358,27 @@ public partial class ChatViewModel : ObservableObject
                 return;
             }
 
+            // ENH-33: intercept media attachment intent before sending to LLM.
+            if (IsMediaAttachTrigger(text!))
+            {
+                await HandleMediaAttachAsync(assistantMsg);
+                assistantSucceeded = true;
+                return;
+            }
+
+            // Coco routing: explicit mode toggle OR auto-detected code query (Phase 2).
+            var cocoEnabled    = Preferences.Default.Get(StringConsts.CocoEnabledPrefKey, false);
+            var isAutoCodeQuery = cocoEnabled
+                               && !CodeIntentAnalyzer.IsExplicitCpRequest(text!)
+                               && CodeIntentAnalyzer.IsCodeQuery(text!);
+
+            if (IsCocoMode || isAutoCodeQuery)
+            {
+                await HandleCocoTurnAsync(text!, assistantMsg, wasAutoRouted: isAutoCodeQuery && !IsCocoMode);
+                assistantSucceeded = true;
+                return;
+            }
+
             if (UseStreaming.Not())
             {
                 var response = await cp.ConverseAsync(text
@@ -330,10 +402,25 @@ public partial class ChatViewModel : ObservableObject
                 }
                 else
                 {
+                    string  cleanMessage;
+                    string? tierNotice;
+
+                    if (response.ModelNotice is not null)
+                    {
+                        cleanMessage = response.Message;
+                        tierNotice   = response.ModelNotice;
+                    }
+                    else
+                    {
+                        (cleanMessage, tierNotice) = TierNoticeExtractor.Extract(response.Message);
+                    }
+
                     await MainThread.InvokeOnMainThreadAsync(() =>
                     {
-                        assistantMsg.Content     = response.Message;
+                        assistantMsg.Content     = cleanMessage;
                         assistantMsg.WasFastPath = response.WasFastPath;
+                        if (tierNotice is not null)
+                            assistantMsg.TierNotice = tierNotice;
 
                         foreach (var insight in response.Insights)
                         {
@@ -347,6 +434,10 @@ public partial class ChatViewModel : ObservableObject
                                          });
                         }
                     });
+
+                    if (tierNotice is not null)
+                        ScheduleTierNoticeDismiss(assistantMsg);
+
                     assistantSucceeded = true;
                 }
             }
@@ -358,6 +449,11 @@ public partial class ChatViewModel : ObservableObject
                                                                   , ConversationId
                                                                   , modelToUse))
                 {
+                    // Stop the thinking animation as soon as the first real chunk arrives so it
+                    // cannot overwrite streamed content. Cancel() is thread-safe per CTS docs.
+                    if (hasReceivedFirstChunk.Not())
+                        _thinkingCts?.Cancel();
+
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
                         if (hasReceivedFirstChunk.Not())
@@ -460,6 +556,81 @@ public partial class ChatViewModel : ObservableObject
         await _conversationMemory.ClearAsync();
     }
 
+    // ── Media attachment flow ─────────────────────────────────────────────────
+
+    private static bool IsMediaAttachTrigger(string input)
+    {
+        var lower = input.ToLowerInvariant();
+        return lower.Contains("attach photo")
+            || lower.Contains("attach image")
+            || lower.Contains("attach picture")
+            || lower.Contains("add photo to journal")
+            || lower.Contains("add image to journal")
+            || lower.Contains("add picture to journal")
+            || lower.Contains("add photo to last entry")
+            || lower.Contains("add image to last entry");
+    }
+
+    private async Task HandleMediaAttachAsync(Message assistantMsg)
+    {
+        FileResult? photo = null;
+
+        try
+        {
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                photo = await MediaPicker.Default.PickPhotoAsync();
+            });
+        }
+        catch (Exception ex)
+        {
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                assistantMsg.Content = $"Could not open the photo picker: {ex.Message}. Open a journal entry and use the Attach button instead.";
+            });
+            return;
+        }
+
+        if (photo is null)
+        {
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                assistantMsg.Content = "No photo selected.";
+            });
+            return;
+        }
+
+        var journalClient = _journalFactory.Create();
+        var recentEntry   = await journalClient.GetMostRecentAsync();
+
+        if (recentEntry is null)
+        {
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                assistantMsg.Content = "Could not find a journal entry to attach to. Open a journal entry and use the Attach button.";
+            });
+            return;
+        }
+
+        await using var stream      = await photo.OpenReadAsync();
+        var             contentType = photo.ContentType ?? "image/jpeg";
+        // BUG-17 audit: recentEntry.Id (Guid) is passed to the API but never surfaced in the
+        // confirmation message — the friendly date format is used instead. No UUID leakage.
+        var uploaded = await _mediaClient.UploadAsync(recentEntry.Id
+                                                    , photo.FileName
+                                                    , contentType
+                                                    , stream);
+
+        var confirmation = uploaded is not null
+            ? $"Photo attached to your journal entry from {recentEntry.CreatedAt:MMMM d}."
+            : "Upload failed. Please try again or use the Attach button on the journal entry.";
+
+        await MainThread.InvokeOnMainThreadAsync(() =>
+        {
+            assistantMsg.Content = confirmation;
+        });
+    }
+
     // ── Brain dump flow ───────────────────────────────────────────────────────
 
     private async Task HandleBrainDumpTurnAsync( string                    input
@@ -495,6 +666,114 @@ public partial class ChatViewModel : ObservableObject
         {
             _ = cp.ConverseAsync($"add task: {turn.TaskTitle}", ConversationId, model);
         }
+    }
+
+    // ── Coco code-intelligence flow ───────────────────────────────────────────
+
+    private async Task HandleCocoTurnAsync( string  question
+                                          , Message assistantMsg
+                                          , bool    wasAutoRouted = false )
+    {
+        var coco                   = _cocoFactory.Create();
+        var receivedAnswer         = false;
+        var stoppedThinkingForCoco = false;
+
+        try
+        {
+            await foreach (var ev in coco.AskStreamAsync(question))
+            {
+                if (ev.IsHeartbeat) continue;
+
+                if (ev.IsComplete)
+                {
+                    var answer  = ev.Response ?? string.Empty;
+                    var sources = ev.Sources;
+
+                    if (sources?.Count > 0)
+                    {
+                        var sourceLines = string.Join("\n", sources.Select(src => $"— `{src}`"));
+                        answer = $"{answer}\n\n**Sources:**\n{sourceLines}";
+                    }
+
+                    await MainThread.InvokeOnMainThreadAsync(() =>
+                    {
+                        assistantMsg.Content   = answer;
+                        assistantMsg.IsViaCoco = true;
+                        if (sources?.Count > 0)
+                            assistantMsg.CocoSources = sources;
+                    });
+
+                    receivedAnswer = true;
+                    break;
+                }
+
+                // Stage progress event — stop the generic thinking animation and show the
+                // Coco pipeline stage so the user sees what's happening (searching, analyzing…).
+                if (!stoppedThinkingForCoco)
+                {
+                    _thinkingCts?.Cancel();
+                    stoppedThinkingForCoco = true;
+                }
+
+                var stageLabel = ev.Detail ?? ev.Stage;
+                if (stageLabel is not null)
+                {
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        assistantMsg.Content = $"🔵 {stageLabel}…";
+                    });
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                assistantMsg.Content = $"⚠ Coco error: {ex.Message}";
+            });
+            return;
+        }
+
+        if (!receivedAnswer)
+        {
+            var baseUrl = Preferences.Default.Get(StringConsts.CocoBaseUrlPrefKey, StringConsts.CocoDefaultBaseUrl);
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                assistantMsg.Content = $"⚠ Coco is unavailable. Check that the Coco API is running at {baseUrl}.";
+            });
+        }
+    }
+
+    // ── Clipboard & hotkey sidecar handlers ──────────────────────────────────
+
+    private async void OnCodeDetectedInClipboard(object? sender, string code)
+    {
+        var cocoEnabled             = Preferences.Default.Get(StringConsts.CocoEnabledPrefKey, false);
+        var clipboardMonitorEnabled = Preferences.Default.Get(StringConsts.CocoClipboardMonitorEnabledPrefKey, true);
+
+        if (!cocoEnabled || !clipboardMonitorEnabled) return;
+
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            PromptText          = $"Explain this code:\n\n{code}";
+            IsCocoMode          = true;
+            ClipboardNoticeText = "Code detected in clipboard — ready to ask Coco";
+
+            await Task.Delay(3000);
+            ClipboardNoticeText = string.Empty;
+        });
+    }
+
+    private void OnCocoHotkeyPressed(object? sender, EventArgs e)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            IsCocoMode = true;
+        });
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
@@ -758,5 +1037,13 @@ public partial class ChatViewModel : ObservableObject
         _thinkingCts?.Cancel();
         _thinkingCts?.Dispose();
         _thinkingCts = null;
+    }
+
+    // ── Tier notice auto-dismiss ──────────────────────────────────────────────
+
+    private static void ScheduleTierNoticeDismiss(Message msg, int delayMs = 5000)
+    {
+        _ = Task.Delay(delayMs).ContinueWith(_ =>
+            MainThread.BeginInvokeOnMainThread(() => msg.TierNotice = null));
     }
 }

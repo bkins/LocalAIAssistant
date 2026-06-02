@@ -16,10 +16,18 @@ public partial class Message : ObservableObject
     [ObservableProperty] private List<string> _tags           = new(); // e.g. ["summary","promotion"]
     [ObservableProperty] private int          _importance     = 1;     // 1..5
     [ObservableProperty] private double       _score;
-    [ObservableProperty] private bool         _wasFastPath;
+    [ObservableProperty] private bool                  _wasFastPath;
+    [ObservableProperty] private bool                  _isViaCoco;
+    [ObservableProperty] private IReadOnlyList<string> _cocoSources  = Array.Empty<string>();
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(DisplayContent))]
     private bool _isInsight;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasTierNotice))]
+    private string? _tierNotice;
+
+    public bool HasTierNotice => !string.IsNullOrEmpty(_tierNotice);
 
     public Message()
     {

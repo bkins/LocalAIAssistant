@@ -8,6 +8,7 @@
              Title="Local AI Assistant">
 
     <Grid x:Name="Root"
+          RowDefinitions="*"
           Opacity="0"
           BackgroundColor="Black">
 
@@ -63,6 +64,41 @@
                     </HorizontalStackLayout>
                 </Grid>
 
+                <!-- Ask Coco toggle — Windows only, visible when Coco is enabled in settings -->
+                <Grid Padding="12,8"
+                      BackgroundColor="#0D1A2E"
+                      IsVisible="{Binding IsCocoToggleVisible}">
+
+                    <HorizontalStackLayout Spacing="12"
+                                           VerticalOptions="Center">
+
+                        <Label Text="🔵 Ask Coco"
+                               FontSize="13"
+                               TextColor="#4A90D9"
+                               FontAttributes="Bold"
+                               VerticalTextAlignment="Center" />
+
+                        <Switch IsToggled="{Binding IsCocoMode, Mode=TwoWay}"
+                                VerticalOptions="Center" />
+
+                        <Label Text="Code queries route to Coco"
+                               FontSize="11"
+                               TextColor="{StaticResource SecondaryTextColor}"
+                               VerticalTextAlignment="Center"
+                               IsVisible="{Binding IsCocoMode}" />
+
+                    </HorizontalStackLayout>
+                </Grid>
+
+                <!-- Clipboard code detection toast — auto-dismisses after 3 s -->
+                <Label Text="{Binding ClipboardNoticeText}"
+                       FontSize="12"
+                       TextColor="#FFD700"
+                       BackgroundColor="#1A2233"
+                       HorizontalTextAlignment="Center"
+                       Padding="8,4"
+                       IsVisible="{Binding HasClipboardNotice}" />
+
             </VerticalStackLayout>
 
             <!-- Message list — children placed directly in the * row so the
@@ -72,7 +108,8 @@
                  overflow the row's touch area on Android. -->
             <BoxView Grid.Row="1"
                      Color="Black"
-                     Margin="12" />
+                     Margin="12"
+                     InputTransparent="True" />
 
             <!-- Background glyph — animated from code-behind -->
             <Image Grid.Row="1"
@@ -81,12 +118,14 @@
                    Aspect="Center"
                    Scale="0.5"
                    Opacity="0.5"
-                   Margin="12" />
+                   Margin="12"
+                   InputTransparent="True" />
 
             <!-- ItemsUpdatingScrollMode="KeepLastItemInView" -->
             <!-- Scrolled="OnCollectionViewScrolled" -->
             <CollectionView Grid.Row="1"
                             x:Name="MessagesView"
+                            AutomationId="MessagesView"
                             Margin="12"
                             ItemsSource="{Binding Messages}"
                             ItemSizingStrategy="MeasureAllItems"
@@ -163,6 +202,29 @@
                                            TextColor="#C89618"
                                            IsVisible="{Binding IsInsight}" />
 
+                                    <!-- Coco header label — only visible for Coco responses -->
+                                    <Label Text="🔵 via Coco"
+                                           FontSize="11"
+                                           FontAttributes="Bold"
+                                           TextColor="#4A90D9"
+                                           IsVisible="{Binding IsViaCoco}" />
+
+                                    <!-- Tier downgrade chip — auto-dismisses after ~5 s -->
+                                    <Border IsVisible="{Binding HasTierNotice}"
+                                            BackgroundColor="#2A2A3A"
+                                            Stroke="#555577"
+                                            StrokeThickness="1"
+                                            Padding="6,3"
+                                            Margin="0,2,0,0">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="6" />
+                                        </Border.StrokeShape>
+                                        <Label Text="{Binding TierNotice}"
+                                               FontSize="10"
+                                               FontAttributes="Italic"
+                                               TextColor="#9999CC" />
+                                    </Border>
+
                                     <Grid ColumnDefinitions="*" VerticalOptions="Start">
                                         <controls:NativeMarkdownView
                                             Grid.Column="0"
@@ -212,6 +274,7 @@
                   BackgroundColor="{StaticResource SurfaceColor}">
 
                 <Editor Grid.Column="0"
+                        AutomationId="ChatEditor"
                         Text="{Binding PromptText}"
                         Placeholder="Type a message…"
                         AutoSize="TextChanges"
@@ -226,6 +289,7 @@
                         TextChanged="OnEditorTextChanged" />
 
                 <Button Grid.Column="1"
+                        AutomationId="SendButton"
                         Text="Send"
                         Command="{Binding SendCommand}"
                         IsEnabled="{Binding IsTyping, Converter={StaticResource InverseBoolConverter}}"
@@ -234,6 +298,7 @@
                         BackgroundColor="#4CAF50" />
 
                 <Button Grid.Column="2"
+                        AutomationId="ClearButton"
                         Text="Clear"
                         Clicked="OnClearButtonClicked"
                         IsEnabled="{Binding IsTyping, Converter={StaticResource InverseBoolConverter}}"
