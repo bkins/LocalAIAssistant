@@ -66,6 +66,18 @@ public partial class ConversationsViewModel : ObservableObject
     [RelayCommand]
     private async Task DeleteConversation(ConversationSummaryDto conversation)
     {
+        var name = string.IsNullOrWhiteSpace(conversation.Name)
+                       ? "this conversation"
+                       : $"\"{conversation.Name}\"";
+
+        var confirmed = await Shell.Current.DisplayAlert(
+            "Delete conversation"
+          , $"Permanently delete {name}? This cannot be undone."
+          , "Delete"
+          , "Cancel");
+
+        if (!confirmed) return;
+
         try
         {
             var deleted = await _conversationClient.DeleteConversationAsync(conversation.ConversationId);
