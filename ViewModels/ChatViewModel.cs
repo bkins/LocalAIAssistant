@@ -9,6 +9,7 @@ using LocalAIAssistant.Core.Tts;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Extensions;
+using LocalAIAssistant.Core.BrainDump;
 using LocalAIAssistant.Knowledge.Inbox;
 using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.AiMemory;
@@ -38,6 +39,7 @@ public partial class ChatViewModel : ObservableObject
     private readonly AppShellMasterViewModel          _appShellMasterViewModel;
     private readonly IConversationHistoryClient       _historyClient;
     private readonly ITtsService                      _ttsService;
+    private readonly IGuidedBrainDumpFlow             _brainDumpFlow;
 
     // ── Connectivity ──────────────────────────────────────────────────────────
     [ObservableProperty] private bool _isOffline;
@@ -79,7 +81,8 @@ public partial class ChatViewModel : ObservableObject
                         , ApiHealthService                 apiHealthService
                         , AppShellMasterViewModel          appShellMasterViewModel
                         , IConversationHistoryClient       historyClient
-                        , ITtsService                      ttsService )
+                        , ITtsService                      ttsService
+                        , IGuidedBrainDumpFlow             brainDumpFlow )
     {
         _llmService              = llmService;
         _conversationMemory      = conversationMemory;
@@ -95,6 +98,7 @@ public partial class ChatViewModel : ObservableObject
         _appShellMasterViewModel = appShellMasterViewModel;
         _historyClient           = historyClient;
         _ttsService              = ttsService;
+        _brainDumpFlow           = brainDumpFlow;
 
         // ENH-20: persist ConversationId across app restarts so server history can be retrieved.
         var savedConversationId = Preferences.Get(StringConsts.ActiveConversationIdKey, string.Empty);
@@ -295,6 +299,14 @@ public partial class ChatViewModel : ObservableObject
 
             reachedApi = true;
 
+            // ENH-32: intercept brain dump flow turns before normal converse routing.
+            if (_brainDumpFlow.IsActive || _brainDumpFlow.IsTrigger(text!))
+            {
+                await HandleBrainDumpTurnAsync(text!, assistantMsg, cp, modelToUse);
+                assistantSucceeded = true;
+                return;
+            }
+
             if (UseStreaming.Not())
             {
                 var response = await cp.ConverseAsync(text
@@ -446,6 +458,43 @@ public partial class ChatViewModel : ObservableObject
 
         await _conversationMemory.ClearShortTermAsync();
         await _conversationMemory.ClearAsync();
+    }
+
+    // ── Brain dump flow ───────────────────────────────────────────────────────
+
+    private async Task HandleBrainDumpTurnAsync( string                    input
+                                               , Message                   assistantMsg
+                                               , CognitivePlatformClientBase cp
+                                               , string                    model )
+    {
+        FlowTurn turn;
+
+        if (_brainDumpFlow.IsActive)
+        {
+            turn = await _brainDumpFlow.HandleInputAsync(input);
+        }
+        else
+        {
+            // Starting a new session — wire the converse delegate for LLM extraction
+            Func<string, CancellationToken, Task<string>> converseFn =
+                async (prompt, ct) =>
+                {
+                    var result = await cp.ConverseAsync(prompt, ConversationId, model)
+                                         .ConfigureAwait(false);
+                    return result.Message;
+                };
+
+            turn = await _brainDumpFlow.StartAsync(converseFn);
+        }
+
+        await MainThread.InvokeOnMainThreadAsync(() => assistantMsg.Content = turn.Message);
+
+        // When an item was confirmed as a task, create it via the NL action silently.
+        // Fire-and-forget: the chat message already tells the user it was queued.
+        if (turn.Action == FlowAction.CreateTask && turn.TaskTitle is not null)
+        {
+            _ = cp.ConverseAsync($"add task: {turn.TaskTitle}", ConversationId, model);
+        }
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────

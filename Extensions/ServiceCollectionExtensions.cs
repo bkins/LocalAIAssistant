@@ -1,4 +1,6 @@
+using LocalAIAssistant.CognitivePlatform.CpClients.BrainDump;
 using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
+using LocalAIAssistant.Core.BrainDump;
 using LocalAIAssistant.Core.ConversationHistory;
 using LocalAIAssistant.Core.Personality;
 using LocalAIAssistant.Core.Tts;
@@ -111,6 +113,12 @@ public static class ServiceCollectionExtensions
             return new ElevenLabsTtsService(factory.CreateClient("ElevenLabs"), audio, mauiFallback);
         });
         services.AddSingleton<ITtsService, TtsServiceProxy>();
+
+        services.AddSingleton<IGuidedBrainDumpFlow>(sp =>
+        {
+            var factory = sp.GetRequiredService<IBrainDumpApiClientFactory>();
+            return new GuidedBrainDumpFlow(factory.Create());
+        });
 
         services.AddSingleton<IOrchestratorService, OrchestratorService>();
         services.AddSingleton<IPersonaAndContextEngine, PersonaAndContextEngine.PersonaAndContextEngine>();
