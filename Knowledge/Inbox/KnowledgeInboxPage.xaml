@@ -45,6 +45,7 @@
 
         <CollectionView
             Grid.Row="1"
+            AutomationId="InboxList"
             ItemsSource="{Binding GroupedItems}"
             IsGrouped="True"
             SelectionMode="Single"

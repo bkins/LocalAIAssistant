@@ -1,6 +1,10 @@
 using LocalAIAssistant.CognitivePlatform.CpClients.BrainDump;
 using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
+#if WINDOWS
+using LocalAIAssistant.Platforms.Windows;
+#endif
 using LocalAIAssistant.Core.BrainDump;
+using LocalAIAssistant.Core.Media;
 using LocalAIAssistant.Core.ConversationHistory;
 using LocalAIAssistant.Core.Personality;
 using LocalAIAssistant.Core.Tts;
@@ -114,11 +118,27 @@ public static class ServiceCollectionExtensions
         });
         services.AddSingleton<ITtsService, TtsServiceProxy>();
 
+        services.AddSingleton<IMediaAttachmentApiClient>(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            var client  = factory.CreateClient(HttpClientNames.CpApi);
+            return new MediaAttachmentApiClient(client);
+        });
+
         services.AddSingleton<IGuidedBrainDumpFlow>(sp =>
         {
             var factory = sp.GetRequiredService<IBrainDumpApiClientFactory>();
             return new GuidedBrainDumpFlow(factory.Create());
         });
+
+        // Clipboard monitoring and global hotkey — Windows-native impl; no-op on other platforms
+#if WINDOWS
+        services.AddSingleton<IClipboardMonitorService, WindowsClipboardMonitorService>();
+        services.AddSingleton<IGlobalHotkeyService, WindowsHotkeyService>();
+#else
+        services.AddSingleton<IClipboardMonitorService, NullClipboardMonitorService>();
+        services.AddSingleton<IGlobalHotkeyService, NullGlobalHotkeyService>();
+#endif
 
         services.AddSingleton<IOrchestratorService, OrchestratorService>();
         services.AddSingleton<IPersonaAndContextEngine, PersonaAndContextEngine.PersonaAndContextEngine>();

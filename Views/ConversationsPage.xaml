@@ -24,6 +24,7 @@
                    VerticalOptions="Center"/>
 
             <Button Grid.Column="1"
+                    AutomationId="NewChatButton"
                     Text="New Chat"
                     Command="{Binding NewConversationCommand}"
                     BackgroundColor="#4CAF50"
@@ -41,7 +42,8 @@
                                HorizontalOptions="Center"
                                VerticalOptions="Center"/>
 
-            <CollectionView ItemsSource="{Binding Conversations}"
+            <CollectionView AutomationId="ConversationsList"
+                            ItemsSource="{Binding Conversations}"
                             IsVisible="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}">
 
                 <CollectionView.ItemTemplate>

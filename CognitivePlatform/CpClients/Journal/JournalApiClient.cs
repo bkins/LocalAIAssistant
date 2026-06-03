@@ -88,6 +88,30 @@ public sealed class JournalApiClient : IJournalApiClient
         }
     }
 
+    public async Task<JournalEntryDto?> GetMostRecentAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"{_journalsApiBaseRoute}/recent", ct);
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+                return null;
+
+            response.EnsureSuccessStatusCode();
+
+            return await response.Content
+                                 .ReadFromJsonAsync<JournalEntryDto>(cancellationToken: ct);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+    }
+
     public async Task EditEntryAsync (Guid                   journalId
                                    , string                 text
                                    , IReadOnlyList<string>? parseTags

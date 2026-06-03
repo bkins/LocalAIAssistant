@@ -3,6 +3,7 @@
              x:Class="LocalAIAssistant.Knowledge.Journals.Views.JournalDetailPage"
              xmlns:controls="clr-namespace:LocalAIAssistant.Views.Controls"
              xmlns:converters1="clr-namespace:LocalAIAssistant.Converters"
+             xmlns:vm="clr-namespace:LocalAIAssistant.Knowledge.Journals.ViewModels"
              Title="Journal">
 
     <ContentPage.Resources>
@@ -63,7 +64,51 @@
                     FontSize="12"
                     BackgroundColor="Transparent"
                     Command="{Binding EditEntryCommand}" />
-            
+
+            <!-- Attachments (read-only chips, tap to open) -->
+            <CollectionView ItemsSource="{Binding Attachments}"
+                            IsVisible="{Binding HasAttachments}"
+                            HeightRequest="90">
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Horizontal" ItemSpacing="6" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:AttachmentViewModel">
+                        <Border Stroke="{AppThemeBinding Light=#CCC, Dark=#444}"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 6"
+                                Padding="4"
+                                WidthRequest="80">
+                            <Grid RowDefinitions="60,Auto" RowSpacing="2">
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding OpenCommand}" />
+                                </Grid.GestureRecognizers>
+
+                                <Image Grid.Row="0"
+                                       Source="{Binding ThumbnailUrl}"
+                                       Aspect="AspectFill"
+                                       IsVisible="{Binding IsImage}"
+                                       HeightRequest="60"
+                                       WidthRequest="72" />
+
+                                <Label Grid.Row="0"
+                                       Text="📎"
+                                       FontSize="30"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"
+                                       IsVisible="{Binding IsImage, Converter={StaticResource InverseBoolConverter}}" />
+
+                                <Label Grid.Row="1"
+                                       Text="{Binding FileName}"
+                                       FontSize="10"
+                                       LineBreakMode="TailTruncation"
+                                       HorizontalOptions="Center" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
             <HorizontalStackLayout Spacing="8">
                 <Switch IsToggled="{Binding ShowAsMarkdown}" />
                 <Label Text="Show as Markdown"

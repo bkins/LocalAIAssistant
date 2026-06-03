@@ -2,9 +2,17 @@
 
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:converters="clr-namespace:LocalAIAssistant.Converters"
+             xmlns:vm="clr-namespace:LocalAIAssistant.Knowledge.Journals.ViewModels"
              x:Class="LocalAIAssistant.Knowledge.Journals.Views.EditJournalEntryPage"
-             Title="Edit Entry"
-             >
+             Title="Edit Entry">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:InverseBoolConverter x:Key="InverseBool" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
     <ScrollView>
         <VerticalStackLayout Padding="12" Spacing="12">
 
@@ -24,6 +32,87 @@
                    Keyboard="Numeric"
                    Placeholder="Mood score (1–5)" />
 
+            <!-- ── Attachments ──────────────────────────────────────────── -->
+            <BoxView HeightRequest="1"
+                     Color="{AppThemeBinding Light=#DDD, Dark=#333}" />
+
+            <Label Text="Attachments"
+                   FontSize="13"
+                   TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" />
+
+            <HorizontalStackLayout Spacing="8">
+                <Button Text="Camera"
+                        FontSize="13"
+                        Padding="8,4"
+                        BackgroundColor="Transparent"
+                        Command="{Binding AttachFromCameraCommand}" />
+                <Button Text="Gallery"
+                        FontSize="13"
+                        Padding="8,4"
+                        BackgroundColor="Transparent"
+                        Command="{Binding AttachFromGalleryCommand}" />
+            </HorizontalStackLayout>
+
+            <CollectionView ItemsSource="{Binding Attachments}"
+                            IsVisible="{Binding HasAttachments}"
+                            HeightRequest="100">
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Horizontal" ItemSpacing="8" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:AttachmentViewModel">
+                        <Border Stroke="{AppThemeBinding Light=#CCC, Dark=#444}"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 6"
+                                Padding="4"
+                                WidthRequest="84">
+                            <Grid RowDefinitions="60,Auto,Auto" RowSpacing="2">
+
+                                <!-- Thumbnail for images -->
+                                <Image Grid.Row="0"
+                                       Source="{Binding ThumbnailUrl}"
+                                       Aspect="AspectFill"
+                                       IsVisible="{Binding IsImage}"
+                                       HeightRequest="60"
+                                       WidthRequest="76">
+                                    <Image.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding OpenCommand}" />
+                                    </Image.GestureRecognizers>
+                                </Image>
+
+                                <!-- File icon for non-images -->
+                                <Label Grid.Row="0"
+                                       Text="📎"
+                                       FontSize="30"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"
+                                       IsVisible="{Binding IsImage, Converter={StaticResource InverseBool}}">
+                                    <Label.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding OpenCommand}" />
+                                    </Label.GestureRecognizers>
+                                </Label>
+
+                                <Label Grid.Row="1"
+                                       Text="{Binding FileName}"
+                                       FontSize="10"
+                                       LineBreakMode="TailTruncation"
+                                       HorizontalOptions="Center" />
+
+                                <Button Grid.Row="2"
+                                        Text="✕"
+                                        FontSize="10"
+                                        Padding="2,0"
+                                        HeightRequest="22"
+                                        BackgroundColor="Transparent"
+                                        TextColor="{AppThemeBinding Light=#888, Dark=#AAA}"
+                                        Command="{Binding DeleteCommand}" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <!-- ── Actions ────────────────────────────────────────────── -->
             <HorizontalStackLayout Spacing="12">
                 <Button Text="Cancel"
                         Command="{Binding CancelCommand}"

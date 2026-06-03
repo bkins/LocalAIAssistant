@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LocalAIAssistant.CognitivePlatform.CpClients.Coco;
 using LocalAIAssistant.Core.Tts;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
@@ -18,6 +19,7 @@ public partial class SettingsViewModel : ObservableObject
     private readonly ApiEnvironmentDescriptor _apiEnvironment;
     private readonly AppShellMasterViewModel  _appShellMasterViewModel;
     private readonly IHealthConnectManager?   _healthConnect;
+    private readonly ICocoApiClientFactory?   _cocoFactory;
     
     [ObservableProperty] private string _model;
     [ObservableProperty] private string _endpoint;
@@ -49,6 +51,17 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string _healthStatusText = "Checking…";
 
     public bool IsHealthConnectAvailable => _healthConnect is not null;
+
+    // ── Coco (Code Intelligence — Windows only) ───────────────────────────────
+    [ObservableProperty] private string _cocoBaseUrl    = StringConsts.CocoDefaultBaseUrl;
+    [ObservableProperty] private bool   _cocoEnabled;
+    [ObservableProperty] private string _cocoProjectPath            = string.Empty;
+    [ObservableProperty] private string _cocoStatusText             = "Not checked";
+    [ObservableProperty] private bool   _isIndexing;
+    [ObservableProperty] private bool   _cocoClipboardMonitorEnabled = true;
+    [ObservableProperty] private string _cocoHotkey                  = StringConsts.CocoDefaultHotkey;
+
+    public bool IsCocoSectionVisible => DeviceInfo.Current.Platform == DevicePlatform.WinUI;
 
     private string _selectedEnvironment;
     public string SelectedEnvironment
@@ -98,6 +111,13 @@ public partial class SettingsViewModel : ObservableObject
         _ttsAzureKey          = Preferences.Default.Get(StringConsts.TtsAzureKeyPrefKey,      string.Empty);
         _ttsAzureRegion       = Preferences.Default.Get(StringConsts.TtsAzureRegionPrefKey,   "eastus");
         _ttsElevenLabsKey     = Preferences.Default.Get(StringConsts.TtsElevenLabsKeyPrefKey, string.Empty);
+
+        _cocoFactory                 = services.GetService<ICocoApiClientFactory>();
+        _cocoBaseUrl                 = Preferences.Default.Get(StringConsts.CocoBaseUrlPrefKey,                  StringConsts.CocoDefaultBaseUrl);
+        _cocoEnabled                 = Preferences.Default.Get(StringConsts.CocoEnabledPrefKey,                  false);
+        _cocoProjectPath             = Preferences.Default.Get(StringConsts.CocoProjectPathPrefKey,              string.Empty);
+        _cocoClipboardMonitorEnabled = Preferences.Default.Get(StringConsts.CocoClipboardMonitorEnabledPrefKey,  true);
+        _cocoHotkey                  = Preferences.Default.Get(StringConsts.CocoHotkeyPrefKey,                   StringConsts.CocoDefaultHotkey);
     }
 
     public Task RefreshHealthStatusAsync() => RefreshHealthStatus();
@@ -153,5 +173,96 @@ public partial class SettingsViewModel : ObservableObject
         Preferences.Default.Set(StringConsts.TtsAzureKeyPrefKey,      TtsAzureKey);
         Preferences.Default.Set(StringConsts.TtsAzureRegionPrefKey,   TtsAzureRegion);
         Preferences.Default.Set(StringConsts.TtsElevenLabsKeyPrefKey, TtsElevenLabsKey);
+
+        Preferences.Default.Set(StringConsts.CocoBaseUrlPrefKey,                 CocoBaseUrl);
+        Preferences.Default.Set(StringConsts.CocoEnabledPrefKey,                 CocoEnabled);
+        Preferences.Default.Set(StringConsts.CocoProjectPathPrefKey,             CocoProjectPath);
+        Preferences.Default.Set(StringConsts.CocoClipboardMonitorEnabledPrefKey, CocoClipboardMonitorEnabled);
+        Preferences.Default.Set(StringConsts.CocoHotkeyPrefKey,                  CocoHotkey);
+    }
+
+    // ── Coco commands ─────────────────────────────────────────────────────────
+
+    [RelayCommand]
+    private async Task RefreshCocoStatus()
+    {
+        if (_cocoFactory is null)
+        {
+            CocoStatusText = "Coco client not registered";
+            return;
+        }
+
+        CocoStatusText = "Checking…";
+        var coco   = _cocoFactory.Create();
+        var status = await coco.GetStatusAsync();
+        CocoStatusText = status.Summary;
+    }
+
+    private CancellationTokenSource? _indexCts;
+
+    [RelayCommand]
+    private async Task IndexCocoPath()
+    {
+        if (_cocoFactory is null)
+        {
+            CocoStatusText = "Coco client not registered";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(CocoProjectPath))
+        {
+            CocoStatusText = "Enter a project path first";
+            return;
+        }
+
+        _indexCts?.Cancel();
+        _indexCts = new CancellationTokenSource();
+        var token  = _indexCts.Token;
+
+        IsIndexing     = true;
+        CocoStatusText = "Starting index…";
+
+        try
+        {
+            var coco = _cocoFactory.Create();
+
+            await foreach (var ev in coco.IndexStreamAsync(CocoProjectPath, force: false, token))
+            {
+                if (token.IsCancellationRequested) break;
+
+                CocoStatusText = ev.Total.HasValue
+                    ? $"Indexing {ev.Processed}/{ev.Total} — {ev.CurrentFile ?? ev.Message}"
+                    : ev.Message ?? ev.Status ?? "Indexing…";
+
+                if (ev.IsCompleted)
+                {
+                    CocoStatusText = $"Index complete — refreshing status…";
+                    break;
+                }
+
+                if (ev.IsError)
+                {
+                    CocoStatusText = $"Index error: {ev.Message}";
+                    return;
+                }
+            }
+
+            if (!token.IsCancellationRequested)
+                await RefreshCocoStatus();
+        }
+        catch (OperationCanceledException)
+        {
+            CocoStatusText = "Indexing cancelled";
+        }
+        finally
+        {
+            IsIndexing = false;
+        }
+    }
+
+    [RelayCommand]
+    private void CancelIndex()
+    {
+        _indexCts?.Cancel();
     }
 }

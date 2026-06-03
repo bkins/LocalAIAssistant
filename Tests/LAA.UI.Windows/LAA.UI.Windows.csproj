@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+        <!-- FlaUI uses Windows UI Automation APIs — Windows TFM required. -->
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!--
+            FlaUI.UIA3 drives Windows UI Automation (UIA3) natively.
+            No WinAppDriver server is required — tests launch and control
+            the app in-process via the Windows accessibility API.
+        -->
+        <PackageReference Include="FlaUI.UIA3"                    Version="4.0.0" />
+        <!-- Test framework -->
+        <PackageReference Include="Microsoft.NET.Test.Sdk"        Version="17.9.0" />
+        <PackageReference Include="xunit"                          Version="2.9.0" />
+        <PackageReference Include="xunit.runner.visualstudio"      Version="2.8.2">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="coverlet.collector"             Version="6.0.2">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+</Project>

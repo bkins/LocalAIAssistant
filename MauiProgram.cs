@@ -8,6 +8,7 @@ using LocalAIAssistant.CognitivePlatform.CpClients.Knowledge;
 using LocalAIAssistant.CognitivePlatform.CpClients.Notifications;
 using LocalAIAssistant.Core.Notifications;
 using LocalAIAssistant.CognitivePlatform.CpClients.BrainDump;
+using LocalAIAssistant.CognitivePlatform.CpClients.Coco;
 using LocalAIAssistant.CognitivePlatform.CpClients.Tasks;
 using Plugin.LocalNotification;
 using Plugin.LocalNotification.AndroidOption;
@@ -88,6 +89,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<ITaskApiClientFactory, TaskApiClientFactory>();
 		builder.Services.AddSingleton<INotificationApiClientFactory, NotificationApiClientFactory>();
 		builder.Services.AddSingleton<IBrainDumpApiClientFactory, BrainDumpApiClientFactory>();
+		builder.Services.AddSingleton<ICocoApiClientFactory, CocoApiClientFactory>();
 		// Guard rules (MaxPerDay, MinGapMinutes, QuietHoursStart/End) are server-side.
 		// Change them in CognitivePlatform/appsettings.json under "Notifications".
 		builder.Services.AddSingleton<INotificationScheduler, PluginLocalNotificationScheduler>();
@@ -142,6 +144,21 @@ public static class MauiProgram
 						       Debug.WriteLine($"[ANDROID CRASH] {args.Exception}");
 						       args.Handled = true; // Prevents hard crash — remove once you've identified issues
 					       };
+				       });
+			       });
+#endif
+#if WINDOWS
+			       lifecycle.AddWindows(windows =>
+			       {
+				       windows.OnClosed((window, _) =>
+				       {
+					       var hotkeyService = IPlatformApplication.Current?.Services
+					                                                         .GetService<IGlobalHotkeyService>();
+					       hotkeyService?.Unregister();
+
+					       var clipboardMonitor = IPlatformApplication.Current?.Services
+					                                                            .GetService<IClipboardMonitorService>();
+					       clipboardMonitor?.Stop();
 				       });
 			       });
 #endif

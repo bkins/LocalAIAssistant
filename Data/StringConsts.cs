@@ -25,6 +25,15 @@ public static class StringConsts
 
     public static string ApplicationJsonMediaType = "application/json";
 
+    // Coco (Code Intelligence) settings
+    public const string CocoBaseUrlPrefKey                  = "CocoBaseUrl";
+    public const string CocoDefaultBaseUrl                  = "http://localhost:5292";
+    public const string CocoEnabledPrefKey                  = "CocoEnabled";
+    public const string CocoProjectPathPrefKey              = "CocoProjectPath";
+    public const string CocoClipboardMonitorEnabledPrefKey  = "CocoClipboardMonitorEnabled";
+    public const string CocoHotkeyPrefKey                   = "CocoHotkey";
+    public const string CocoDefaultHotkey                   = "Ctrl+Shift+C";
+
     // Grog key: stored in: %APPDATA%\Microsoft\UserSecrets\
 
 }

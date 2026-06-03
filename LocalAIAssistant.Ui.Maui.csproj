@@ -95,6 +95,9 @@
 
 	<ItemGroup>
 		<Compile Include="$(IntermediateOutputPath)BuildEnvironment.g.cs" />
+		<!-- Prevent the SDK default glob from picking up test-project source files
+		     that live in subdirectories of this project root. -->
+		<Compile Remove="Tests\**\*.cs" />
 	</ItemGroup>
 <!-- /GenerateBuildEnvironment -->
 

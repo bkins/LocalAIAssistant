@@ -47,7 +47,24 @@
       "Bash(Select-Object FullName)",
       "PowerShell(Select-String -Path \"C:\\\\Users\\\\benho\\\\.claude\\\\projects\\\\C--Users-benho-source-repos-LocalAIAssistant\\\\af4da578-01ce-42e4-b098-8b5bbe9cbc9c\\\\tool-results\\\\bevl71359.txt\" -Pattern \" error | Build succeeded| Build FAILED\" | Select-Object -Last 20 | ForEach-Object { $_.Line })",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\benho\\\\source\\\\repos\\\\LocalAIAssistant\" -Recurse -Filter \"*.xaml\" -o BasicFileInfo)",
-      "Bash(Select-Object -First 30)"
+      "Bash(Select-Object -First 30)",
+      "Bash(adb devices *)",
+      "Bash(adb -s emulator-5554 shell pm list packages)",
+      "Bash(adb -s ZY22JF9FHP shell pm list packages)",
+      "Bash(adb -s emulator-5554 shell dumpsys window windows)",
+      "Bash(adb -s emulator-5554 shell dumpsys window)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\benho\\\\source\\\\repos\\\\LocalAIAssistant\" -Recurse -Filter \"*.cs\")",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\benho\\\\source\\\\repos\\\\LocalAIAssistant\" -Directory -Recurse)",
+      "Bash(Sort-Object)",
+      "Bash(grep -i \"\\\\\\\\.xaml$\")",
+      "PowerShell(cd \"C:\\\\Users\\\\benho\\\\source\\\\repos\\\\LocalAIAssistant\\\\Tests\\\\LAA.SmokeTests.Android\"; powershell.exe -ExecutionPolicy Bypass -File \"SmokeTest-Android.ps1\" -Device \"emulator-5554\" -PackageName \"com.snikpoh.localaiassistant.debug\" -MaxWaitSeconds 45 -KeepAppOpen)",
+      "Bash(adb -s emulator-5554 shell uiautomator dump /sdcard/debug_dump.xml)",
+      "Bash(adb -s emulator-5554 shell cat /sdcard/debug_dump.xml)",
+      "PowerShell(adb -s emulator-5554 shell \"cmd package resolve-activity --brief -c android.intent.category.LAUNCHER com.snikpoh.localaiassistant.debug\")",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\benho\\\\source\\\\repos\\\\ReleaseConsole\\\\ReleaseConsole\\\\Scripts\\\\\" -Filter \"*.ps1\" | Select-Object FullName)",
+      "Bash(find 'C:\\\\Users\\\\benho\\\\source\\\\repos\\\\ReleaseConsole\\\\ReleaseConsole\\\\Scripts' -name '*.ps1' -type f)",
+      "Bash(cat \"C:\\\\Users\\\\benho\\\\source\\\\Application Documentation\\\\The CP Universe\\\\Natural Language Command System\\\\Developer Log.md\" | tail -60)"
     ]
   }
 }
