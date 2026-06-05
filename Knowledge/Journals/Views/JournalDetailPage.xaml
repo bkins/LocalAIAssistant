@@ -26,10 +26,33 @@
                        TextColor="#FFCC88"
                        HorizontalOptions="Center" />
             </Border>
-            
-            <Label Text="{Binding CreatedAt, StringFormat='{0:MMMM d, yyyy · h:mm tt}'}"
-                   FontSize="12"
-                   TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" />
+
+            <!-- Consistent detail header: type badge · date · workspace -->
+            <HorizontalStackLayout Spacing="8">
+                <Border Padding="5,2"
+                        BackgroundColor="#1E3A5A"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 4">
+                    <Label Text="Journal"
+                           FontSize="11"
+                           TextColor="#88BBEE" />
+                </Border>
+
+                <Label Text="{Binding CreatedAt, StringFormat='{0:MMMM d, yyyy · h:mm tt}'}"
+                       FontSize="12"
+                       VerticalOptions="Center"
+                       TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" />
+
+                <Border Padding="5,2"
+                        BackgroundColor="#1E3A2A"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 4"
+                        IsVisible="{Binding Workspace, Converter={StaticResource NullToBool}}">
+                    <Label Text="{Binding Workspace}"
+                           FontSize="11"
+                           TextColor="#88CCAA" />
+                </Border>
+            </HorizontalStackLayout>
 
             <Button Text="View revision history"
                     FontSize="12"

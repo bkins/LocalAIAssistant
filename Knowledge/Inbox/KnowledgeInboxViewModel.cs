@@ -31,6 +31,24 @@ public partial class KnowledgeInboxViewModel : ObservableObject
     [ObservableProperty] private string         _errorMessage = string.Empty;
     [ObservableProperty] private KnowledgeItem? _selectedItem;
 
+    // ── Filter chips ─────────────────────────────────────────────────────────
+
+    public ObservableCollection<FilterChip> TypeFilters { get; } = new()
+    {
+        new FilterChip("All",      "All",     isSelected: true)
+      , new FilterChip("Journals", "Journal")
+      , new FilterChip("Tasks",    "Task")
+    };
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasMultipleWorkspaces))]
+    private ObservableCollection<FilterChip> _workspaceFilters = new();
+
+    public bool HasMultipleWorkspaces => WorkspaceFilters.Count > 1;
+
+    private KnowledgeKind? _activeTypeFilter;     // null = All
+    private string?        _activeWorkspaceFilter; // null = All
+
     public KnowledgeInboxViewModel(IKnowledgeClientFactory   clientFactory
                                  , IKnowledgeSyncService     syncService
                                  , ILocalKnowledgeStore      localStore
@@ -68,10 +86,12 @@ public partial class KnowledgeInboxViewModel : ObservableObject
         }
         finally
         {
+            RebuildWorkspaceFilters();
             RebuildGroups();
             IsLoading = false;
         }
     }
+
     private async Task LoadOnlineAsync()
     {
         await _syncService.SyncAsync();
@@ -88,14 +108,13 @@ public partial class KnowledgeInboxViewModel : ObservableObject
 
         foreach (var item in pendingItems)
             _items.Add(item);
-        
+
         var localItems = _localStore.List();
 
         foreach (var item in localItems)
             _items.Add(item);
-
     }
-    
+
     private async Task<IReadOnlyList<KnowledgeItem>> BuildPendingItemsAsync()
     {
         var queued = await _db.OfflineQueue
@@ -116,15 +135,138 @@ public partial class KnowledgeInboxViewModel : ObservableObject
                      .ToList();
     }
 
+    // ── Filter commands ───────────────────────────────────────────────────────
+
+    [RelayCommand]
+    private void SelectTypeFilter(FilterChip chip)
+    {
+        foreach (var filterChip in TypeFilters)
+            filterChip.IsSelected = filterChip == chip;
+
+        _activeTypeFilter = chip.Value switch
+        {
+            "Journal" => KnowledgeKind.Journal
+          , "Task"    => KnowledgeKind.Task
+          , _         => null
+        };
+
+        RebuildGroups();
+    }
+
+    [RelayCommand]
+    private void SelectWorkspaceFilter(FilterChip chip)
+    {
+        foreach (var filterChip in WorkspaceFilters)
+            filterChip.IsSelected = filterChip == chip;
+
+        _activeWorkspaceFilter = chip.Value == "All" ? null : chip.Value;
+
+        RebuildGroups();
+    }
+
+    // ── Groups / filtering ────────────────────────────────────────────────────
+
     private void RebuildGroups()
     {
-        var rebuilt = _items.GroupBy(item => item.Kind)
-                            .OrderBy(group => group.Key)
-                            .Select(group => new KnowledgeItemGroup(group.Key, group))
-                            .ToList();
+        var filtered = _items.AsEnumerable();
+
+        if (_activeTypeFilter.HasValue)
+            filtered = filtered.Where(item => item.Kind == _activeTypeFilter.Value);
+
+        if (_activeWorkspaceFilter is not null)
+            filtered = filtered.Where(item => item.Workspace == _activeWorkspaceFilter);
+
+        var rebuilt = filtered
+            .GroupBy(item => item.Kind)
+            .OrderBy(group => group.Key)
+            .Select(group => new KnowledgeItemGroup(group.Key, group))
+            .ToList();
 
         GroupedItems = new ObservableCollection<KnowledgeItemGroup>(rebuilt);
     }
+
+    private void RebuildWorkspaceFilters()
+    {
+        var workspaces = _items
+            .Where(item => !string.IsNullOrEmpty(item.Workspace))
+            .Select(item => item.Workspace!)
+            .Distinct()
+            .OrderBy(ws => ws)
+            .ToList();
+
+        if (workspaces.Count == 0)
+        {
+            WorkspaceFilters       = new ObservableCollection<FilterChip>();
+            _activeWorkspaceFilter = null;
+            return;
+        }
+
+        var chips = new List<FilterChip> { new FilterChip("All Workspaces", "All", isSelected: true) };
+        chips.AddRange(workspaces.Select(ws => new FilterChip(ws, ws)));
+        WorkspaceFilters       = new ObservableCollection<FilterChip>(chips);
+        _activeWorkspaceFilter = null;
+    }
+
+    // ── Archive ───────────────────────────────────────────────────────────────
+
+    [RelayCommand]
+    private async Task ArchiveAsync(KnowledgeItem item)
+    {
+        if (item is null || item.IsQueued)
+            return;
+
+        var client = _clientFactory.Create();
+        await client.ArchiveAsync(item.Id);
+
+        Items.Remove(item);
+        RebuildGroups();
+    }
+
+    // ── Open (navigate to detail) ─────────────────────────────────────────────
+
+    partial void OnSelectedItemChanged(KnowledgeItem? value)
+    {
+        if (value is null)
+            return;
+
+        if (value.IsQueued.Not())
+            OpenCommand.Execute(value);
+
+        SelectedItem = null;
+    }
+
+    [RelayCommand]
+    private async Task OpenAsync(KnowledgeItem item)
+    {
+        switch (item.Kind)
+        {
+            case KnowledgeKind.Journal:
+            {
+                var url = $"{nameof(JournalDetailPage)}?id={item.Id}";
+                if (!string.IsNullOrEmpty(item.Workspace))
+                    url += $"&workspace={Uri.EscapeDataString(item.Workspace)}";
+                await Shell.Current.GoToAsync(url);
+                break;
+            }
+
+            case KnowledgeKind.Task:
+            {
+                var url = $"{nameof(TaskDetailPage)}?id={item.Id}";
+                if (!string.IsNullOrEmpty(item.Workspace))
+                    url += $"&workspace={Uri.EscapeDataString(item.Workspace)}";
+                await Shell.Current.GoToAsync(url);
+                break;
+            }
+
+            case KnowledgeKind.Pending:
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private static string BuildPendingTitle(string input)
     {
@@ -135,61 +277,4 @@ public partial class KnowledgeInboxViewModel : ObservableObject
                        ? $"Pending: {trimmed}"
                        : $"Pending: {trimmed[..maxLength]}…";
     }
-    
-    partial void OnSelectedItemChanged(KnowledgeItem? value)
-    {
-        if (value is null)
-            return;
-        
-        if (value.IsQueued.Not())
-            OpenCommand.Execute(value);
-        
-        // OpenCommand.Execute(value);
-
-        // Allow re-tapping the same item later
-        SelectedItem = null;
-    }
-    [RelayCommand]
-    private async Task ArchiveAsync(KnowledgeItem item)
-    {
-        if (item is null || item.IsQueued)
-            return;
-        
-        var client = _clientFactory.Create();
-        await client.ArchiveAsync(item.Id);
-
-        // Optimistic UI update
-        Items.Remove(item);
-        RebuildGroups();
-    }
-
-    
-    [RelayCommand]
-    private async Task OpenAsync(KnowledgeItem item)
-    {
-        switch (item.Kind)
-        {
-            case KnowledgeKind.Journal:
-                await Shell.Current.GoToAsync($"{nameof(JournalDetailPage)}?id={item.Id}");
-                break;
-            
-            case KnowledgeKind.Task:
-                await Shell.Current.GoToAsync($"{nameof(TaskDetailPage)}?id={item.Id}");
-                break;
-          
-            case KnowledgeKind.Pending:
-                // Queued items are not navigable yet
-                break;
-  
-            // TODO :
-            //case KnowledgeKind.<other kind>:
-            //    await Shell.Current.GoToAsync($"{nameof(<other kind>)}?id={item.Id}");
-            //    break;
-            
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-
-    }
-
 }

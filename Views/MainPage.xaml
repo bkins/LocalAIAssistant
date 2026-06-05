@@ -195,6 +195,13 @@
 
                                 <VerticalStackLayout Spacing="4">
 
+                                    <!-- Calendar connect prompt button -->
+                                    <Button Text="Connect Google Calendar"
+                                            IsVisible="{Binding IsCalendarConnectPrompt}"
+                                            Clicked="OnCalendarConnectClicked"
+                                            BackgroundColor="#4285F4"
+                                            Margin="0,0,0,4" />
+
                                     <!-- Insight header label — only visible for insight messages -->
                                     <Label Text="Insight"
                                            FontSize="11"

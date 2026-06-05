@@ -22,6 +22,8 @@ public sealed class KnowledgeItem
     public string? Mood      { get; init; }
     public int?    MoodScore { get; init; }
 
+    public string? Workspace { get; init; }
+
     public bool IsEdited { get; set; }
     public bool IsQueued { get; init; }  // true = came from offline queue, not yet API-processed
 }

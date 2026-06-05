@@ -7,105 +7,156 @@
              x:Class="LocalAIAssistant.Knowledge.Tasks.Views.TaskDetailPage"
              Title="Task">
 
-       <ContentPage.Resources>
-              <ResourceDictionary>
-                     <converters:NullToBoolConverter x:Key="NullToBoolConverter" />
-              </ResourceDictionary>
-       </ContentPage.Resources>
-       
-    <ScrollView>
-        <VerticalStackLayout Padding="16"
-                             Spacing="12">
-               <Border Padding="10,6"
-                       BackgroundColor="#553300"
-                       IsVisible="{Binding HasError}">
-                      <Label Text="Offline — Data will not be displayed or saved until connection is restored"
-                             FontSize="12"
-                             TextColor="#FFCC88"
-                             HorizontalOptions="Center" />
-               </Border>
-            <ActivityIndicator IsRunning="{Binding IsLoading}"
-                               IsVisible="{Binding IsLoading}" />
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:NullToBoolConverter x:Key="NullToBoolConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
 
-            <!-- Description -->
+    <Grid RowDefinitions="Auto,Auto,*">
+
+        <!-- Header: type badge · date · workspace -->
+        <VerticalStackLayout Grid.Row="0" Padding="16,16,16,8" Spacing="8">
+
+            <Border Padding="10,6"
+                    BackgroundColor="#553300"
+                    IsVisible="{Binding HasError}">
+                <Label Text="Offline — Data will not be displayed or saved until connection is restored"
+                       FontSize="12"
+                       TextColor="#FFCC88"
+                       HorizontalOptions="Center" />
+            </Border>
+
+            <!-- Consistent detail header: type badge · date · workspace -->
+            <HorizontalStackLayout Spacing="8">
+                <Border Padding="5,2"
+                        BackgroundColor="#2A3A1E"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 4">
+                    <Label Text="Task"
+                           FontSize="11"
+                           TextColor="#AABB88" />
+                </Border>
+
+                <Label Text="{Binding CreatedAt, StringFormat='Created {0:MMMM d, yyyy}'}"
+                       FontSize="12"
+                       VerticalOptions="Center"
+                       TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" />
+
+                <Border Padding="5,2"
+                        BackgroundColor="#1E3A2A"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 4"
+                        IsVisible="{Binding Workspace, Converter={StaticResource NullToBoolConverter}}">
+                    <Label Text="{Binding Workspace}"
+                           FontSize="11"
+                           TextColor="#88CCAA" />
+                </Border>
+            </HorizontalStackLayout>
+
+            <!-- Title -->
             <Label Text="{Binding ShortDescription}"
                    FontSize="18"
                    FontAttributes="Bold"
                    LineBreakMode="WordWrap" />
-            <HorizontalStackLayout Spacing="8"
-                                   IsVisible="{Binding Details, Converter={StaticResource NullToBoolConverter}}">
-                   <Switch IsToggled="{Binding ShowAsMarkdown}" />
-                   <Label Text="Show as Markdown"
-                          FontSize="13"
-                          VerticalOptions="Center"
-                          TextColor="{AppThemeBinding Light=#555, Dark=#BBB}" />
-            </HorizontalStackLayout>
-            <!-- Details (only shown when present) -->
-            <Label Text="{Binding Details}"
-                   FontSize="15"
-                   LineBreakMode="WordWrap">
-                   <Label.Triggers>
-                          <DataTrigger TargetType="Label"
-                                       Binding="{Binding Details, Converter={StaticResource NullToBoolConverter}}"
-                                       Value="False">
-                                 <Setter Property="IsVisible" Value="False" />
-                          </DataTrigger>
-                          <DataTrigger TargetType="Label"
-                                       Binding="{Binding ShowAsMarkdown}"
-                                       Value="True">
-                                 <Setter Property="IsVisible" Value="False" />
-                          </DataTrigger>
-                   </Label.Triggers>
-            </Label>
-            <controls:NativeMarkdownView Markdown="{Binding Details}"
-                                         IsVisible="{Binding ShowAsMarkdown}"
-                                         TextColor="{AppThemeBinding Light=Black, Dark=White}" />
-            <!-- Status row -->
-            <HorizontalStackLayout Spacing="8">
 
-                <Label Text="Completed"
-                       TextColor="{AppThemeBinding Light=#2E7D32, Dark=#81C784}"
-                       FontSize="13"
-                       IsVisible="{Binding IsCompleted}" />
-
-                <Label Text="{Binding Priority}"
-                       FontSize="13"
-                       TextColor="{AppThemeBinding Light=#555, Dark=#BBB}" />
-
-                <Label Text="Important"
-                       FontSize="13"
-                       TextColor="{AppThemeBinding Light=#1565C0, Dark=#90CAF9}"
-                       IsVisible="{Binding IsImportant}" />
-
-                <Label Text="Urgent"
-                       FontSize="13"
-                       TextColor="{AppThemeBinding Light=#B71C1C, Dark=#EF9A9A}"
-                       IsVisible="{Binding IsUrgent}" />
-
-            </HorizontalStackLayout>
-
-            <!-- Due date (only shown when present) -->
-            <Label Text="{Binding DueDate, StringFormat='Due: {0:MMMM d, yyyy}'}"
-                   FontSize="13"
-                   TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
-                   IsVisible="{Binding DueDate, Converter={StaticResource NullToBoolConverter}}" />
-
-            <!-- Tags (only shown when present) -->
-            <Label Text="{Binding Tags, StringFormat='Tags: {0}'}"
-                   FontSize="13"
-                   TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
-                   IsVisible="{Binding Tags, Converter={StaticResource NullToBoolConverter}}" />
-
-            <!-- Timestamps -->
-            <Label Text="{Binding CreatedAt, StringFormat='Created: {0:MMMM d, yyyy · h:mm tt}'}"
-                   FontSize="11"
-                   TextColor="{AppThemeBinding Light=#999, Dark=#777}" />
-
-            <Label Text="{Binding UpdatedAt, StringFormat='Updated: {0:MMMM d, yyyy · h:mm tt}'}"
-                   FontSize="11"
-                   TextColor="{AppThemeBinding Light=#999, Dark=#777}" />
+            <!-- Edit button -->
+            <Button Text="Edit task"
+                    FontSize="12"
+                    Padding="6,4"
+                    HorizontalOptions="Start"
+                    BackgroundColor="Transparent"
+                    TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                    Command="{Binding EditTaskCommand}" />
 
         </VerticalStackLayout>
-    </ScrollView>
+
+        <!-- Divider -->
+        <BoxView Grid.Row="1"
+                 HeightRequest="1"
+                 Margin="16,0"
+                 Color="{AppThemeBinding Light=#DDD, Dark=#333}" />
+
+        <!-- Scrollable body -->
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout Padding="16" Spacing="12">
+
+                <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                   IsVisible="{Binding IsLoading}" />
+
+                <!-- Markdown toggle (shown only when details are present) -->
+                <HorizontalStackLayout Spacing="8"
+                                       IsVisible="{Binding Details, Converter={StaticResource NullToBoolConverter}}">
+                    <Switch IsToggled="{Binding ShowAsMarkdown}" />
+                    <Label Text="Show as Markdown"
+                           FontSize="13"
+                           VerticalOptions="Center"
+                           TextColor="{AppThemeBinding Light=#555, Dark=#BBB}" />
+                </HorizontalStackLayout>
+
+                <!-- Details -->
+                <Label Text="{Binding Details}"
+                       FontSize="15"
+                       LineBreakMode="WordWrap">
+                    <Label.Triggers>
+                        <DataTrigger TargetType="Label"
+                                     Binding="{Binding Details, Converter={StaticResource NullToBoolConverter}}"
+                                     Value="False">
+                            <Setter Property="IsVisible" Value="False" />
+                        </DataTrigger>
+                        <DataTrigger TargetType="Label"
+                                     Binding="{Binding ShowAsMarkdown}"
+                                     Value="True">
+                            <Setter Property="IsVisible" Value="False" />
+                        </DataTrigger>
+                    </Label.Triggers>
+                </Label>
+                <controls:NativeMarkdownView Markdown="{Binding Details}"
+                                             IsVisible="{Binding ShowAsMarkdown}"
+                                             TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+
+                <!-- Status row -->
+                <HorizontalStackLayout Spacing="8">
+                    <Label Text="Completed"
+                           TextColor="{AppThemeBinding Light=#2E7D32, Dark=#81C784}"
+                           FontSize="13"
+                           IsVisible="{Binding IsCompleted}" />
+
+                    <Label Text="{Binding Priority}"
+                           FontSize="13"
+                           TextColor="{AppThemeBinding Light=#555, Dark=#BBB}" />
+
+                    <Label Text="Important"
+                           FontSize="13"
+                           TextColor="{AppThemeBinding Light=#1565C0, Dark=#90CAF9}"
+                           IsVisible="{Binding IsImportant}" />
+
+                    <Label Text="Urgent"
+                           FontSize="13"
+                           TextColor="{AppThemeBinding Light=#B71C1C, Dark=#EF9A9A}"
+                           IsVisible="{Binding IsUrgent}" />
+                </HorizontalStackLayout>
+
+                <!-- Due date -->
+                <Label Text="{Binding DueDate, StringFormat='Due: {0:MMMM d, yyyy}'}"
+                       FontSize="13"
+                       TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                       IsVisible="{Binding DueDate, Converter={StaticResource NullToBoolConverter}}" />
+
+                <!-- Tags -->
+                <Label Text="{Binding Tags, StringFormat='Tags: {0}'}"
+                       FontSize="13"
+                       TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"
+                       IsVisible="{Binding Tags, Converter={StaticResource NullToBoolConverter}}" />
+
+                <!-- Timestamps -->
+                <Label Text="{Binding UpdatedAt, StringFormat='Updated: {0:MMMM d, yyyy · h:mm tt}'}"
+                       FontSize="11"
+                       TextColor="{AppThemeBinding Light=#999, Dark=#777}" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </Grid>
 
 </ContentPage>

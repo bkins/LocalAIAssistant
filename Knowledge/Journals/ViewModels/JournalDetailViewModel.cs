@@ -24,6 +24,7 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
     [ObservableProperty] private bool                  _showAsMarkdown;
     [ObservableProperty] private bool                  _hasError;
     [ObservableProperty] private string                _errorMessage;
+    [ObservableProperty] private string?               _workspace;
 
     private Exception _caughtException;
 
@@ -47,6 +48,9 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
         {
             _journalId = id;
         }
+
+        if (query.TryGetValue("workspace", out var wsObj) && wsObj?.ToString() is { Length: > 0 } ws)
+            Workspace = Uri.UnescapeDataString(ws);
     }
 
     [RelayCommand]

@@ -194,10 +194,15 @@ public sealed class CocoApiClient : ICocoApiClient
             var response = await _http.GetAsync("rag/health", ct);
             response.EnsureSuccessStatusCode();
 
-            var envelope = await response.Content
-                                         .ReadFromJsonAsync<CocoHealthResponse>(JsonOptions
-                                                                              , ct);
-            return envelope?.Data;
+            var json = await response.Content.ReadAsStringAsync(ct);
+
+            // Try the envelope format: { "success": true, "data": { "apiAvailable": true, ... } }
+            var envelope = JsonSerializer.Deserialize<CocoHealthResponse>(json, JsonOptions);
+            if (envelope?.Data is not null)
+                return envelope.Data;
+
+            // Fall back to flat format: { "apiAvailable": true, "ollamaAvailable": true, ... }
+            return JsonSerializer.Deserialize<CocoHealthData>(json, JsonOptions);
         }
         catch (OperationCanceledException)
         {

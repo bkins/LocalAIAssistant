@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:converters1="clr-namespace:LocalAIAssistant.Converters"
+    xmlns:inbox="clr-namespace:LocalAIAssistant.Knowledge.Inbox"
     Title="Knowledge">
 
     <ContentPage.Resources>
@@ -40,6 +41,75 @@
                        TextColor="#FF8888"
                        HorizontalOptions="Center" />
             </Border>
+
+            <!-- Type filter chips -->
+            <ScrollView Orientation="Horizontal" HeightRequest="44" Padding="8,4">
+                <HorizontalStackLayout BindableLayout.ItemsSource="{Binding TypeFilters}"
+                                       Spacing="6">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="inbox:FilterChip">
+                            <Border Padding="10,6"
+                                    StrokeShape="RoundRectangle 14"
+                                    StrokeThickness="1">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="#2A4A80" />
+                                        <Setter Property="Stroke" Value="#5588CC" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
+                                        <Setter Property="BackgroundColor" Value="#1E1E1E" />
+                                        <Setter Property="Stroke" Value="#444" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}},
+                                                          Path=BindingContext.SelectTypeFilterCommand}"
+                                        CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                                <Label Text="{Binding Label}"
+                                       FontSize="13"
+                                       TextColor="White" />
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </HorizontalStackLayout>
+            </ScrollView>
+
+            <!-- Workspace filter chips (hidden when no workspace data) -->
+            <ScrollView Orientation="Horizontal" HeightRequest="36" Padding="8,0,8,4"
+                        IsVisible="{Binding HasMultipleWorkspaces}">
+                <HorizontalStackLayout BindableLayout.ItemsSource="{Binding WorkspaceFilters}"
+                                       Spacing="6">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="inbox:FilterChip">
+                            <Border Padding="8,4"
+                                    StrokeShape="RoundRectangle 10"
+                                    StrokeThickness="1">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="#1E3A2A" />
+                                        <Setter Property="Stroke" Value="#44AA66" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
+                                        <Setter Property="BackgroundColor" Value="#1A1A1A" />
+                                        <Setter Property="Stroke" Value="#333" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}},
+                                                          Path=BindingContext.SelectWorkspaceFilterCommand}"
+                                        CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                                <Label Text="{Binding Label}"
+                                       FontSize="12"
+                                       TextColor="#AACCAA" />
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </HorizontalStackLayout>
+            </ScrollView>
 
         </VerticalStackLayout>
 
@@ -87,7 +157,6 @@
                             StrokeThickness="1"
                             StrokeShape="RoundRectangle 8">
 
-                            <!-- Queued items get a muted dashed-style stroke; normal items use the standard border -->
                             <Border.Triggers>
                                 <DataTrigger TargetType="Border" Binding="{Binding IsQueued}" Value="True">
                                     <Setter Property="Stroke" Value="#664400" />
@@ -105,7 +174,21 @@
                                     FontSize="16"
                                     LineBreakMode="WordWrap" />
 
-                                <HorizontalStackLayout Spacing="12">
+                                <HorizontalStackLayout Spacing="8">
+
+                                    <!-- Workspace badge -->
+                                    <Border
+                                        Padding="4,2"
+                                        BackgroundColor="#1A2A3A"
+                                        StrokeShape="RoundRectangle 4"
+                                        StrokeThickness="1"
+                                        Stroke="#2A4A6A"
+                                        IsVisible="{Binding Workspace, Converter={StaticResource NullToBool}}">
+                                        <Label
+                                            Text="{Binding Workspace}"
+                                            FontSize="11"
+                                            TextColor="#88AACC" />
+                                    </Border>
 
                                     <Label
                                         Text="{Binding Tags, Converter={StaticResource TagsToTextConverter}}"
@@ -155,90 +238,3 @@
 
     </Grid>
 </ContentPage>
-
-<!-- <?xml version="1.0" encoding="utf-8" ?> -->
-<!-- <ContentPage -->
-<!--     x:Class="LocalAIAssistant.Knowledge.Inbox.KnowledgeInboxPage" -->
-<!--     xmlns="http://schemas.microsoft.com/dotnet/2021/maui" -->
-<!--     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" -->
-<!--     xmlns:converters="clr-namespace:LocalAIAssistant.Knowledge" -->
-<!--     xmlns:converters1="clr-namespace:LocalAIAssistant.Converters" -->
-<!--     Title="Knowledge"> -->
-<!-- -->
-<!--     <ContentPage.Resources> -->
-<!--         <ResourceDictionary> -->
-<!--             <converters1:TagsToTextConverter x:Key="TagsToTextConverter" /> -->
-<!--             <converters1:KnowledgeStatusToTextConverter x:Key="StatusToTextConverter" /> -->
-<!--         </ResourceDictionary> -->
-<!--     </ContentPage.Resources> -->
-<!-- -->
-<!--     ~1~ <Grid RowDefinitions="Auto,*"> @1@ -->
-<!--     <Grid RowDefinitions="*"> -->
-<!--         ~1~ Loading indicator @1@ -->
-<!--         ~1~ <ActivityIndicator Grid.Row="0" @1@ -->
-<!--         ~1~                    IsRunning="{Binding IsLoading}" @1@ -->
-<!--         ~1~                    IsVisible="{Binding IsLoading}" @1@ -->
-<!--         ~1~                    Margin="12" /> @1@ -->
-<!-- -->
-<!--       <CollectionView -->
-<!--     ItemsSource="{Binding Items}" -->
-<!--     SelectionMode="Single" -->
-<!--     SelectedItem="{Binding SelectedItem}"> -->
-<!-- -->
-<!--     <CollectionView.ItemTemplate> -->
-<!--         <DataTemplate> -->
-<!--             <SwipeView> -->
-<!-- -->
-<!--                 <SwipeView.RightItems> -->
-<!--                     <SwipeItems> -->
-<!--                         <SwipeItem -->
-<!--                             Text="Archive" -->
-<!--                             BackgroundColor="#883333" -->
-<!--                             Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, -->
-<!--                                               Path=BindingContext.ArchiveCommand}" -->
-<!--                             CommandParameter="{Binding .}" /> -->
-<!--                     </SwipeItems> -->
-<!--                 </SwipeView.RightItems> -->
-<!-- -->
-<!--                 <Border -->
-<!--                     Padding="12" -->
-<!--                     Margin="6" -->
-<!--                     Stroke="#333" -->
-<!--                     StrokeThickness="1" -->
-<!--                     StrokeShape="RoundRectangle 8"> -->
-<!-- -->
-<!--                     <VerticalStackLayout Spacing="6"> -->
-<!-- -->
-<!--                         ~1~ Main text @1@ -->
-<!--                         <Label -->
-<!--                             Text="{Binding Title}" -->
-<!--                             FontSize="16" -->
-<!--                             LineBreakMode="WordWrap" /> -->
-<!-- -->
-<!--                         ~1~ Metadata row @1@ -->
-<!--                         <HorizontalStackLayout Spacing="12"> -->
-<!-- -->
-<!--                             <Label -->
-<!--                                 Text="{Binding Tags, Converter={StaticResource TagsToTextConverter}}" -->
-<!--                                 FontSize="12" -->
-<!--                                 TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" -->
-<!--                                 IsVisible="{Binding Tags.Count, Converter={StaticResource StatusToTextConverter}}" /> -->
-<!-- -->
-<!--                             <Label -->
-<!--                                 Text="Edited" -->
-<!--                                 FontSize="12" -->
-<!--                                 TextColor="#CC8844" -->
-<!--                                 IsVisible="{Binding IsEdited}" /> -->
-<!-- -->
-<!--                         </HorizontalStackLayout> -->
-<!-- -->
-<!--                     </VerticalStackLayout> -->
-<!--                 </Border> -->
-<!-- -->
-<!--             </SwipeView> -->
-<!--         </DataTemplate> -->
-<!--     </CollectionView.ItemTemplate> -->
-<!-- </CollectionView> -->
-<!-- -->
-<!--     </Grid> -->
-<!-- </ContentPage> -->

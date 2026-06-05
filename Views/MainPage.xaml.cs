@@ -252,6 +252,9 @@ public partial class MainPage : ContentPage
         // Optional: UX feedback
         await DisplayToast("Copied to clipboard");
     }
+
+    private async void OnCalendarConnectClicked(object sender, EventArgs e)
+        => await ChatViewModel.ConnectGoogleCalendarAsync();
     
     private async Task DisplayToast(string message)
     {

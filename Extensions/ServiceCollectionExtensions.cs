@@ -1,3 +1,4 @@
+using LocalAIAssistant.Services.Google;
 using LocalAIAssistant.CognitivePlatform.CpClients.BrainDump;
 using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
 #if WINDOWS
@@ -140,6 +141,17 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IGlobalHotkeyService, NullGlobalHotkeyService>();
 #endif
 
+        services.AddHttpClient("GoogleCalendar", client =>
+        {
+            client.BaseAddress = new Uri("https://oauth2.googleapis.com");
+            client.Timeout     = TimeSpan.FromSeconds(30);
+        });
+        services.AddSingleton<IGoogleCalendarService>(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            return new GoogleCalendarService(factory.CreateClient("GoogleCalendar"));
+        });
+
         services.AddSingleton<IOrchestratorService, OrchestratorService>();
         services.AddSingleton<IPersonaAndContextEngine, PersonaAndContextEngine.PersonaAndContextEngine>();
         services.AddSingleton<IPersonaRepository, InMemoryPersonaRepository>();
@@ -184,6 +196,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<JournalRevisionHistoryViewModel>();
         
         services.AddTransient<TaskDetailViewModel>();
+        services.AddTransient<EditTaskViewModel>();
 
         services.AddTransient<ConversationsViewModel>();
 
@@ -206,6 +219,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<JournalRevisionHistoryPage>();
 
         services.AddTransient<TaskDetailPage>();
+        services.AddTransient<EditTaskPage>();
 
         services.AddTransient<ConversationsPage>();
 

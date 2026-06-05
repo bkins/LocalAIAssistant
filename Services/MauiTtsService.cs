@@ -94,8 +94,7 @@ public sealed class MauiTtsService : ITtsService
 
     public async Task<IReadOnlyList<VoiceInfo>> GetVoicesAsync()
     {
-        if (!_isTtsAvailable)
-            return Array.Empty<VoiceInfo>();
+        if ( ! _isTtsAvailable) return Array.Empty<VoiceInfo>();
 
         try
         {
@@ -103,11 +102,12 @@ public sealed class MauiTtsService : ITtsService
             var locales = await Task.Run(async () => await TextToSpeech.GetLocalesAsync());
             _cachedLocales = locales.ToList();
 
-            return _cachedLocales
-                   .Select(locale => new VoiceInfo(locale.Name, locale.Language, locale.Country))
-                   .OrderBy(voice => voice.Language)
-                   .ThenBy(voice => voice.Name)
-                   .ToList();
+            return _cachedLocales.Select(locale => new VoiceInfo(locale.Name
+                                                               , locale.Language
+                                                               , locale.Country))
+                                 .OrderBy(voice => voice.Language)
+                                 .ThenBy(voice => voice.Name)
+                                 .ToList();
         }
         catch (Exception ex) when (ex is FeatureNotSupportedException or FeatureNotEnabledException)
         {

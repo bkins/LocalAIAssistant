@@ -36,4 +36,10 @@ public static class StringConsts
 
     // Grog key: stored in: %APPDATA%\Microsoft\UserSecrets\
 
+    // Google Calendar OAuth
+    public const string GoogleCalendarClientIdPrefKey  = "GoogleCalendarClientId";
+    public const string GoogleCalendarRefreshTokenKey  = "gcal_refresh_token";
+    public const string GoogleCalendarAccessTokenKey   = "gcal_access_token";
+    public const string GoogleCalendarTokenExpiryKey   = "gcal_token_expiry";
+
 }

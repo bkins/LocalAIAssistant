@@ -47,6 +47,9 @@ public partial class AppShell : Shell
 // Tasks
 		Routing.RegisterRoute(nameof(TaskDetailPage)
 		                    , typeof(TaskDetailPage));
+
+		Routing.RegisterRoute(nameof(EditTaskPage)
+		                    , typeof(EditTaskPage));
 	}
 
 	protected override async void OnAppearing()

@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LocalAIAssistant.CognitivePlatform.CpClients.Tasks;
 using LocalAIAssistant.Knowledge.Tasks.Models;
+using LocalAIAssistant.Knowledge.Tasks.Views;
 
 namespace LocalAIAssistant.Knowledge.Tasks.ViewModels;
 
@@ -26,6 +27,7 @@ public partial class TaskDetailViewModel : ObservableObject, IQueryAttributable
     [ObservableProperty] private bool            _showAsMarkdown;
     [ObservableProperty] private bool            _hasError;
     [ObservableProperty] private string          _errorMessage;
+    [ObservableProperty] private string?         _workspace;
 
     public TaskDetailViewModel(ITaskApiClientFactory clientFactory)
     {
@@ -39,6 +41,9 @@ public partial class TaskDetailViewModel : ObservableObject, IQueryAttributable
         {
             _id = id;
         }
+
+        if (query.TryGetValue("workspace", out var wsObj) && wsObj?.ToString() is { Length: > 0 } ws)
+            Workspace = Uri.UnescapeDataString(ws);
     }
 
     [RelayCommand]
@@ -90,8 +95,15 @@ public partial class TaskDetailViewModel : ObservableObject, IQueryAttributable
     private void SetDtoError( TasksDto? item )
     {
         if (item?.Error is null) return;
-        
+
         HasError     = true;
         ErrorMessage = item.Error.Message;
+    }
+
+    [RelayCommand]
+    private async Task EditTaskAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_id)) return;
+        await Shell.Current.GoToAsync($"{nameof(EditTaskPage)}?id={_id}");
     }
 }

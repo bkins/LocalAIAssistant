@@ -29,6 +29,8 @@ public partial class Message : ObservableObject
 
     public bool HasTierNotice => !string.IsNullOrEmpty(_tierNotice);
 
+    [ObservableProperty] private bool _isCalendarConnectPrompt;
+
     public Message()
     {
     }

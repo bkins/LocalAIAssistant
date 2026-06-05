@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="LocalAIAssistant.Knowledge.Tasks.Views.EditTaskPage"
+             Title="Edit Task">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="12" Spacing="12">
+
+            <ActivityIndicator IsRunning="{Binding IsLoading}"
+                               IsVisible="{Binding IsLoading}" />
+
+            <Label Text="Description"
+                   FontSize="13"
+                   TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" />
+
+            <Entry Text="{Binding ShortDescription}"
+                   Placeholder="Short description" />
+
+            <Label Text="Details"
+                   FontSize="13"
+                   TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" />
+
+            <ScrollView HeightRequest="200">
+                <Editor Text="{Binding Details}"
+                        AutoSize="TextChanges"
+                        Placeholder="Details (optional)" />
+            </ScrollView>
+
+            <Entry Text="{Binding Tags}"
+                   Placeholder="Tags (comma-separated)" />
+
+            <HorizontalStackLayout Spacing="12">
+                <Button Text="Cancel"
+                        Command="{Binding CancelCommand}"
+                        HorizontalOptions="Start" />
+
+                <Button Text="Save changes"
+                        Command="{Binding SaveCommand}"
+                        HorizontalOptions="EndAndExpand" />
+            </HorizontalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LocalAIAssistant.CognitivePlatform.CpClients.Coco;
+using LocalAIAssistant.Services.Google;
 using LocalAIAssistant.Core.Tts;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
@@ -20,6 +21,7 @@ public partial class SettingsViewModel : ObservableObject
     private readonly AppShellMasterViewModel  _appShellMasterViewModel;
     private readonly IHealthConnectManager?   _healthConnect;
     private readonly ICocoApiClientFactory?   _cocoFactory;
+    private readonly IGoogleCalendarService   _googleCalendar;
     
     [ObservableProperty] private string _model;
     [ObservableProperty] private string _endpoint;
@@ -52,6 +54,10 @@ public partial class SettingsViewModel : ObservableObject
 
     public bool IsHealthConnectAvailable => _healthConnect is not null;
 
+    // ── Google Calendar ───────────────────────────────────────────────────────
+    [ObservableProperty] private string _googleCalendarClientId = string.Empty;
+    [ObservableProperty] private string _googleCalendarStatusText = "Not connected";
+
     // ── Coco (Code Intelligence — Windows only) ───────────────────────────────
     [ObservableProperty] private string _cocoBaseUrl    = StringConsts.CocoDefaultBaseUrl;
     [ObservableProperty] private bool   _cocoEnabled;
@@ -83,6 +89,7 @@ public partial class SettingsViewModel : ObservableObject
                             , IPersonalityService      personalityService
                             , ApiEnvironmentDescriptor apiEnvironment
                             , AppShellMasterViewModel  appShellMasterViewModel
+                            , IGoogleCalendarService   googleCalendar
                             , IServiceProvider         services)
     {
         _apiEnvironment = apiEnvironment;
@@ -111,6 +118,10 @@ public partial class SettingsViewModel : ObservableObject
         _ttsAzureKey          = Preferences.Default.Get(StringConsts.TtsAzureKeyPrefKey,      string.Empty);
         _ttsAzureRegion       = Preferences.Default.Get(StringConsts.TtsAzureRegionPrefKey,   "eastus");
         _ttsElevenLabsKey     = Preferences.Default.Get(StringConsts.TtsElevenLabsKeyPrefKey, string.Empty);
+
+        _googleCalendar              = googleCalendar;
+        _googleCalendarClientId      = Preferences.Default.Get(StringConsts.GoogleCalendarClientIdPrefKey, string.Empty);
+        _googleCalendarStatusText    = googleCalendar.HasToken ? "Connected" : "Not connected";
 
         _cocoFactory                 = services.GetService<ICocoApiClientFactory>();
         _cocoBaseUrl                 = Preferences.Default.Get(StringConsts.CocoBaseUrlPrefKey,                  StringConsts.CocoDefaultBaseUrl);
@@ -174,11 +185,39 @@ public partial class SettingsViewModel : ObservableObject
         Preferences.Default.Set(StringConsts.TtsAzureRegionPrefKey,   TtsAzureRegion);
         Preferences.Default.Set(StringConsts.TtsElevenLabsKeyPrefKey, TtsElevenLabsKey);
 
+        Preferences.Default.Set(StringConsts.GoogleCalendarClientIdPrefKey, GoogleCalendarClientId);
+
         Preferences.Default.Set(StringConsts.CocoBaseUrlPrefKey,                 CocoBaseUrl);
         Preferences.Default.Set(StringConsts.CocoEnabledPrefKey,                 CocoEnabled);
         Preferences.Default.Set(StringConsts.CocoProjectPathPrefKey,             CocoProjectPath);
         Preferences.Default.Set(StringConsts.CocoClipboardMonitorEnabledPrefKey, CocoClipboardMonitorEnabled);
         Preferences.Default.Set(StringConsts.CocoHotkeyPrefKey,                  CocoHotkey);
+    }
+
+    // ── Google Calendar commands ──────────────────────────────────────────────
+
+    [RelayCommand]
+    private async Task ConnectCalendar()
+    {
+        // Save the client ID before attempting the OAuth flow.
+        Preferences.Default.Set(StringConsts.GoogleCalendarClientIdPrefKey, GoogleCalendarClientId);
+
+        if (string.IsNullOrWhiteSpace(GoogleCalendarClientId))
+        {
+            GoogleCalendarStatusText = "Enter your Client ID first";
+            return;
+        }
+
+        GoogleCalendarStatusText = "Connecting…";
+        var success = await _googleCalendar.ConnectAsync();
+        GoogleCalendarStatusText = success ? "Connected" : "Connection failed — check Client ID";
+    }
+
+    [RelayCommand]
+    private async Task DisconnectCalendar()
+    {
+        await _googleCalendar.DisconnectAsync();
+        GoogleCalendarStatusText = "Not connected";
     }
 
     // ── Coco commands ─────────────────────────────────────────────────────────

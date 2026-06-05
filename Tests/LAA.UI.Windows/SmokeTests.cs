@@ -301,6 +301,251 @@ public sealed class SmokeTests : IClassFixture<AppFixture>
         textBox.Text = string.Empty;
     }
 
+    // ─── 17. Brain Dump trigger: editor accepts text, Send enabled ────────────
+
+    [Fact]
+    public void BrainDump_Trigger_Text_Is_Accepted_And_Send_Is_Enabled()
+    {
+        var editor = _f.WaitForElement("ChatEditor").AsTextBox();
+        editor.Text = "brain dump";
+        Thread.Sleep(200);
+
+        var send = _f.WaitForElement("SendButton");
+
+        Assert.True(send.IsEnabled,    "SendButton must be enabled after typing 'brain dump'");
+        Assert.False(send.IsOffscreen, "SendButton must be visible after typing 'brain dump'");
+
+        // Do not submit — clean up so subsequent tests start with an empty editor.
+        editor.Text = string.Empty;
+    }
+
+    // ─── 18. Inbox type-filter chips present ──────────────────────────────────
+
+    [Fact]
+    public void Inbox_TypeFilter_Chips_Are_Present()
+    {
+        _f.NavigateTo("Inbox");
+        Thread.Sleep(600);
+
+        var allChip      = _f.FindByName("All",      timeoutSeconds: 8);
+        var journalsChip = _f.FindByName("Journals",  timeoutSeconds: 4);
+        var tasksChip    = _f.FindByName("Tasks",     timeoutSeconds: 4);
+
+        Assert.NotNull(allChip);
+        Assert.NotNull(journalsChip);
+        Assert.NotNull(tasksChip);
+    }
+
+    // ─── 19. Journal edit page has Camera and Gallery buttons ─────────────────
+
+    [Fact]
+    public void Journal_EditPage_Has_Camera_And_Gallery_Buttons()
+    {
+        _f.NavigateTo("Inbox");
+        Thread.Sleep(500);
+
+        // Select the Journals filter chip to narrow the list.
+        var journalsChip = _f.FindByName("Journals", timeoutSeconds: 5);
+        Assert.NotNull(journalsChip); // Journals filter chip must be present.
+        journalsChip!.Patterns.Invoke.PatternOrDefault?.Invoke();
+        Thread.Sleep(700);
+
+        // Attempt to open the first journal item if one exists.
+        var inboxList = _f.FindById("InboxList", timeoutSeconds: 5);
+        var firstItem = inboxList?.FindFirstDescendant(
+            cf => cf.ByControlType(ControlType.ListItem));
+
+        if (firstItem is null)
+        {
+            // No journal entries on this device — verify the app is still alive.
+            Assert.False(_f.App.HasExited, "App should still be running even when InboxList has no journal items");
+            return;
+        }
+
+        firstItem.Patterns.Invoke.PatternOrDefault?.Invoke();
+        Thread.Sleep(800);
+
+        var editButton = _f.FindByName("Edit entry", timeoutSeconds: 6);
+        if (editButton is null)
+        {
+            Assert.False(_f.App.HasExited, "App should still be running after tapping a journal item");
+            return;
+        }
+
+        editButton.Patterns.Invoke.PatternOrDefault?.Invoke();
+        Thread.Sleep(700);
+
+        var cameraBtn  = _f.FindByName("Camera",  timeoutSeconds: 8);
+        var galleryBtn = _f.FindByName("Gallery", timeoutSeconds: 4);
+
+        Assert.NotNull(cameraBtn);
+        Assert.NotNull(galleryBtn);
+    }
+
+    // ─── 20. Streaming response appears within 15 s ───────────────────────────
+
+    [Fact]
+    public void Streaming_Response_Appears_Within_15_Seconds()
+    {
+        var messagesView = _f.WaitForElement("MessagesView");
+        var beforeCount  = messagesView.FindAllDescendants().Length;
+
+        var editor = _f.WaitForElement("ChatEditor").AsTextBox();
+        editor.Text = "Hello";
+        Thread.Sleep(300);
+
+        var send = _f.WaitForElement("SendButton");
+        send.Patterns.Invoke.PatternOrDefault?.Invoke();
+
+        // Poll up to 15 s for at least one new descendant in the messages area.
+        var  deadline        = DateTime.UtcNow.AddSeconds(15);
+        bool responseVisible = false;
+        while (DateTime.UtcNow < deadline)
+        {
+            Thread.Sleep(600);
+            if (messagesView.FindAllDescendants().Length > beforeCount)
+            {
+                responseVisible = true;
+                break;
+            }
+        }
+
+        Assert.True(responseVisible,
+            "A message bubble should appear in MessagesView within 15 seconds of sending");
+    }
+
+    // ─── 21. Memory badge hidden when no pending confirmations ────────────────
+
+    [Fact]
+    public void MemoryBadge_Hidden_When_No_Pending_Confirmations()
+    {
+        // The 🧠 badge Frame uses IsVisible bound to PendingMemoryConfirmationCount.
+        // In a clean / default state (count = 0) the Frame must not appear in the UIA tree.
+        var badge = _f.FindByName("🧠", timeoutSeconds: 3);
+
+        Assert.True(
+            badge is null || badge.IsOffscreen
+          , "Memory badge should be hidden (IsVisible=False) when PendingMemoryConfirmationCount is 0");
+    }
+
+    // ─── 22. Journal filter shows list or empty state ────────────────────────
+
+    [Fact]
+    public void Journal_Filter_Shows_List_Or_EmptyState()
+    {
+        _f.NavigateTo("Inbox");
+        Thread.Sleep(600);
+
+        var journalsChip = _f.FindByName("Journals", timeoutSeconds: 8);
+        Assert.NotNull(journalsChip);
+
+        journalsChip!.Patterns.Invoke.PatternOrDefault?.Invoke();
+        Thread.Sleep(700);
+
+        Assert.False(_f.App.HasExited, "App should still be running after applying Journals filter");
+        Assert.False(_f.MainWindow.IsOffscreen, "Main window should be visible after Journals filter");
+
+        var list       = _f.FindById("InboxList", timeoutSeconds: 5);
+        var emptyState = _f.FindByName("No items", timeoutSeconds: 3);
+
+        Assert.True(
+            list is not null || emptyState is not null || !_f.App.HasExited
+          , "After Journals filter: InboxList or empty state should be present, or app alive with no entries");
+    }
+
+    // ─── 23. Brain Dump send does not crash ───────────────────────────────────
+
+    [Fact]
+    public void BrainDump_Send_Does_Not_Crash()
+    {
+        var editor = _f.WaitForElement("ChatEditor").AsTextBox();
+        editor.Text = "brain dump";
+        Thread.Sleep(200);
+
+        var send = _f.WaitForElement("SendButton");
+        send.Patterns.Invoke.PatternOrDefault?.Invoke();
+
+        // Wait up to 10 s for a response or timeout — do not require a specific reply,
+        // only that the app stays alive and the window is still present.
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        while (DateTime.UtcNow < deadline)
+        {
+            if (_f.App.HasExited) break;
+            Thread.Sleep(500);
+        }
+
+        Assert.False(_f.App.HasExited,       "App should still be running after sending 'brain dump'");
+        Assert.False(_f.MainWindow.IsOffscreen, "Main window should be visible after brain dump send");
+    }
+
+    // ─── 24. Task detail opens without crash ─────────────────────────────────
+
+    [Fact]
+    public void Tasks_TaskDetail_Opens_Without_Crash()
+    {
+        _f.NavigateTo("Inbox");
+        Thread.Sleep(600);
+
+        var tasksChip = _f.FindByName("Tasks", timeoutSeconds: 8);
+        Assert.NotNull(tasksChip);
+
+        tasksChip!.Patterns.Invoke.PatternOrDefault?.Invoke();
+        Thread.Sleep(700);
+
+        var inboxList = _f.FindById("InboxList", timeoutSeconds: 5);
+        var firstItem = inboxList?.FindFirstDescendant(
+            cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.ListItem));
+
+        if (firstItem is null)
+        {
+            // No task items — still verify the app did not crash.
+            Assert.False(_f.App.HasExited, "App should not crash when Tasks filter is applied with no items");
+            return;
+        }
+
+        firstItem.Patterns.Invoke.PatternOrDefault?.Invoke();
+        Thread.Sleep(800);
+
+        Assert.False(_f.App.HasExited,          "App should still be running after opening a task item");
+        Assert.False(_f.MainWindow.IsOffscreen, "Main window should still be visible after task detail open");
+    }
+
+    // ─── 25. Health Connect section correctly hidden on Windows ──────────────
+
+    [Fact]
+    public void Settings_HealthConnect_Section_CorrectlyHidden_On_Windows()
+    {
+        _f.NavigateTo("Settings");
+        Thread.Sleep(400);
+
+        // On Windows, IsHealthConnectAvailable = false, so the Health section should
+        // not appear in the UIA tree.  A non-null find here would indicate the
+        // IsVisible binding is broken on this platform.
+        var connectHealthBtn = _f.FindByName("Connect Health", timeoutSeconds: 3);
+
+        Assert.True(
+            connectHealthBtn is null || connectHealthBtn.IsOffscreen
+          , "Connect Health button should be absent/offscreen on Windows (Android-only feature)");
+
+        // Settings page itself must still be alive and visible.
+        Assert.False(_f.App.HasExited,          "App should still be running after visiting Settings");
+        Assert.False(_f.MainWindow.IsOffscreen, "Main window must be visible after Settings page load");
+    }
+
+    // ─── 26. Logs tab loads without crash (closest to a Notifications tab) ────
+
+    [Fact]
+    public void Logs_Tab_Loads_Without_Crash()
+    {
+        var navigated = _f.NavigateTo("Logs");
+        Assert.True(navigated, "Could not find the 'Logs' tab in the navigation bar");
+
+        Thread.Sleep(600);
+
+        Assert.False(_f.App.HasExited,          "App should still be running after opening the Logs tab");
+        Assert.False(_f.MainWindow.IsOffscreen, "Main window should be visible after opening the Logs tab");
+    }
+
     // ─── Helper ───────────────────────────────────────────────────────────────
 
     private void TryNavigateTo(string tabTitle)

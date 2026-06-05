@@ -60,4 +60,21 @@ public class TaskApiClient : ITaskApiClient
             return [];
         }
     }
+
+    public async Task EditTaskAsync( Guid                   taskId
+                                   , string                 shortDescription
+                                   , string?                details
+                                   , IReadOnlyList<string>? tags
+                                   , CancellationToken      ct = default )
+    {
+        var payload = new
+                      {
+                          ShortDescription = shortDescription
+                        , Details          = details
+                        , Tags             = tags
+                      };
+
+        var response = await _httpClient.PostAsJsonAsync($"api/tasks/{taskId}/edit", payload, ct);
+        response.EnsureSuccessStatusCode();
+    }
 }

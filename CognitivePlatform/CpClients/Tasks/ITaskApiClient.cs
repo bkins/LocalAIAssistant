@@ -8,4 +8,10 @@ public interface ITaskApiClient
                                              , CancellationToken ct = default);
 
     Task<IReadOnlyList<TasksDto>> GetAllAsync (CancellationToken ct = default);
+
+    Task EditTaskAsync(Guid                    taskId
+                     , string                  shortDescription
+                     , string?                 details
+                     , IReadOnlyList<string>?  tags
+                     , CancellationToken       ct = default);
 }

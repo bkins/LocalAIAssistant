@@ -20,6 +20,7 @@ using LocalAIAssistant.Core.Conversation;
 using LocalAIAssistant.Services.AiMemory;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
 using LocalAIAssistant.Services.Interfaces;
+using LocalAIAssistant.Services.Google;
 using LocalAIAssistant.Services.Logging;
 using LocalAIAssistant.Services.Logging.Interfaces;
 using Microsoft.Extensions.Options;
@@ -50,6 +51,7 @@ public partial class ChatViewModel : ObservableObject
     private readonly ICocoApiClientFactory            _cocoFactory;
     private readonly IClipboardMonitorService         _clipboardMonitor;
     private readonly IGlobalHotkeyService             _hotkeyService;
+    private readonly IGoogleCalendarService           _googleCalendar;
 
     // ── Connectivity ──────────────────────────────────────────────────────────
     [ObservableProperty] private bool _isOffline;
@@ -108,7 +110,8 @@ public partial class ChatViewModel : ObservableObject
                         , IMediaAttachmentApiClient        mediaClient
                         , ICocoApiClientFactory            cocoFactory
                         , IClipboardMonitorService         clipboardMonitor
-                        , IGlobalHotkeyService             hotkeyService )
+                        , IGlobalHotkeyService             hotkeyService
+                        , IGoogleCalendarService           googleCalendar )
     {
         _llmService              = llmService;
         _conversationMemory      = conversationMemory;
@@ -130,6 +133,7 @@ public partial class ChatViewModel : ObservableObject
         _cocoFactory             = cocoFactory;
         _clipboardMonitor        = clipboardMonitor;
         _hotkeyService           = hotkeyService;
+        _googleCalendar          = googleCalendar;
 
         _clipboardMonitor.CodeDetected += OnCodeDetectedInClipboard;
         _hotkeyService.HotkeyPressed   += OnCocoHotkeyPressed;
@@ -244,6 +248,7 @@ public partial class ChatViewModel : ObservableObject
         var voices = await _ttsService.GetVoicesAsync();
         TtsVoices.Clear();
         foreach (var voice in voices)
+            
             TtsVoices.Add(voice.Name);
 
         var preferred = _ttsService.PreferredVoiceName;
@@ -362,6 +367,14 @@ public partial class ChatViewModel : ObservableObject
             if (IsMediaAttachTrigger(text!))
             {
                 await HandleMediaAttachAsync(assistantMsg);
+                assistantSucceeded = true;
+                return;
+            }
+
+            // Intercept calendar actions when no Google Calendar token exists.
+            if (IsCalendarActionTrigger(text!) && !_googleCalendar.HasToken)
+            {
+                await HandleCalendarConnectPromptAsync(assistantMsg);
                 assistantSucceeded = true;
                 return;
             }
@@ -554,6 +567,56 @@ public partial class ChatViewModel : ObservableObject
 
         await _conversationMemory.ClearShortTermAsync();
         await _conversationMemory.ClearAsync();
+    }
+
+    // ── Google Calendar connect flow ──────────────────────────────────────────
+
+    private static bool IsCalendarActionTrigger(string input)
+    {
+        var lower = input.ToLowerInvariant();
+        return lower.Contains("add to calendar")
+            || lower.Contains("schedule event")
+            || lower.Contains("add event")
+            || lower.Contains("calendar event")
+            || lower.Contains("put on calendar")
+            || lower.Contains("add appointment")
+            || lower.Contains("schedule meeting")
+            || lower.Contains("create event");
+    }
+
+    private async Task HandleCalendarConnectPromptAsync(Message assistantMsg)
+    {
+        var hasClientId = !string.IsNullOrWhiteSpace(_googleCalendar.ClientId);
+
+        var content = hasClientId
+            ? "To use calendar features, connect your Google Calendar. Tap the button below to connect."
+            : "To use calendar features, add your Google Calendar Client ID in Settings, then tap connect.";
+
+        await MainThread.InvokeOnMainThreadAsync(() =>
+        {
+            assistantMsg.Content                 = content;
+            assistantMsg.IsCalendarConnectPrompt = hasClientId;
+        });
+    }
+
+    [RelayCommand]
+    public async Task ConnectGoogleCalendarAsync()
+    {
+        var success = await _googleCalendar.ConnectAsync();
+
+        var content = success
+            ? "Google Calendar connected! Your calendar actions will now work."
+            : "Calendar connection failed. Make sure your Client ID is set in Settings and try again.";
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            Messages.Add(new Message
+                         {
+                                 Sender    = "assistant"
+                               , Content   = content
+                               , Timestamp = DateTime.Now
+                         });
+        });
     }
 
     // ── Media attachment flow ─────────────────────────────────────────────────
