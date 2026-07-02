@@ -9,4 +9,7 @@ public class ConverseResponseDto
     // Populated when the API falls back to a lower model tier.
     // If null the client attempts to extract the notice from trailing italic text in Message.
     public string?                   ModelNotice    { get; set; }
+    public int                       PendingMemoryCount { get; set; }
+    public bool                      IsConfirmationRequired { get; set; }
+    public string?                   ConfirmationPrompt     { get; set; }
 }

@@ -31,6 +31,32 @@
             <Entry Text="{Binding Tags}"
                    Placeholder="Tags (comma-separated)" />
 
+            <Label Text="Due Date"
+                   FontSize="13"
+                   TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" />
+
+            <HorizontalStackLayout Spacing="8">
+                <CheckBox IsChecked="{Binding HasDueDate}" VerticalOptions="Center" />
+                <Label Text="Set Due Date" VerticalOptions="Center" FontSize="14" />
+            </HorizontalStackLayout>
+
+            <DatePicker Date="{Binding DueDateValue}"
+                        IsVisible="{Binding HasDueDate}"
+                        Format="yyyy-MM-dd" />
+
+            <Label Text="Completion"
+                   FontSize="13"
+                   TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" />
+
+            <HorizontalStackLayout Spacing="8">
+                <CheckBox IsChecked="{Binding IsCompleted}" VerticalOptions="Center" />
+                <Label Text="Mark Completed" VerticalOptions="Center" FontSize="14" />
+            </HorizontalStackLayout>
+
+            <DatePicker Date="{Binding CompletedAtValue}"
+                        IsVisible="{Binding IsCompleted}"
+                        Format="yyyy-MM-dd" />
+
             <HorizontalStackLayout Spacing="12">
                 <Button Text="Cancel"
                         Command="{Binding CancelCommand}"

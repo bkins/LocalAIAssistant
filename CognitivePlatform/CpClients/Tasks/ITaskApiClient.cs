@@ -13,5 +13,7 @@ public interface ITaskApiClient
                      , string                  shortDescription
                      , string?                 details
                      , IReadOnlyList<string>?  tags
+                     , DateTimeOffset?         dueDate
+                     , DateTimeOffset?         completedAt
                      , CancellationToken       ct = default);
 }

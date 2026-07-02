@@ -178,7 +178,7 @@ public partial class KnowledgeInboxViewModel : ObservableObject
 
         var rebuilt = filtered
             .GroupBy(item => item.Kind)
-            .OrderBy(group => group.Key)
+            .OrderByDescending(group => group.Key)
             .Select(group => new KnowledgeItemGroup(group.Key, group))
             .ToList();
 
@@ -187,12 +187,12 @@ public partial class KnowledgeInboxViewModel : ObservableObject
 
     private void RebuildWorkspaceFilters()
     {
-        var workspaces = _items
-            .Where(item => !string.IsNullOrEmpty(item.Workspace))
-            .Select(item => item.Workspace!)
-            .Distinct()
-            .OrderBy(ws => ws)
-            .ToList();
+        var workspaces = _items.Where(item => item.Workspace != null 
+                                           && item.Workspace.HasValue())
+                               .Select(item => item.Workspace!)
+                               .Distinct()
+                               .OrderBy(workspace => workspace)
+                               .ToList();
 
         if (workspaces.Count == 0)
         {

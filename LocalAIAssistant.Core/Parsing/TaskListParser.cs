@@ -1,34 +1,34 @@
 using System.Text.RegularExpressions;
+using CP.Client.Core.Avails;
 
 namespace LocalAIAssistant.Core.Parsing;
 
 public static class TaskListParser
 {
-    private static readonly Regex TaskLineRegex = new(
-        @"^- (?<id>[a-f0-9]+): (?<title>.+?) \[(?<status>[^]]+)\](?: \[tags: (?<tags>[^]]+)\])?",
-        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    private static readonly Regex TaskLineRegex = new(RegexMatchingPatterns.StructuredTaskLinePattern
+                                                    , RegexOptions.Compiled 
+                                                    | RegexOptions.IgnoreCase);
 
     public static bool TryParseTasks(string text, out List<ParsedTask> tasks)
     {
         tasks = new();
 
-        if (string.IsNullOrEmpty(text))
-            return false;
+        if (text.HasNoValue()) return false;
 
         var lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
         foreach (var line in lines)
         {
-            var m = TaskLineRegex.Match(line.Trim());
-            if (!m.Success)
+            var match = TaskLineRegex.Match(line.Trim());
+            if (match.Success.Not())
                 continue;
 
-            var id     = m.Groups["id"].Value;
-            var title  = m.Groups["title"].Value;
-            var status = m.Groups["status"].Value;
-            var tags = m.Groups["tags"].Success
-                               ? m.Groups["tags"].Value.Split(',', StringSplitOptions.TrimEntries)
-                               : Array.Empty<string>();
+            var id     = match.Groups["id"].Value;
+            var title  = match.Groups["title"].Value;
+            var status = match.Groups["status"].Value;
+            var tags   = match.Groups["tags"].Success
+                                 ? match.Groups["tags"].Value.Split(',', StringSplitOptions.TrimEntries)
+                                 : Array.Empty<string>();
 
             var importance = status.Contains("Important", StringComparison.OrdinalIgnoreCase);
             var urgent     = status.Contains("Urgent",    StringComparison.OrdinalIgnoreCase);

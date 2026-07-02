@@ -65,6 +65,8 @@ public class TaskApiClient : ITaskApiClient
                                    , string                 shortDescription
                                    , string?                details
                                    , IReadOnlyList<string>? tags
+                                   , DateTimeOffset?        dueDate
+                                   , DateTimeOffset?        completedAt
                                    , CancellationToken      ct = default )
     {
         var payload = new
@@ -72,6 +74,8 @@ public class TaskApiClient : ITaskApiClient
                           ShortDescription = shortDescription
                         , Details          = details
                         , Tags             = tags
+                        , DueDate          = dueDate
+                        , CompletedAt      = completedAt
                       };
 
         var response = await _httpClient.PostAsJsonAsync($"api/tasks/{taskId}/edit", payload, ct);

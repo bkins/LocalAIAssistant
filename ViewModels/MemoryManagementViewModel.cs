@@ -8,7 +8,8 @@ namespace LocalAIAssistant.ViewModels;
 
 public partial class MemoryManagementViewModel : ObservableObject
 {
-    private readonly IConversationMemory _conversationMemory;
+    private readonly IConversationMemory     _conversationMemory;
+    private readonly AppShellMasterViewModel _appShellMasterViewModel;
 
     [ObservableProperty]
     private ObservableCollection<Message> _shortTermMessages = new();
@@ -18,10 +19,23 @@ public partial class MemoryManagementViewModel : ObservableObject
 
     public int ShortTermCount => ShortTermMessages.Count;
     public int LongTermCount  => LongTermMessages.Count;
+
+    public int PendingMemoryConfirmationCount => _appShellMasterViewModel.PendingMemoryConfirmationCount;
+    public bool HasPendingMemoryConfirmation  => PendingMemoryConfirmationCount > 0;
     
-    public MemoryManagementViewModel(IConversationMemory conversationMemory)
+    public MemoryManagementViewModel(IConversationMemory conversationMemory, AppShellMasterViewModel appShellMasterViewModel)
     {
-        _conversationMemory = conversationMemory;
+        _conversationMemory      = conversationMemory;
+        _appShellMasterViewModel = appShellMasterViewModel;
+
+        _appShellMasterViewModel.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(AppShellMasterViewModel.PendingMemoryConfirmationCount))
+            {
+                OnPropertyChanged(nameof(PendingMemoryConfirmationCount));
+                OnPropertyChanged(nameof(HasPendingMemoryConfirmation));
+            }
+        };
     }
     
     [RelayCommand]

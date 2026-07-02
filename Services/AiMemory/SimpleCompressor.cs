@@ -1,7 +1,8 @@
 using System.Text.RegularExpressions;
+using CP.Client.Core.Avails;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
-using LocalAIAssistant.Extensions;
+using StringExtensions = LocalAIAssistant.Extensions.StringExtensions;
 
 namespace LocalAIAssistant.Services.AiMemory;
 
@@ -82,12 +83,12 @@ public static class SimpleCompressor
                                , int     maxLineLength
                                , double? score)
     {
-        var who            = message.Sender.HasNoValue() ? Senders.Unknown : message.Sender;
+        var who            = StringExtensions.HasNoValue(message.Sender) ? Senders.Unknown : message.Sender;
         var content        = OneLine(message.Content, maxLineLength);
         var timestamp      = includeTimestamp ? $" [{message.Timestamp:yyyy-MM-dd HH:mm}]" : "";
         var scoreText      = $" (Score: {score:0.##})";
         var tagsText       = message.Tags?.Any() == true ? $" [Tags: {string.Join(",", message.Tags)}]" : "";
-        var importanceText = message.Importance > 1 ? $" [Imp: {message.Importance}]" : "";
+        var importanceText = message.Importance  > 1 ? $" [Imp: {message.Importance}]" : "";
 
         return $"- {who}{timestamp}{tagsText}{importanceText}{scoreText}: {content}";
     }
@@ -96,10 +97,9 @@ public static class SimpleCompressor
                                 , int    limit)
     {
         if (string.IsNullOrWhiteSpace(messageContent)) return "";
-        var clean = Regex.Replace(messageContent.Replace("\r"
-                                                       , " ").Replace("\n"
-                                                                    , " ")
-                                , @"\s+"
+        var clean = Regex.Replace(messageContent.Replace("\r", " ")
+                                                .Replace("\n", " ")
+                                , RegexMatchingPatterns.WhitespacePattern
                                 , " ").Trim();
 
         return clean.Length <= limit ? clean : clean[..(limit - 1)] + "…";

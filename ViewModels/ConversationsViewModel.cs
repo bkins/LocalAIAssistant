@@ -92,6 +92,36 @@ public partial class ConversationsViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task RenameConversation(ConversationSummaryDto conversation)
+    {
+        var currentName = conversation.Name ?? string.Empty;
+        var newName = await Shell.Current.DisplayPromptAsync(
+            "Rename Conversation",
+            "Enter new name:",
+            "OK",
+            "Cancel",
+            initialValue: currentName);
+
+        if (string.IsNullOrWhiteSpace(newName) || newName == currentName) return;
+
+        try
+        {
+            await _conversationClient.RenameConversationAsync(conversation.ConversationId, newName);
+            conversation.Name = newName;
+            var index = Conversations.IndexOf(conversation);
+            if (index >= 0)
+            {
+                Conversations[index] = conversation;
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _log.LogError(ex, "Failed to rename conversation");
+            await Shell.Current.DisplayAlert("Error", "Could not rename conversation. Please try again.", "OK");
+        }
+    }
+
+    [RelayCommand]
     private async Task NewConversation()
     {
         try

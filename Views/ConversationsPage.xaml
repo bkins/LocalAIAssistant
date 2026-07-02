@@ -52,6 +52,10 @@
 
                             <SwipeView.RightItems>
                                 <SwipeItems>
+                                    <SwipeItem Text="Rename"
+                                               BackgroundColor="Orange"
+                                               Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ConversationsViewModel}}, Path=RenameConversationCommand}"
+                                               CommandParameter="{Binding}"/>
                                     <SwipeItem Text="Delete"
                                                BackgroundColor="Red"
                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ConversationsViewModel}}, Path=DeleteConversationCommand}"
@@ -72,7 +76,7 @@
                                                           CommandParameter="{Binding}"/>
                                 </Border.GestureRecognizers>
 
-                                <Grid ColumnDefinitions="*,Auto">
+                                <Grid ColumnDefinitions="*,Auto,Auto">
 
                                     <VerticalStackLayout Grid.Column="0" Spacing="2">
                                         <Label Text="{Binding Name, TargetNullValue='Unnamed conversation'}"
@@ -91,7 +95,19 @@
                                         </Label>
                                     </VerticalStackLayout>
 
-                                    <Label Grid.Column="1"
+                                    <Button Grid.Column="1"
+                                            AutomationId="RenameButton"
+                                            Text="Rename"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ConversationsViewModel}}, Path=RenameConversationCommand}"
+                                            CommandParameter="{Binding}"
+                                            BackgroundColor="Transparent"
+                                            TextColor="{StaticResource SecondaryTextColor}"
+                                            FontSize="12"
+                                            Padding="4"
+                                            VerticalOptions="Center"
+                                            Margin="0,0,8,0"/>
+
+                                    <Label Grid.Column="2"
                                            Text="{Binding LastActiveUtc, StringFormat='{0:MMM d}'}"
                                            FontSize="12"
                                            TextColor="{StaticResource SecondaryTextColor}"

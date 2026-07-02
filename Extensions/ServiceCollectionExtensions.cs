@@ -118,6 +118,7 @@ public static class ServiceCollectionExtensions
             return new ElevenLabsTtsService(factory.CreateClient("ElevenLabs"), audio, mauiFallback);
         });
         services.AddSingleton<ITtsService, TtsServiceProxy>();
+        services.AddSingleton<ISpeechToTextService, AzureSpeechToTextService>();
 
         services.AddSingleton<IMediaAttachmentApiClient>(sp =>
         {

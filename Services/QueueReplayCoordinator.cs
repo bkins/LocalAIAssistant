@@ -1,6 +1,6 @@
 using CP.Client.Core.Common.ConnectivityToApi;
 using LocalAIAssistant.Services.Interfaces;
-using System.Threading;
+using System.Threading.Tasks;
 using CP.Client.Core.Avails;
 
 namespace LocalAIAssistant.Services;
@@ -18,35 +18,42 @@ public class QueueReplayCoordinator
         _queue        = queue;
         _connectivity = connectivity;
         
+        _connectivity.ConnectivityChanged += OnConnectivityChanged;
+
         if (_connectivity.IsOffline.Not())
         {
-            _ = _queue.ProcessQueueAsync();
+            TriggerQueueReplay();
         }
-        
-        _connectivity.ConnectivityChanged += OnConnectivityChanged;
     }
 
-    private async void OnConnectivityChanged(object? sender, ConnectivityStatus connectivityStatus)
+    private void OnConnectivityChanged(object? sender, ConnectivityStatus connectivityStatus)
     {
         if (_connectivity.IsOffline)
             return;
 
+        TriggerQueueReplay();
+    }
+
+    private void TriggerQueueReplay()
+    {
         // Prevent concurrent processors
         if (Interlocked.Exchange(ref _isProcessing, 1) == 1)
             return;
 
-        try
+        Task.Run(async () =>
         {
-            await _queue.ProcessQueueAsync();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Queue replay failed: {ex}");
-        }
-        finally
-        {
-            Interlocked.Exchange(ref _isProcessing, 0);
-        }
-
+            try
+            {
+                await _queue.ProcessQueueAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Queue replay failed: {ex}");
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _isProcessing, 0);
+            }
+        });
     }
 }

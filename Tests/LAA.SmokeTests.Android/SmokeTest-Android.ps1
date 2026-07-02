@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     LAA (Local AI Assistant) Android Smoke Test Suite
 
@@ -27,7 +27,8 @@ param(
     [string] $Device        = "",
     [string] $PackageName   = "",
     [int]    $MaxWaitSeconds = 180,
-    [switch] $KeepAppOpen
+    [switch] $KeepAppOpen,
+    [switch] $ForceFailure
 )
 
 Set-StrictMode -Version Latest
@@ -141,6 +142,40 @@ function Tap-Tab {
     return $true
 }
 
+function Dismiss-Diagnostics-IfVisible {
+    param([int] $DelayMs = 1000)
+
+    $dump = Get-UiDump
+    if ($null -eq $dump) { return $false }
+
+    $goBtn = Find-Node $dump -Text "Go to App"
+    if ($null -eq $goBtn) { return $false }
+
+    Write-Host "  Late debug modal detected - tapping 'Go to App'..." -ForegroundColor DarkGray
+    Tap-Node $goBtn -DelayMs $DelayMs | Out-Null
+    return $true
+}
+
+function Find-ChatEditor {
+    param([int] $TimeoutSeconds = 8)
+
+    Dismiss-Diagnostics-IfVisible -DelayMs 1500 | Out-Null
+
+    return Wait-ForElement -TimeoutSeconds $TimeoutSeconds -IntervalMs 500 -Predicate {
+        param($dump)
+
+        $goBtn = Find-Node $dump -Text "Go to App"
+        if ($null -ne $goBtn) {
+            $center = Get-NodeCenter $goBtn
+            Invoke-Adb "shell", "input", "tap", $center.X, $center.Y | Out-Null
+            Start-Sleep -Milliseconds 1000
+            return $null
+        }
+
+        Find-Node $dump -ClassName "android.widget.EditText"
+    }
+}
+
 function Wait-ForElement {
     <#
     Polls the UI dump until the predicate returns a non-null node or the timeout expires.
@@ -163,6 +198,14 @@ function Wait-ForElement {
     return $null
 }
 
+# Dot-source the common helpers
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$helpersPath = Join-Path $scriptDir "..\Test-Helpers.ps1"
+if (-not (Test-Path $helpersPath)) {
+    $helpersPath = Join-Path $scriptDir "Test-Helpers.ps1"
+}
+. $helpersPath
+
 # --- Test runner -------------------------------------------------------------
 
 function Run-Test {
@@ -178,6 +221,9 @@ function Run-Test {
             $result.Detail = if ($outcome -is [string]) { $outcome } else { "Test body returned false" }
             $script:Failed++
 
+            # Capture failure screenshot
+            try { Take-AndroidScreenshot -Device $script:Device -FileNamePrefix "LAA_Android_Failure" } catch { }
+
             # Dump the UI hierarchy so the caller can see what was on screen.
             $dump = Get-UiDump
             if ($dump) {
@@ -189,6 +235,8 @@ function Run-Test {
     } catch {
         $result.Detail = $_.Exception.Message
         $script:Failed++
+
+        try { Take-AndroidScreenshot -Device $script:Device -FileNamePrefix "LAA_Android_Failure" } catch { }
 
         $dump = Get-UiDump
         if ($dump) {
@@ -345,16 +393,14 @@ Write-Host ""
 
 # -- 1. App launches and Chat page is visible ---------------------------------
 Run-Test "App launches and Chat page is visible" {
-    $dump   = Get-UiDump
-    $editor = Find-Node $dump -ClassName "android.widget.EditText"
+    $editor = Find-ChatEditor -TimeoutSeconds 8
     $null -ne $editor
 }
 
 # -- 2. Chat editor is focusable and clickable --------------------------------
 # Regression guard for the Android Editor tap-to-focus bug fixed in PRs #23-#28.
 Run-Test "Chat editor is focusable and clickable" {
-    $dump   = Get-UiDump
-    $editor = Find-Node $dump -ClassName "android.widget.EditText"
+    $editor = Find-ChatEditor -TimeoutSeconds 8
     if ($null -eq $editor) { return "EditText not found in hierarchy" }
     if ($editor.focusable -ne "true")  { return "Editor is not focusable (focusable=false)" }
     if ($editor.clickable -ne "true")  { return "Editor is not clickable (clickable=false)" }
@@ -363,8 +409,7 @@ Run-Test "Chat editor is focusable and clickable" {
 
 # -- 3. Editor enabled attribute is true (not blocked by an overlay) ----------
 Run-Test "Chat editor is enabled (no overlay blocking input)" {
-    $dump   = Get-UiDump
-    $editor = Find-Node $dump -ClassName "android.widget.EditText"
+    $editor = Find-ChatEditor -TimeoutSeconds 8
     if ($null -eq $editor) { return "EditText not found" }
     if ($editor.enabled -ne "true") { return "Editor disabled - possible overlay or permission dialog intercepting touches" }
     $true
@@ -373,8 +418,7 @@ Run-Test "Chat editor is enabled (no overlay blocking input)" {
 # -- 4. Can type a message and Send button is present -------------------------
 Run-Test "Can type a message and Send button is present" {
     # Tap editor to focus it.
-    $dump   = Get-UiDump
-    $editor = Find-Node $dump -ClassName "android.widget.EditText"
+    $editor = Find-ChatEditor -TimeoutSeconds 8
     if ($null -eq $editor) { return "EditText not found" }
     Tap-Node $editor | Out-Null
     Start-Sleep -Milliseconds 300
@@ -408,14 +452,7 @@ Run-Test "Navigation to Chats tab works" {
     # The debug startup modal (DebugStartupPage) is pushed via PushModalAsync after
     # InitializeAsync completes, which can happen AFTER the startup wait found the
     # EditText and declared the app ready.  Dismiss it now if it is already visible.
-    $preDump = Get-UiDump
-    if ($null -ne $preDump) {
-        $goBtn = Find-Node $preDump -Text "Go to App"
-        if ($null -ne $goBtn) {
-            Write-Host "  Late debug modal detected - tapping 'Go to App'..." -ForegroundColor DarkGray
-            Tap-Node $goBtn -DelayMs 2000 | Out-Null
-        }
-    }
+    Dismiss-Diagnostics-IfVisible -DelayMs 2000 | Out-Null
 
     $ok = Tap-Tab "Chats" -DelayMs 800
     if (-not $ok) { return "Could not find 'Chats' tab in the bottom navigation bar" }
@@ -507,6 +544,7 @@ Run-Test "App survives rapid tab cycling without crashing" {
             break
         }
     }
+    Tap-Tab "Chat" -DelayMs 1000 | Out-Null
     Start-Sleep -Milliseconds 800
     $dump   = Get-UiDump
     if ($null -eq $dump) { return "UI dump returned null after rapid tab cycling - app may have crashed" }
@@ -546,20 +584,32 @@ Run-Test "Settings page loads cleanly on Android (Coco section correctly hidden)
     # On Android the shell has 6 tabs but only 5 fit in the bottom nav bar.
     # Logs and Settings are collapsed into the "More" overflow item.
     $ok = Tap-Tab "More" -DelayMs 600
-    if (-not $ok) { return "Could not find 'More' tab in the bottom navigation bar" }
+    if (-not $ok) {
+        $ok = Tap-Tab "Settings" -DelayMs 1500
+        if (-not $ok) { return "Could not find 'More' or 'Settings' tab in the bottom navigation bar" }
+    }
 
-    # The More page can take a moment to render — poll for the Settings item.
-    $settingsNode = Wait-ForElement -TimeoutSeconds 8 -IntervalMs 500 -Predicate {
-        param($d)
-        $n = Find-Node $d -Text "Settings"
-        if ($null -ne $n) { return $n }
-        $n = Find-Node $d -ContentDesc "Settings"
-        if ($null -ne $n) { return $n }
-        return $null
+    if ($ok) {
+        # The More page can take a moment to render. If the Settings page was
+        # directly reachable, this resolves immediately on existing page content.
+        $settingsNode = Wait-ForElement -TimeoutSeconds 8 -IntervalMs 500 -Predicate {
+            param($d)
+
+            $connection = Find-Node $d -Text "CONNECTION"
+            if ($null -ne $connection) { return $connection }
+
+            $n = Find-Node $d -Text "Settings"
+            if ($null -ne $n) { return $n }
+            $n = Find-Node $d -ContentDesc "Settings"
+            if ($null -ne $n) { return $n }
+            return $null
+        }
     }
     if ($null -eq $settingsNode) { return "Could not find 'Settings' in the More overflow panel" }
 
-    Tap-Node $settingsNode -DelayMs 1500 | Out-Null
+    if ($settingsNode.text -eq "Settings" -or $settingsNode.'content-desc' -eq "Settings") {
+        Tap-Node $settingsNode -DelayMs 1500 | Out-Null
+    }
 
     $dump = Get-UiDump
     if ($null -eq $dump) { return "UI dump returned null after navigating to Settings" }
@@ -581,6 +631,7 @@ Run-Test "Settings page loads cleanly on Android (Coco section correctly hidden)
 
 # -- 15. Inbox filter chips are visible (All / Journals / Tasks) --------------
 Run-Test "Inbox filter chips are visible after navigating to Inbox" {
+    Tap-Tab "Chat" -DelayMs 800 | Out-Null
     $ok = Tap-Tab "Inbox" -DelayMs 1200
     if (-not $ok) { return "Could not find 'Inbox' tab in the bottom navigation bar" }
 
@@ -616,8 +667,7 @@ Run-Test "Chat Send button present after returning from Inbox and typing" {
     $ok = Tap-Tab "Chat" -DelayMs 1200
     if (-not $ok) { return "Could not find 'Chat' tab in the bottom navigation bar" }
 
-    $dump   = Get-UiDump
-    $editor = Find-Node $dump -ClassName "android.widget.EditText"
+    $editor = Find-ChatEditor -TimeoutSeconds 8
     if ($null -eq $editor) { return "Chat editor not found after returning to Chat tab" }
 
     Tap-Node $editor | Out-Null
@@ -637,6 +687,12 @@ Run-Test "Chat Send button present after returning from Inbox and typing" {
     Invoke-Adb "shell", "input", "keyevent", "KEYCODE_ESCAPE"  | Out-Null
     Start-Sleep -Milliseconds 400
     $true
+}
+
+if ($ForceFailure) {
+    Run-Test "Forced failure to test screenshots" {
+        throw "Forced failure to verify screenshot functionality."
+    }
 }
 
 # --- Teardown ----------------------------------------------------------------

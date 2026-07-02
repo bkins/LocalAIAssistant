@@ -7,7 +7,7 @@ public sealed class AttachmentViewModel
 {
     public Guid              Id           { get; }
     public string            FileName     { get; }
-    public string            ThumbnailUrl { get; }
+    public string StoragePath    { get; }
     public bool              IsImage      { get; }
     public IAsyncRelayCommand DeleteCommand { get; }
     public IAsyncRelayCommand OpenCommand   { get; }
@@ -18,7 +18,7 @@ public sealed class AttachmentViewModel
     {
         Id           = dto.Id;
         FileName     = dto.FileName;
-        ThumbnailUrl = $"{baseUrl.TrimEnd('/')}/api/media/{dto.Id}/file";
+        StoragePath  = dto.StoragePath;
         IsImage      = dto.IsImage;
 
         DeleteCommand = new AsyncRelayCommand(() => onDelete(dto.Id));
@@ -29,7 +29,7 @@ public sealed class AttachmentViewModel
     {
         try
         {
-            await Launcher.OpenAsync(new Uri(ThumbnailUrl));
+            await Launcher.OpenAsync(StoragePath);
         }
         catch (Exception)
         {

@@ -1,4 +1,4 @@
-﻿<Shell
+<Shell
     x:Class="LocalAIAssistant.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -128,8 +128,10 @@
                        Padding="4"
                        CornerRadius="20"
                        HasShadow="False"
+                       AutomationId="OfflineQueueBadgeFrame"
                        IsVisible="{Binding PendingQueueCount, Converter={StaticResource IntGreaterThanZeroConverter}}">
                     <Label Text="{Binding PendingQueueCount}"
+                           AutomationId="OfflineQueueBadgeLabel"
                            TextColor="White"
                            FontSize="10"/>
                 </Frame>
@@ -149,7 +151,7 @@
         <Tab Title="Inbox">
             <ShellContent ContentTemplate="{DataTemplate inbox:KnowledgeInboxPage}"/>
         </Tab>
-        <Tab Title="Memory">
+        <Tab Title="{Binding MemoryTabTitle}">
             <ShellContent x:Name="MemoryShellContent"
                           Route="Memory"
                           ContentTemplate="{DataTemplate views:MemoryManagementPage}"/>

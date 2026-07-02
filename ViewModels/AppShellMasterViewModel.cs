@@ -24,7 +24,14 @@ public partial class AppShellMasterViewModel : ObservableObject
 
     // Pending persona-memory confirmations (Provisional → Reinforced → Canonical).
     // Populated by the memory confirmation service once that pipeline is wired.
-    [ObservableProperty] private int _pendingMemoryConfirmationCount;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(MemoryTabTitle))]
+    private int _pendingMemoryConfirmationCount;
+
+    public string MemoryTabTitle => PendingMemoryConfirmationCount > 0
+        ? $"Memory ({PendingMemoryConfirmationCount})"
+        : "Memory";
+
 
     public static bool IsOffline => _connectivity.IsOffline;
 

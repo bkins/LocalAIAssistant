@@ -12,6 +12,28 @@
 
     <ScrollView>
     <VerticalStackLayout>
+        <!-- Pending memory confirmation badge banner -->
+        <Border Margin="15,10,15,5"
+                Padding="15,12"
+                StrokeShape="RoundRectangle 8"
+                StrokeThickness="1"
+                Stroke="#8B5CF6"
+                BackgroundColor="#1D1430"
+                IsVisible="{Binding HasPendingMemoryConfirmation}">
+            <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
+                <Label Text="🧠" FontSize="24" VerticalOptions="Center" />
+                <VerticalStackLayout VerticalOptions="Center">
+                    <Label Text="Provisional Memories Pending" 
+                           FontAttributes="Bold" 
+                           FontSize="14" 
+                           TextColor="#DFD8F7" />
+                    <Label Text="{Binding PendingMemoryConfirmationCount, StringFormat='You have {0} provisional memories waiting for confirmation.'}" 
+                           FontSize="12" 
+                           TextColor="#B3B3B3" />
+                </VerticalStackLayout>
+            </HorizontalStackLayout>
+        </Border>
+
         <HorizontalStackLayout Padding="10" Spacing="15" HorizontalOptions="Center">
             <!--Command="{Binding ClearShortTermAsyncCommand}" -->
             <Button x:Name="ClearShorTermButton"

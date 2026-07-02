@@ -9,6 +9,7 @@ public sealed class MediaAttachmentDto
     public DateTimeOffset CreatedAt   { get; init; }
     public string         OwnerType   { get; init; } = string.Empty;
     public Guid           OwnerId     { get; init; }
+    public string         StoragePath { get; init; } = string.Empty;
 
     public bool IsImage => ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase);
 }

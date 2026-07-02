@@ -6,7 +6,7 @@ No additional tools required beyond Android SDK platform-tools.
 
 ---
 
-## Quick start (tomorrow, when the phone is connected)
+## Quick start (when the phone is connected)
 
 ```powershell
 # 1. Plug in the phone and confirm it's visible

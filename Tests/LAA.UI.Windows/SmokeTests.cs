@@ -463,6 +463,11 @@ public sealed class SmokeTests : IClassFixture<AppFixture>
         Thread.Sleep(200);
 
         var send = _f.WaitForElement("SendButton");
+        var limit = DateTime.UtcNow.AddSeconds(3);
+        while (DateTime.UtcNow < limit && !send.IsEnabled)
+        {
+            Thread.Sleep(100);
+        }
         send.Patterns.Invoke.PatternOrDefault?.Invoke();
 
         // Wait up to 10 s for a response or timeout — do not require a specific reply,

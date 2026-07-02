@@ -108,7 +108,7 @@
                                 </Grid.GestureRecognizers>
 
                                 <Image Grid.Row="0"
-                                       Source="{Binding ThumbnailUrl}"
+                                       Source="{Binding StoragePath}"
                                        Aspect="AspectFill"
                                        IsVisible="{Binding IsImage}"
                                        HeightRequest="60"

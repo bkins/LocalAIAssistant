@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -218,18 +218,25 @@
 
                                     <!-- Tier downgrade chip — auto-dismisses after ~5 s -->
                                     <Border IsVisible="{Binding HasTierNotice}"
-                                            BackgroundColor="#2A2A3A"
-                                            Stroke="#555577"
+                                            BackgroundColor="#3D2800"
+                                            Stroke="#FF9500"
                                             StrokeThickness="1"
                                             Padding="6,3"
                                             Margin="0,2,0,0">
                                         <Border.StrokeShape>
                                             <RoundRectangle CornerRadius="6" />
                                         </Border.StrokeShape>
-                                        <Label Text="{Binding TierNotice}"
-                                               FontSize="10"
-                                               FontAttributes="Italic"
-                                               TextColor="#9999CC" />
+                                        <HorizontalStackLayout Spacing="4" VerticalOptions="Center">
+                                            <Label Text="⚠"
+                                                   FontSize="10"
+                                                   TextColor="#FFB340"
+                                                   VerticalOptions="Center" />
+                                            <Label Text="{Binding TierNotice}"
+                                                   FontSize="10"
+                                                   FontAttributes="Italic"
+                                                   TextColor="#FFB340"
+                                                   VerticalOptions="Center" />
+                                        </HorizontalStackLayout>
                                     </Border>
 
                                     <Grid ColumnDefinitions="*" VerticalOptions="Start">
@@ -277,7 +284,7 @@
             <!-- Input bar -->
             <Grid Grid.Row="2"
                   Padding="12"
-                  ColumnDefinitions="*,Auto,Auto"
+                  ColumnDefinitions="*,Auto,Auto,Auto"
                   BackgroundColor="{StaticResource SurfaceColor}">
 
                 <Editor Grid.Column="0"
@@ -296,6 +303,17 @@
                         TextChanged="OnEditorTextChanged" />
 
                 <Button Grid.Column="1"
+                        AutomationId="VoiceButton"
+                        Text="🎙"
+                        Command="{Binding VoiceCaptureCommand}"
+                        IsEnabled="{Binding IsTyping, Converter={StaticResource InverseBoolConverter}}"
+                        HeightRequest="44"
+                        WidthRequest="44"
+                        Padding="0"
+                        Margin="0,0,8,0"
+                        BackgroundColor="#7C5CE6" />
+
+                <Button Grid.Column="2"
                         AutomationId="SendButton"
                         Text="Send"
                         Command="{Binding SendCommand}"
@@ -304,7 +322,7 @@
                         Padding="16,0"
                         BackgroundColor="#4CAF50" />
 
-                <Button Grid.Column="2"
+                <Button Grid.Column="3"
                         AutomationId="ClearButton"
                         Text="Clear"
                         Clicked="OnClearButtonClicked"

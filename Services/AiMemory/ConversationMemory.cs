@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using CP.Client.Core.Avails;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
@@ -42,19 +43,19 @@ public class ConversationMemory : IConversationMemory
         var text = message.Content.ToLowerInvariant();
 
         // “things to remember”
-        if (Regex.IsMatch(text, @"\b(remember|don't forget|do not forget)\b")) score += 2;
+        if (Regex.IsMatch(text, RegexMatchingPatterns.IntentRememberPattern)) score += 2;
         
         // actionable / tasks
-        if (Regex.IsMatch(text, @"\b(todo|task|action item|deadline|due|remind)\b")) score += 2;
+        if (Regex.IsMatch(text, RegexMatchingPatterns.IntentTaskPattern)) score += 2;
 
         // preferences / identity
-        if (Regex.IsMatch(text, @"\b(i like|i prefer|my favorite|call me|my name is)\b")) score += 2;
+        if (Regex.IsMatch(text, RegexMatchingPatterns.IntentUserPreferencePattern)) score += 2;
 
         // critical info
-        if (Regex.IsMatch(text, @"\b(allergic|i'm allergic|emergency|medication)\b")) score += 3;
+        if (Regex.IsMatch(text, RegexMatchingPatterns.IntentEmergencyPattern)) score += 3;
 
         // tags boost
-        if (Regex.IsMatch(text, @"\b(summary|promotion)\b")) score += 1;
+        if (Regex.IsMatch(text, RegexMatchingPatterns.IntentSummaryPattern)) score += 1;
         
         // clamp to 1..5
         return Math.Max(1, Math.Min(5, score));

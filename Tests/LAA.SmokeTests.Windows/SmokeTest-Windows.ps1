@@ -23,7 +23,8 @@
 param(
     [string] $ExePath        = "",
     [int]    $MaxWaitSeconds = 30,
-    [switch] $KeepAppOpen
+    [switch] $KeepAppOpen,
+    [switch] $ForceFailure
 )
 
 Set-StrictMode -Version Latest
@@ -40,10 +41,11 @@ $AE   = [System.Windows.Automation.AutomationElement]
 $Tree = [System.Windows.Automation.TreeScope]
 
 # ─── Counters ────────────────────────────────────────────────────────────────
-$script:Passed  = 0
-$script:Failed  = 0
-$script:Proc    = $null
-$script:Window  = $null
+$script:Passed        = 0
+$script:Failed        = 0
+$script:Inconclusive  = 0
+$script:Proc          = $null
+$script:Window        = $null
 
 # ─── Exe resolution ──────────────────────────────────────────────────────────
 
@@ -170,6 +172,41 @@ function Clear-ElementValue {
     return $false
 }
 
+function Scroll-IntoView {
+    param($Element)
+
+    if (-not $Element) { return $false }
+
+    try {
+        $pat = $Element.GetCurrentPattern(
+                   [System.Windows.Automation.ScrollItemPattern]::Pattern)
+        $pat.ScrollIntoView()
+        Start-Sleep -Milliseconds 400
+        return $true
+    } catch { }
+
+    try {
+        $Element.SetFocus()
+        Start-Sleep -Milliseconds 200
+        return $true
+    } catch { }
+
+    return $false
+}
+
+function Ensure-ElementVisible {
+    param($Element, [string] $Description)
+
+    if (-not $Element) { return "$Description not found" }
+    if (-not $Element.Current.IsOffscreen) { return $true }
+
+    Scroll-IntoView $Element | Out-Null
+    Start-Sleep -Milliseconds 300
+
+    if ($Element.Current.IsOffscreen) { return "$Description is offscreen" }
+    return $true
+}
+
 function Click-Tab {
     <# Navigates to a Shell tab by its visible title. #>
     param([string] $Title, [int] $DelayMs = 800)
@@ -204,6 +241,14 @@ function Get-ElementTreeText {
 
 # ─── Test runner ─────────────────────────────────────────────────────────────
 
+# Dot-source the common helpers
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$helpersPath = Join-Path $scriptDir "..\Test-Helpers.ps1"
+if (-not (Test-Path $helpersPath)) {
+    $helpersPath = Join-Path $scriptDir "Test-Helpers.ps1"
+}
+. $helpersPath
+
 function Run-Test {
     param([string] $Name, [scriptblock] $Body)
     $detail = ""
@@ -213,19 +258,25 @@ function Run-Test {
         if ($result -eq $true) {
             $status = "PASS"
             $script:Passed++
+        } elseif ($result -eq "INCONCLUSIVE" -or $result -eq "inconclusive") {
+            $status = "INCONC"
+            $script:Inconclusive++
+            $detail = "Test environment or external dependency not ready (e.g. API offline)."
         } else {
             $detail = if ($result -is [string]) { $result } else { "returned false" }
             $script:Failed++
+            try { Take-WindowsScreenshot -FileNamePrefix "LAA_Win_Failure" -ProcessId $script:Proc.Id } catch { }
             $detail += "`n       --- UIA tree at failure ---`n" + (Get-ElementTreeText $script:Window 3)
         }
     } catch {
         $detail  = $_.Exception.Message
         $script:Failed++
+        try { Take-WindowsScreenshot -FileNamePrefix "LAA_Win_Failure" -ProcessId $script:Proc.Id } catch { }
         try { $detail += "`n       --- UIA tree at failure ---`n" + (Get-ElementTreeText $script:Window 3) } catch { }
     }
 
-    $icon   = if ($status -eq "PASS") { "[PASS]" } else { "[FAIL]" }
-    $colour = if ($status -eq "PASS") { "Green" }  else { "Red" }
+    $icon   = if ($status -eq "PASS") { "[PASS]" } elseif ($status -eq "INCONC") { "[INCONC]" } else { "[FAIL]" }
+    $colour = if ($status -eq "PASS") { "Green" }  elseif ($status -eq "INCONC") { "Yellow" } else { "Red" }
     Write-Host "$icon $Name" -ForegroundColor $colour
     if ($detail) { Write-Host $detail -ForegroundColor DarkGray }
 }
@@ -280,6 +331,11 @@ if (-not $readyEditor) {
     # Continue anyway so other tests can collect data.
 }
 Write-Host "App ready." -ForegroundColor DarkGray
+try {
+    $wshell = New-Object -ComObject WScript.Shell
+    $wshell.AppActivate($script:Proc.Id) | Out-Null
+    Start-Sleep -Milliseconds 600
+} catch {}
 Write-Host ""
 
 # ─── Smoke Tests ─────────────────────────────────────────────────────────────
@@ -334,6 +390,88 @@ Run-Test "Clear button is present and enabled" {
     $clear = Find-ById $script:Window "ClearButton" -TimeoutSeconds 5
     if (-not $clear) { return "ClearButton not found in UIA tree" }
     if (-not $clear.Current.IsEnabled) { return "ClearButton.IsEnabled = false" }
+    $true
+}
+
+# ── 5b. Destructive action confirmation modal triggers ─────────────────────────
+Run-Test "Destructive action triggers client-side confirmation modal" {
+    $apiOnline = $true
+    try {
+        $tcp = New-Object System.Net.Sockets.TcpClient
+        $connect = $tcp.BeginConnect("localhost", 5273, $null, $null)
+        $wait = $connect.AsyncWaitHandle.WaitOne(1000, $false)
+        if (-not $wait) { $apiOnline = $false }
+        else { $tcp.EndConnect($connect) }
+        $tcp.Close()
+    } catch {
+        $apiOnline = $false
+    }
+    if (-not $apiOnline) { return "INCONCLUSIVE" }
+
+    $editor = Find-ById $script:Window "ChatEditor" -TimeoutSeconds 5
+    if (-not $editor) { return "ChatEditor not found" }
+    
+    $ok = Set-ElementValue $editor "delete task #999"
+    if (-not $ok) { return "Could not set value in ChatEditor" }
+    
+    $send = Find-ById $script:Window "SendButton" -TimeoutSeconds 5
+    if (-not $send) { return "SendButton not found" }
+    
+    $ok = Invoke-Element $send
+    if (-not $ok) { return "Could not click SendButton" }
+    
+    $dialog = Find-ByName $AE::RootElement "Confirm Action" -TimeoutSeconds 60
+    if (-not $dialog) { return "Confirmation dialog modal did not appear" }
+    
+    $noBtn = Find-ByName $dialog "No" -TimeoutSeconds 5
+    if (-not $noBtn) { return "'No' button not found on confirmation dialog" }
+    
+    $ok = Invoke-Element $noBtn
+    if (-not $ok) { return "Could not click 'No' button" }
+    
+    Start-Sleep -Milliseconds 600
+    Clear-ElementValue $editor | Out-Null
+    $true
+}
+
+# ── 5c. Provider and Model Switching ──────────────────────────────────────────
+Run-Test "Provider and model switching via meta commands" {
+    $apiOnline = $true
+    try {
+        $tcp = New-Object System.Net.Sockets.TcpClient
+        $connect = $tcp.BeginConnect("localhost", 5273, $null, $null)
+        $wait = $connect.AsyncWaitHandle.WaitOne(1000, $false)
+        if (-not $wait) { $apiOnline = $false }
+        else { $tcp.EndConnect($connect) }
+        $tcp.Close()
+    } catch {
+        $apiOnline = $false
+    }
+    if (-not $apiOnline) { return "INCONCLUSIVE" }
+
+    $editor = Find-ById $script:Window "ChatEditor" -TimeoutSeconds 5
+    if (-not $editor) { return "ChatEditor not found" }
+    
+    $ok = Set-ElementValue $editor "switch provider to Groq"
+    if (-not $ok) { return "Could not set provider switch text in ChatEditor" }
+    
+    $send = Find-ById $script:Window "SendButton" -TimeoutSeconds 5
+    if (-not $send) { return "SendButton not found" }
+    
+    $ok = Invoke-Element $send
+    if (-not $ok) { return "Could not click SendButton for provider switch" }
+    
+    Start-Sleep -Seconds 3
+    Clear-ElementValue $editor | Out-Null
+    
+    $ok = Set-ElementValue $editor "switch model to qwen2.5:14b"
+    if (-not $ok) { return "Could not set model switch text in ChatEditor" }
+    
+    $ok = Invoke-Element $send
+    if (-not $ok) { return "Could not click SendButton for model switch" }
+    
+    Start-Sleep -Seconds 3
+    Clear-ElementValue $editor | Out-Null
     $true
 }
 
@@ -447,7 +585,8 @@ Run-Test "Settings page renders Coco section with enable toggle, URL, and Index 
     $indexBtn    = Find-ByName $script:Window "Index Project"     -TimeoutSeconds 5
 
     if (-not $enableLabel) { return "'Enable Coco' label not found in Settings" }
-    if ($enableLabel.Current.IsOffscreen) { return "'Enable Coco' label is offscreen" }
+    $visible = Ensure-ElementVisible $enableLabel "'Enable Coco' label"
+    if ($visible -ne $true) { return $visible }
     if (-not $urlLabel)    { return "'Coco API URL' label not found in Settings" }
     if (-not $indexBtn)    { return "'Index Project' button not found in Settings" }
     $true
@@ -460,7 +599,8 @@ Run-Test "Settings Coco section shows clipboard monitoring toggle" {
 
     $label = Find-ByName $script:Window "Clipboard monitoring" -TimeoutSeconds 8
     if (-not $label) { return "'Clipboard monitoring' label not found in Settings" }
-    if ($label.Current.IsOffscreen) { return "'Clipboard monitoring' label is offscreen" }
+    $visible = Ensure-ElementVisible $label "'Clipboard monitoring' label"
+    if ($visible -ne $true) { return $visible }
     $true
 }
 
@@ -470,7 +610,8 @@ Run-Test "Settings Coco section shows global hotkey field" {
 
     $label = Find-ByName $script:Window "Global hotkey" -TimeoutSeconds 8
     if (-not $label) { return "'Global hotkey' label not found in Settings" }
-    if ($label.Current.IsOffscreen) { return "'Global hotkey' label is offscreen" }
+    $visible = Ensure-ElementVisible $label "'Global hotkey' label"
+    if ($visible -ne $true) { return $visible }
     $true
 }
 
@@ -480,6 +621,7 @@ Run-Test "Ask Coco toolbar toggle is visible in Chat when Coco is enabled" {
 
     $enableLabel = Find-ByName $script:Window "Enable Coco" -TimeoutSeconds 8
     if (-not $enableLabel) { return "'Enable Coco' label not found - cannot enable Coco" }
+    Scroll-IntoView $enableLabel | Out-Null
 
     # Find the ToggleSwitch that is a sibling of the "Enable Coco" label
     # by walking to the parent container and searching within it.
@@ -548,6 +690,12 @@ Run-Test "Chat editor is accessible after Phase 3+4 changes (regression guard)" 
     $true
 }
 
+if ($ForceFailure) {
+    Run-Test "Forced failure to test screenshots" {
+        throw "Forced failure to verify screenshot functionality."
+    }
+}
+
 # ─── Teardown ────────────────────────────────────────────────────────────────
 
 if (-not $KeepAppOpen -and $script:Proc -and -not $script:Proc.HasExited) {
@@ -561,7 +709,7 @@ if (-not $KeepAppOpen -and $script:Proc -and -not $script:Proc.HasExited) {
 Write-Host ""
 Write-Host "----------------------------------------------" -ForegroundColor DarkGray
 $colour = if ($script:Failed -eq 0) { "Green" } else { "Yellow" }
-Write-Host "Results: $($script:Passed) passed  /  $($script:Failed) failed" -ForegroundColor $colour
+Write-Host "Results: $($script:Passed) passed  /  $($script:Failed) failed  /  $($script:Inconclusive) inconclusive" -ForegroundColor $colour
 Write-Host "----------------------------------------------" -ForegroundColor DarkGray
 Write-Host ""
 

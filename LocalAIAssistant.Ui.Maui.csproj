@@ -141,7 +141,7 @@
 		<!-- v12.x = .NET 9 MAUI. v9.x targets Xamarin; v13+ conflicts with CommunityToolkit.Maui 12.3; v14+ targets .NET 10. -->
 		<PackageReference Include="Plugin.LocalNotification" Version="12.0.2" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-		<PackageReference Include="CP.Client.Core" Version="0.1.51" />
+		<PackageReference Include="CP.Client.Core" Version="0.1.59" />
 		<PackageReference Include="Markdig" Version="1.1.1" />
 		<PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.8" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.13" />

@@ -1,13 +1,13 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using CP.Client.Core.Avails;
 using CP.Client.Core.Common.ConnectivityToApi;
 using LocalAIAssistant.CognitivePlatform.DTOs;
 using LocalAIAssistant.Core.Environment.Models;
+using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.Logging;
 using LocalAIAssistant.Services.Logging.Interfaces;
-using static CP.Client.Core.Intent.FastPathIntentDetector;
 
 namespace LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 
@@ -56,19 +56,13 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
         catch (HttpRequestException ex)
         {
             Connectivity.ReportOffline(ex);
+            throw;
         }
         catch (TaskCanceledException ex)
         {
             Connectivity.ReportOffline(ex);
+            throw;
         }
-
-        // Only reached on genuine network failure / API offline
-        var shortenTextBy   = userMessage.Length < 25 ? userMessage.Length : 25;
-        var responseMessage = $"Added to queued:{Environment.NewLine}{userMessage[..shortenTextBy]}...";
-
-        Connectivity.ReportOffline(responseMessage);
-
-        return new ConverseResponseDto { Message = responseMessage };
     }
 
     private static async Task<string> BuildServerErrorMessageAsync( HttpResponseMessage response )
@@ -182,11 +176,25 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
     }
 
 
-    private static ConverseRequestDto BuildRequest( string userMessage
-                                                  , string conversationId
-                                                  , string model )
+    private static readonly string[] DestructiveVerbs = ["delete", "remove", "clear", "destroy", "reset", "erase", "purge"];
+
+    private static bool IsDestructiveInput(string? input)
     {
-        var isFastPath = IsFastPathIntent(userMessage);
+        if (string.IsNullOrWhiteSpace(input)) return false;
+        var trimmed = input.Trim().ToLowerInvariant();
+        foreach (var verb in DestructiveVerbs)
+        {
+            if (trimmed.StartsWith(verb)) return true;
+        }
+        return false;
+    }
+
+    private static ConverseRequestDto BuildRequest( string userMessage
+                                                   , string conversationId
+                                                   , string model )
+    {
+        var isFastPath    = FastPathIntentDetector.IsFastPathIntent(userMessage);
+        var isDestructive = IsDestructiveInput(userMessage);
 
         return new ConverseRequestDto
                {
@@ -194,7 +202,7 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
                      , SessionId = conversationId
                      , Model     = model
                      , FastPath  = isFastPath
-                     , Streaming = isFastPath.Not()
+                     , Streaming = isFastPath.Not() && !isDestructive
                };
     }
 
@@ -204,8 +212,12 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
                                                                        , [EnumeratorCancellation] CancellationToken ct = default )
     {
         var requestDto = BuildRequest(userMessage, conversationId, model);
-
-        using var request = new HttpRequestMessage(HttpMethod.Post, "api/conversation/converse/stream")
+        var route = "api/conversation/converse";
+        route += requestDto.Streaming
+                         ? "/stream"
+                         : string.Empty;
+        
+        using var request = new HttpRequestMessage(HttpMethod.Post, route)
                             {
                                     Content = JsonContent.Create(requestDto)
                             };
@@ -221,7 +233,8 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
         await using var stream = await response.Content.ReadAsStreamAsync(ct);
         using var       reader = new StreamReader(stream);
 
-        while (reader.EndOfStream.Not() && ct.IsCancellationRequested.Not())
+        while (reader.EndOfStream.Not() 
+            && ct.IsCancellationRequested.Not())
         {
             var line = await reader.ReadLineAsync(ct) ?? string.Empty;
 
@@ -232,8 +245,7 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
 
             if (payload.StartsWith(' ')) payload = payload[1..];
 
-            if (payload.Length > 0)
-                yield return payload;
+            if (payload.Length > 0) yield return payload;
         }
     }
 

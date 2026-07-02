@@ -4,23 +4,27 @@ using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Services.Contracts;
 using LocalAIAssistant.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LocalAIAssistant.Services;
 
 public class OfflineQueueService: IOfflineQueueService
 {
-    private readonly LocalAiAssistantDbContext   _db;
+    private readonly IServiceProvider             _serviceProvider;
     private readonly CognitivePlatformClientBase _apiClient;
 
-    public OfflineQueueService( LocalAiAssistantDbContext       db
+    public OfflineQueueService( IServiceProvider                serviceProvider
                               , ICognitivePlatformClientFactory clientFactory  )
     {
-        _db        = db;
-        _apiClient = clientFactory.Create();
+        _serviceProvider = serviceProvider;
+        _apiClient        = clientFactory.Create();
     }
 
     public async Task EnqueueAsync(string sessionId, string input, string? model)
     {
+        using var scope = _serviceProvider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<LocalAiAssistantDbContext>();
+
         var item = new OfflineQueueItem
                    {
                            Id              = Guid.NewGuid()
@@ -32,20 +36,33 @@ public class OfflineQueueService: IOfflineQueueService
                          , Status          = OfflineQueueStatus.Pending
                    };
 
-        _db.OfflineQueue.Add(item);
+        db.OfflineQueue.Add(item);
         
-        await _db.SaveChangesAsync();
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new InvalidOperationException("Failed to save offline queue item due to database error.", ex);
+        }
     }
     
     public async Task<int> GetPendingCountAsync()
     {
-        return await _db.OfflineQueue
+        using var scope = _serviceProvider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<LocalAiAssistantDbContext>();
+
+        return await db.OfflineQueue
                         .CountAsync(x => x.Status == OfflineQueueStatus.Pending);
     }
 
     public async Task ProcessQueueAsync(CancellationToken ct = default)
     {
-        var items = await _db.OfflineQueue
+        using var scope = _serviceProvider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<LocalAiAssistantDbContext>();
+
+        var items = await db.OfflineQueue
                              .Where(x => x.Status == OfflineQueueStatus.Pending)
                              .OrderBy(x => x.CreatedUtc)
                              .ToListAsync(ct);
@@ -55,7 +72,7 @@ public class OfflineQueueService: IOfflineQueueService
             ct.ThrowIfCancellationRequested();
 
             item.Status = OfflineQueueStatus.Processing;
-            await _db.SaveChangesAsync(ct);
+            await db.SaveChangesAsync(ct);
 
             try
             {
@@ -72,16 +89,23 @@ public class OfflineQueueService: IOfflineQueueService
                                                             , request.Model ?? string.Empty);
 
                 // If success:
-                _db.OfflineQueue.Remove(item);
-                await _db.SaveChangesAsync(ct);
+                db.OfflineQueue.Remove(item);
+                await db.SaveChangesAsync(ct);
             }
-            catch
+            catch (Exception ex) when (ex is HttpRequestException || ex is TaskCanceledException || ex is System.Net.Sockets.SocketException)
             {
                 item.Status = OfflineQueueStatus.Pending;
                 item.RetryCount++;
-                await _db.SaveChangesAsync(ct);
+                await db.SaveChangesAsync(ct);
 
                 // Stop processing further items if the API fails
+                break;
+            }
+            catch (Exception)
+            {
+                item.Status = OfflineQueueStatus.Pending;
+                item.RetryCount++;
+                await db.SaveChangesAsync(ct);
                 break;
             }
         }
@@ -90,14 +114,17 @@ public class OfflineQueueService: IOfflineQueueService
 
     public async Task ResetProcessingItemsAsync()
     {
-        var stuckItems = await _db.OfflineQueue
+        using var scope = _serviceProvider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<LocalAiAssistantDbContext>();
+
+        var stuckItems = await db.OfflineQueue
                                   .Where(queueItem => queueItem.Status == OfflineQueueStatus.Processing)
                                   .ToListAsync();
 
         foreach (var item in stuckItems)
             item.Status = OfflineQueueStatus.Pending;
 
-        await _db.SaveChangesAsync();
+        await db.SaveChangesAsync();
     }
 
 }

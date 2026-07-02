@@ -29,4 +29,9 @@
     <ProjectReference Include="../LocalAIAssistant.Core/LocalAIAssistant.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="../Services/QueueReplayCoordinator.cs" Link="Linked/QueueReplayCoordinator.cs" />
+    <Compile Include="../Services/Interfaces/IOfflineQueueService.cs" Link="Linked/IOfflineQueueService.cs" />
+  </ItemGroup>
+
 </Project>

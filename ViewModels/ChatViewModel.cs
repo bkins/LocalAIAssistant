@@ -52,12 +52,13 @@ public partial class ChatViewModel : ObservableObject
     private readonly IClipboardMonitorService         _clipboardMonitor;
     private readonly IGlobalHotkeyService             _hotkeyService;
     private readonly IGoogleCalendarService           _googleCalendar;
+    private readonly ISpeechToTextService             _speechToText;
 
     // ── Connectivity ──────────────────────────────────────────────────────────
     [ObservableProperty] private bool _isOffline;
 
     // ── UI state ──────────────────────────────────────────────────────────────
-    [ObservableProperty] private bool        _useStreaming        = true;
+    [ObservableProperty] private bool        _useStreaming        = false; // TODO: This needs to be determined dynamically
     [ObservableProperty] private string      _promptText          = string.Empty;
     [ObservableProperty] private bool        _isBusy;
     [ObservableProperty] private bool        _isTyping;
@@ -111,7 +112,8 @@ public partial class ChatViewModel : ObservableObject
                         , ICocoApiClientFactory            cocoFactory
                         , IClipboardMonitorService         clipboardMonitor
                         , IGlobalHotkeyService             hotkeyService
-                        , IGoogleCalendarService           googleCalendar )
+                        , IGoogleCalendarService           googleCalendar
+                        , ISpeechToTextService             speechToTextService )
     {
         _llmService              = llmService;
         _conversationMemory      = conversationMemory;
@@ -134,6 +136,7 @@ public partial class ChatViewModel : ObservableObject
         _clipboardMonitor        = clipboardMonitor;
         _hotkeyService           = hotkeyService;
         _googleCalendar          = googleCalendar;
+        _speechToText            = speechToTextService;
 
         _clipboardMonitor.CodeDetected += OnCodeDetectedInClipboard;
         _hotkeyService.HotkeyPressed   += OnCocoHotkeyPressed;
@@ -147,7 +150,8 @@ public partial class ChatViewModel : ObservableObject
         }
         ConversationId = savedConversationId;
 
-        _apiState.ConnectivityChanged += (_, _) => IsOffline = _apiState.IsOffline;
+        _apiState.ConnectivityChanged += (_, _) => MainThread.BeginInvokeOnMainThread(() => IsOffline = _apiState.IsOffline);
+
     }
 
     public async Task InitializeAsync()
@@ -182,7 +186,7 @@ public partial class ChatViewModel : ObservableObject
             _log.LogError(ex, "Failed to load conversation history from server; falling back to local STM");
         }
 
-        if (!serverLoaded)
+        if (serverLoaded.Not())
         {
             var stm = await _conversationMemory.LoadShortTermAsync();
             foreach (var message in stm.OrderBy(message => message.Timestamp))
@@ -211,8 +215,11 @@ public partial class ChatViewModel : ObservableObject
         var lastPersonalityName = Preferences.Get(SelectedPersonalityPrefKey, Personalities.First().Name);
         SelectedPersonality = Personalities.FirstOrDefault(personality => personality.Name == lastPersonalityName)
                            ?? Personalities.First();
+        
         _personalityService.SetCurrent(SelectedPersonality.Name);
 
+        var offlineCount = await _offlineQueueService.GetPendingCountAsync();
+        
         await _offlineQueueService.ResetProcessingItemsAsync();
         await _appShellMasterViewModel.RefreshQueueCountAsync();
 
@@ -227,15 +234,15 @@ public partial class ChatViewModel : ObservableObject
         var cocoEnabled             = Preferences.Default.Get(StringConsts.CocoEnabledPrefKey, false);
         var clipboardMonitorEnabled = Preferences.Default.Get(StringConsts.CocoClipboardMonitorEnabledPrefKey, true);
 
-        _clipboardMonitor.IsEnabled = cocoEnabled && clipboardMonitorEnabled;
-        if (cocoEnabled && clipboardMonitorEnabled)
-            _clipboardMonitor.Start();
+        _clipboardMonitor.IsEnabled = cocoEnabled 
+                                   && clipboardMonitorEnabled;
+        
+        if (cocoEnabled && clipboardMonitorEnabled) _clipboardMonitor.Start();
 
-        if (cocoEnabled)
-        {
-            var hotkey = Preferences.Default.Get(StringConsts.CocoHotkeyPrefKey, StringConsts.CocoDefaultHotkey);
-            _hotkeyService.Register(hotkey);
-        }
+        if (cocoEnabled.Not()) return;
+        
+        var hotkey = Preferences.Default.Get(StringConsts.CocoHotkeyPrefKey, StringConsts.CocoDefaultHotkey);
+        _hotkeyService.Register(hotkey);
     }
 
     private async Task InitializeTtsAsync()
@@ -266,7 +273,7 @@ public partial class ChatViewModel : ObservableObject
         }
     }
 
-    partial void OnSelectedPersonalityChanged(Personality newValue)
+    partial void OnSelectedPersonalityChanged(Personality? newValue)
     {
         if (newValue == null) return;
 
@@ -281,13 +288,11 @@ public partial class ChatViewModel : ObservableObject
         }
     }
 
-    partial void OnTtsIsEnabledChanged(bool value)
-        => _ttsService.IsEnabled = value;
+    partial void OnTtsIsEnabledChanged(bool value) => _ttsService.IsEnabled = value;
 
     partial void OnTtsSelectedVoiceChanged(string value)
     {
-        if (!string.IsNullOrEmpty(value))
-            _ttsService.PreferredVoiceName = value;
+        if (value.HasValue()) _ttsService.PreferredVoiceName = value;
     }
 
     public Task StopSpeakingAsync() => _ttsService.StopAsync();
@@ -297,7 +302,7 @@ public partial class ChatViewModel : ObservableObject
     [RelayCommand]
     public async Task SendAsync()
     {
-        var text = PromptText?.Trim();
+        var text = PromptText?.Trim() ?? string.Empty;
         if (text.HasNoValue()) return;
 
         var userMessage = new Message
@@ -350,13 +355,21 @@ public partial class ChatViewModel : ObservableObject
                                                       , text
                                                       , modelToUse);
                 await RefreshQueueStatusAsync();
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    assistantMsg.Content = "Message saved to offline queue (currently offline).";
+                });
+
+                await PersistToShortTermAsync(assistantMsg);
                 return;
             }
 
             reachedApi = true;
 
             // ENH-32: intercept brain dump flow turns before normal converse routing.
-            if (_brainDumpFlow.IsActive || _brainDumpFlow.IsTrigger(text!))
+            if (_brainDumpFlow.IsActive 
+             || _brainDumpFlow.IsTrigger(text!))
             {
                 await HandleBrainDumpTurnAsync(text!, assistantMsg, cp, modelToUse);
                 assistantSucceeded = true;
@@ -368,36 +381,71 @@ public partial class ChatViewModel : ObservableObject
             {
                 await HandleMediaAttachAsync(assistantMsg);
                 assistantSucceeded = true;
+                
                 return;
             }
 
             // Intercept calendar actions when no Google Calendar token exists.
-            if (IsCalendarActionTrigger(text!) && !_googleCalendar.HasToken)
+            if (IsCalendarActionTrigger(text!) 
+             && _googleCalendar.HasToken.Not())
             {
                 await HandleCalendarConnectPromptAsync(assistantMsg);
                 assistantSucceeded = true;
+                
                 return;
             }
 
             // Coco routing: explicit mode toggle OR auto-detected code query (Phase 2).
             var cocoEnabled    = Preferences.Default.Get(StringConsts.CocoEnabledPrefKey, false);
             var isAutoCodeQuery = cocoEnabled
-                               && !CodeIntentAnalyzer.IsExplicitCpRequest(text!)
+                               && CodeIntentAnalyzer.IsExplicitCpRequest(text!)
+                                                    .Not()
                                && CodeIntentAnalyzer.IsCodeQuery(text!);
 
-            if (IsCocoMode || isAutoCodeQuery)
+            if (IsCocoMode 
+             || isAutoCodeQuery)
             {
-                await HandleCocoTurnAsync(text!, assistantMsg, wasAutoRouted: isAutoCodeQuery && !IsCocoMode);
+                await HandleCocoTurnAsync(text!
+                                        , assistantMsg
+                                        , wasAutoRouted: isAutoCodeQuery 
+                                                      && IsCocoMode.Not());
                 assistantSucceeded = true;
+                
                 return;
             }
 
-            if (UseStreaming.Not())
+            if (UseStreaming.Not() || IsDestructiveInput(text))
             {
                 var response = await cp.ConverseAsync(text
                                                     , ConversationId
                                                     , modelToUse)
                                        .ConfigureAwait(false);
+
+                if (response.IsConfirmationRequired)
+                {
+                    var confirmed = await MainThread.InvokeOnMainThreadAsync(async () =>
+                    {
+                        try
+                        {
+                            var page = Shell.Current?.CurrentPage;
+                            if (page == null) return false;
+#if WINDOWS
+                            if (page.Handler?.PlatformView is Microsoft.UI.Xaml.FrameworkElement fe && fe.XamlRoot == null)
+                            {
+                                return false; // XamlRoot not ready, prevent WinUI crash
+                            }
+#endif
+                            return await Shell.Current.DisplayAlert("Confirm Action", response.ConfirmationPrompt ?? response.Message, "Yes", "No");
+                        }
+                        catch
+                        {
+                            return false;
+                        }
+                    }).ConfigureAwait(false);
+
+                    var followUpText = confirmed ? "yes" : "no";
+                    response = await cp.ConverseAsync(followUpText, ConversationId, modelToUse).ConfigureAwait(false);
+                }
 
                 if (response.Message.Contains("Groq API returned 429", StringComparison.CurrentCultureIgnoreCase))
                 {
@@ -432,6 +480,7 @@ public partial class ChatViewModel : ObservableObject
                     {
                         assistantMsg.Content     = cleanMessage;
                         assistantMsg.WasFastPath = response.WasFastPath;
+                        _appShellMasterViewModel.PendingMemoryConfirmationCount = response.PendingMemoryCount;
                         if (tierNotice is not null)
                             assistantMsg.TierNotice = tierNotice;
 
@@ -484,6 +533,37 @@ public partial class ChatViewModel : ObservableObject
                 // empty InvokeOnMainThreadAsync ensures all prior chunks have been applied.
                 await MainThread.InvokeOnMainThreadAsync(() => { });
                 assistantSucceeded = true;
+            }
+        }
+        catch (Exception ex) when (ex is HttpRequestException || ex is TaskCanceledException || ex is System.Net.Sockets.SocketException)
+        {
+            try
+            {
+                await _offlineQueueService.EnqueueAsync(ConversationId
+                                                      , text
+                                                      , modelToUse);
+                await RefreshQueueStatusAsync();
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    assistantMsg.Content = "Connection lost. Message saved to offline queue (will replay when online).";
+                });
+
+                assistantSucceeded = true;
+            }
+            catch (Exception dbEx)
+            {
+                var errorMessage = dbEx.Message;
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    assistantMsg.Content = $"⚠ Offline Queue Error: {errorMessage}";
+                    Messages.Add(new Message
+                                 {
+                                         Sender    = "system"
+                                       , Content   = $"Failed to queue message locally:\n{errorMessage}"
+                                       , Timestamp = DateTime.Now
+                                 });
+                });
             }
         }
         catch (Exception ex)
@@ -617,6 +697,44 @@ public partial class ChatViewModel : ObservableObject
                                , Timestamp = DateTime.Now
                          });
         });
+    }
+
+    [RelayCommand]
+    public async Task VoiceCaptureAsync()
+    {
+        if (_speechToText is null || !_speechToText.IsAvailable)
+        {
+            await Shell.Current.DisplayAlert("Voice Capture", "Voice Capture is not configured. Please ensure your Azure Speech Subscription Key and Region are set in Settings.", "OK");
+            return;
+        }
+
+        IsBusy = true;
+        var originalPrompt = PromptText;
+        PromptText = "Listening... Speak now!";
+
+        try
+        {
+            var transcribed = await _speechToText.RecognizeSpeechAsync();
+            if (!string.IsNullOrEmpty(transcribed))
+            {
+                PromptText = transcribed;
+                await SendAsync();
+            }
+            else
+            {
+                PromptText = originalPrompt;
+            }
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "Voice capture failed");
+            PromptText = originalPrompt;
+            await Shell.Current.DisplayAlert("Voice Capture", "Failed to recognize speech. Please try again.", "OK");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     // ── Media attachment flow ─────────────────────────────────────────────────
@@ -842,7 +960,10 @@ public partial class ChatViewModel : ObservableObject
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private async Task RefreshQueueStatusAsync()
-        => PendingQueueCount = await _offlineQueueService.GetPendingCountAsync();
+    {
+        PendingQueueCount = await _offlineQueueService.GetPendingCountAsync();
+        await _appShellMasterViewModel.RefreshQueueCountAsync();
+    }
 
     private async Task PersistToShortTermAsync(Message message)
     {
@@ -1108,5 +1229,18 @@ public partial class ChatViewModel : ObservableObject
     {
         _ = Task.Delay(delayMs).ContinueWith(_ =>
             MainThread.BeginInvokeOnMainThread(() => msg.TierNotice = null));
+    }
+
+    private static readonly string[] DestructiveVerbs = ["delete", "remove", "clear", "destroy", "reset", "erase", "purge"];
+
+    private static bool IsDestructiveInput(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return false;
+        var trimmed = input.Trim().ToLowerInvariant();
+        foreach (var verb in DestructiveVerbs)
+        {
+            if (trimmed.StartsWith(verb)) return true;
+        }
+        return false;
     }
 }

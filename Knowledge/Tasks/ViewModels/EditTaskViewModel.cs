@@ -16,6 +16,12 @@ public sealed partial class EditTaskViewModel : ObservableObject, IQueryAttribut
 
     [ObservableProperty] private bool _isLoading;
 
+    [ObservableProperty] private bool     _hasDueDate;
+    [ObservableProperty] private DateTime _dueDateValue = DateTime.Today;
+
+    [ObservableProperty] private bool     _isCompleted;
+    [ObservableProperty] private DateTime _completedAtValue = DateTime.Today;
+
     public EditTaskViewModel(ITaskApiClientFactory clientFactory)
     {
         _clientFactory = clientFactory;
@@ -47,6 +53,28 @@ public sealed partial class EditTaskViewModel : ObservableObject, IQueryAttribut
                 Tags             = task.Tags.Count > 0
                                        ? string.Join(", ", task.Tags)
                                        : string.Empty;
+
+                if (task.DueDate.HasValue)
+                {
+                    HasDueDate   = true;
+                    DueDateValue = task.DueDate.Value.LocalDateTime;
+                }
+                else
+                {
+                    HasDueDate   = false;
+                    DueDateValue = DateTime.Today;
+                }
+
+                if (task.CompletedAt.HasValue)
+                {
+                    IsCompleted      = true;
+                    CompletedAtValue = task.CompletedAt.Value.LocalDateTime;
+                }
+                else
+                {
+                    IsCompleted      = false;
+                    CompletedAtValue = DateTime.Today;
+                }
             }
         }
         finally
@@ -61,11 +89,16 @@ public sealed partial class EditTaskViewModel : ObservableObject, IQueryAttribut
     {
         if (_taskId == Guid.Empty) return;
 
+        DateTimeOffset? finalDueDate = HasDueDate ? new DateTimeOffset(DueDateValue) : null;
+        DateTimeOffset? finalCompletedAt = IsCompleted ? new DateTimeOffset(CompletedAtValue) : null;
+
         var client = _clientFactory.Create();
         await client.EditTaskAsync(_taskId
                                  , ShortDescription
                                  , Details
-                                 , ParseTags(Tags));
+                                 , ParseTags(Tags)
+                                 , finalDueDate
+                                 , finalCompletedAt);
 
         await Shell.Current.GoToAsync("..");
     }
