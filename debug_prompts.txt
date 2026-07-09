@@ -1,0 +1,9 @@
+SendAsync text: delete task #999
+SendAsync text: switch provider to Groq
+SendAsync text: switch model to qwen2.5:14b
+DEBUG: test:set_pending_memory hook hit!
+SendAsync text: delete task #999
+SendAsync text: switch provider to Groq
+SendAsync text: switch model to qwen2.5:14b
+DEBUG: test:set_pending_memory hook hit!
+AppShell set MemoryTab.Title to Memory (3)
