@@ -1,4 +1,4 @@
-﻿using LocalAIAssistant.Knowledge.Inbox;
+using LocalAIAssistant.Knowledge.Inbox;
 using LocalAIAssistant.Knowledge.Journals.Views;
 using LocalAIAssistant.Knowledge.Tasks.Views;
 using LocalAIAssistant.Services;
@@ -16,10 +16,64 @@ public partial class AppShell : Shell
 
 	public AppShell(AppShellMasterViewModel masterViewModel)
 	{
+		try
+		{
+			System.IO.File.AppendAllText(System.IO.Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, "debug_run_logs.txt"), "AppShell Constructor executed!\n");
+		}
+		catch {}
 		BindingContext = masterViewModel;
 		_viewModel     = masterViewModel;
 
 		InitializeComponent();
+
+		TitleViewGrid.BindingContext = masterViewModel;
+
+		_viewModel.PropertyChanged += (s, e) =>
+		{
+			try
+			{
+				System.IO.File.AppendAllText(System.IO.Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, "debug_run_logs.txt"), $"AppShell PropertyChanged: {e.PropertyName}\n");
+			}
+			catch {}
+			if (e.PropertyName == nameof(AppShellMasterViewModel.PendingMemoryConfirmationCount) || e.PropertyName == nameof(AppShellMasterViewModel.PendingQueueCount))
+			{
+				try
+				{
+					System.IO.File.AppendAllText(System.IO.Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, "debug_run_logs.txt"), $"AppShell count: {_viewModel.PendingMemoryConfirmationCount}\n");
+				}
+				catch {}
+				MainThread.BeginInvokeOnMainThread(() =>
+				{
+					try
+					{
+						int count = _viewModel.PendingMemoryConfirmationCount;
+						if (count > 0)
+						{
+							MemoryBadgeFrame.BackgroundColor = Color.FromArgb("#7C5CE6");
+							MemoryBadgeIcon.Text = "🧠";
+							MemoryBadgeLabel.Text = count.ToString();
+						}
+						else
+						{
+							MemoryBadgeFrame.BackgroundColor = Colors.Transparent;
+							MemoryBadgeIcon.Text = string.Empty;
+							MemoryBadgeLabel.Text = string.Empty;
+						}
+						TitleViewGrid.InvalidateMeasure();
+						BadgesLayout.InvalidateMeasure();
+						System.IO.File.AppendAllText(System.IO.Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, "debug_run_logs.txt"), $"AppShell UI: MemoryBadgeFrame.IsVisible={MemoryBadgeFrame.IsVisible}, Width={MemoryBadgeFrame.Width}, Height={MemoryBadgeFrame.Height}\n");
+					}
+					catch (Exception ex)
+					{
+						try
+						{
+							System.IO.File.AppendAllText(System.IO.Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, "debug_run_logs.txt"), $"AppShell ERROR: {ex.Message}\n{ex.StackTrace}\n");
+						}
+						catch {}
+					}
+				});
+			}
+		};
 
 //Main / Chat
 		Routing.RegisterRoute(nameof(MainPage)
@@ -50,6 +104,13 @@ public partial class AppShell : Shell
 
 		Routing.RegisterRoute(nameof(EditTaskPage)
 		                    , typeof(EditTaskPage));
+		
+// Actions
+		Routing.RegisterRoute(nameof(ActionDirectoryPage)
+		                    , typeof(ActionDirectoryPage));
+		
+		Routing.RegisterRoute(nameof(ActionDetailPage)
+		                    , typeof(ActionDetailPage));
 	}
 
 	protected override async void OnAppearing()

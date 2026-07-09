@@ -41,6 +41,10 @@ public partial class MemoryManagementViewModel : ObservableObject
     [RelayCommand]
     public async Task LoadAsync()
     {
+        OnPropertyChanged(nameof(PendingMemoryConfirmationCount));
+        OnPropertyChanged(nameof(HasPendingMemoryConfirmation));
+        try { System.IO.File.AppendAllText(System.IO.Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, "debug_run_logs.txt"), $"MemoryVM: LoadAsync count={PendingMemoryConfirmationCount}, HasPending={HasPendingMemoryConfirmation}\n"); } catch {}
+
         ShortTermMessages.Clear();
         LongTermMessages.Clear();
 

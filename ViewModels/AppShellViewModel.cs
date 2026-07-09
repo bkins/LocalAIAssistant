@@ -13,10 +13,10 @@ namespace LocalAIAssistant.ViewModels
         
         public AppShellViewModel()
         {
-            WeakReferenceMessenger.Default.Register<LogErrorsChangedMessage>(this, (r, m) =>
+            WeakReferenceMessenger.Default.Register<LogErrorsChangedMessage>(this, (recipient, message) =>
             {
-                ((AppShellViewModel)r).HasErrorsInLogs = m.HasErrors;
-                ((AppShellViewModel)r).HasNoErrorsInLogs = m.HasErrors.Not();
+                ((AppShellViewModel)recipient).HasErrorsInLogs = message.HasErrors;
+                ((AppShellViewModel)recipient).HasNoErrorsInLogs = message.HasErrors.Not();
             });
         }
     }

@@ -11,7 +11,7 @@
     </ContentPage.Resources>
 
     <ScrollView>
-    <VerticalStackLayout>
+    <VerticalStackLayout x:Name="MainLayout">
         <!-- Pending memory confirmation badge banner -->
         <Border Margin="15,10,15,5"
                 Padding="15,12"
@@ -26,7 +26,8 @@
                     <Label Text="Provisional Memories Pending" 
                            FontAttributes="Bold" 
                            FontSize="14" 
-                           TextColor="#DFD8F7" />
+                           TextColor="#DFD8F7"
+                           AutomationId="ProvisionalMemoriesPendingLabel" />
                     <Label Text="{Binding PendingMemoryConfirmationCount, StringFormat='You have {0} provisional memories waiting for confirmation.'}" 
                            FontSize="12" 
                            TextColor="#B3B3B3" />
@@ -37,6 +38,7 @@
         <HorizontalStackLayout Padding="10" Spacing="15" HorizontalOptions="Center">
             <!--Command="{Binding ClearShortTermAsyncCommand}" -->
             <Button x:Name="ClearShorTermButton"
+                    AutomationId="ClearShorTermButton"
                     Text="Clear Short Term" 
                     Clicked="ClearShorTermButton_OnClicked"
                     BackgroundColor="#FF6F61" 
@@ -44,6 +46,7 @@
                     CornerRadius="8"/>
             <!--Command="{Binding ClearLongTermAsyncCommand}" -->
             <Button x:Name="ClearLongTermButton"
+                    AutomationId="ClearLongTermButton"
                     Text="Clear Long Term" 
                     Clicked="ClearLongTermButton_OnClicked"
                     BackgroundColor="#FFB74D" 
@@ -51,6 +54,7 @@
                     CornerRadius="8"/>
             <!--Command="{Binding RefreshAsyncCommand}"-->
             <Button x:Name="RefreshButton"
+                    AutomationId="RefreshButton"
                     Text="Refresh" 
                     Clicked="RefreshButton_OnClicked"
                     BackgroundColor="#4CAF50" 

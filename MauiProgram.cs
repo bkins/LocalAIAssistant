@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using CommunityToolkit.Maui;
 using CP.Client.Core.Common.ConnectivityToApi;
 using CP.Client.Core.Web;
@@ -25,6 +25,7 @@ using LocalAIAssistant.Services.FileSync;
 using LocalAIAssistant.Services.Health;
 using LocalAIAssistant.Services.Interfaces;
 using LocalAIAssistant.ViewModels;
+using LocalAIAssistant.Views;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -32,6 +33,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Maui.LifecycleEvents;
 using Serilog;
 using Serilog.Formatting.Compact;
+
 #if ANDROID
 using LocalAIAssistant.Platforms.Android.Health;
 using LocalAIAssistant.Platforms.Android.Handlers;
@@ -216,9 +218,13 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IKnowledgeSyncService, KnowledgeSyncService>();
 		builder.Services.AddTransient<KnowledgeInboxViewModel>();
 		builder.Services.AddTransient<KnowledgeInboxPage>();
+		builder.Services.AddTransient<ActionDirectoryViewModel>();
+		builder.Services.AddTransient<ActionDirectoryPage>();
+		builder.Services.AddTransient<ActionDetailViewModel>();
+		builder.Services.AddTransient<ActionDetailPage>();
 		
 		builder.Services.AddSingleton<IOfflineQueueService, OfflineQueueService>();
-		builder.Services.AddSingleton<QueueReplayCoordinator>();
+		// builder.Services.AddSingleton<QueueReplayCoordinator>();
 		
 		builder.Services.AddSingleton<UsageService>();
 		builder.Services.AddSingleton<UsageViewModel>();
@@ -291,8 +297,8 @@ public static class MauiProgram
 		// Blocking is ok in this case
 		initializer.InitializeAsync().GetAwaiter().GetResult();
 		
-		var coordinator = scope.ServiceProvider
-		                       .GetRequiredService<QueueReplayCoordinator>();
+		// var coordinator = scope.ServiceProvider
+		//                        .GetRequiredService<QueueReplayCoordinator>();
 		return app;
 	}
 }

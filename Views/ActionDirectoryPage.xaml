@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:LocalAIAssistant.ViewModels"
+             xmlns:dtos="clr-namespace:LocalAIAssistant.CognitivePlatform.DTOs"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:Class="LocalAIAssistant.Views.ActionDirectoryPage"
+             x:DataType="viewModels:ActionDirectoryViewModel"
+             Title="Action Directory"
+             BackgroundColor="{StaticResource AppBackgroundColor}">
+
+    <ContentPage.Behaviors>
+        <toolkit:EventToCommandBehavior EventName="Appearing" Command="{Binding LoadActionsCommand}" />
+    </ContentPage.Behaviors>
+
+    <Grid RowDefinitions="Auto,*">
+        
+        <!-- Search Bar -->
+        <SearchBar Grid.Row="0"
+                   Placeholder="Search actions, categories, or descriptions..."
+                   Text="{Binding SearchQuery, Mode=TwoWay}"
+                   Margin="10" 
+                   TextColor="{StaticResource PrimaryTextColor}"
+                   PlaceholderColor="{StaticResource SecondaryTextColor}"/>
+
+        <!-- Loading Indicator -->
+        <ActivityIndicator Grid.Row="1" 
+                           IsRunning="{Binding IsLoading}" 
+                           IsVisible="{Binding IsLoading}" 
+                           HorizontalOptions="Center" 
+                           VerticalOptions="Center" 
+                           Color="{StaticResource Primary}"/>
+
+        <!-- Actions List -->
+        <CollectionView Grid.Row="1"
+                        ItemsSource="{Binding FilteredActions}"
+                        IsVisible="{Binding IsLoading, Converter={x:StaticResource InverseBoolConverter}}"
+                        SelectionMode="None"
+                        Margin="10,0">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="dtos:ActionMetadataDto">
+                    <Border Stroke="{StaticResource SecondaryTextColor}"
+                            StrokeThickness="1"
+                            BackgroundColor="{StaticResource SurfaceColor}"
+                            Margin="0,0,0,10"
+                            Padding="15">
+                        
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="8" />
+                        </Border.StrokeShape>
+                        
+                        <StackLayout Spacing="8">
+                            <Label Text="{Binding Category}"
+                                   TextColor="{StaticResource Primary}"
+                                   FontSize="12"
+                                   FontAttributes="Bold"
+                                   TextTransform="Uppercase"/>
+                            
+                            <Label Text="{Binding Name}" 
+                                   TextColor="{StaticResource PrimaryTextColor}"
+                                   FontSize="18" 
+                                   FontAttributes="Bold" />
+                            
+                            <Label Text="{Binding Description}" 
+                                   TextColor="{StaticResource SecondaryTextColor}"
+                                   FontSize="14" />
+                            
+                            <HorizontalStackLayout Spacing="10" IsVisible="{Binding IsFastPath}">
+                                <Label Text="⚡ Fast Path" 
+                                       TextColor="{StaticResource AccentColor}" 
+                                       FontSize="12" 
+                                       FontAttributes="Bold"/>
+                            </HorizontalStackLayout>
+                            
+                            <HorizontalStackLayout Spacing="10" IsVisible="{Binding IsDestructive}">
+                                <Label Text="⚠️ Destructive" 
+                                       TextColor="Red" 
+                                       FontSize="12" 
+                                       FontAttributes="Bold"/>
+                            </HorizontalStackLayout>
+                        </StackLayout>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}
+                                                                  , Path=BindingContext.SelectActionCommand}"
+                                                  CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+        
+    </Grid>
+</ContentPage>

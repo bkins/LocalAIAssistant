@@ -31,7 +31,8 @@
               TODO: Add a row to the grid and move the environment name and usage indicator below the title so 
                     everything is visible on smaller device (e.g. a phone).
         -->
-        <Grid ColumnDefinitions="Auto,Auto,*,Auto"
+        <Grid x:Name="TitleViewGrid"
+              ColumnDefinitions="Auto,Auto,*,Auto"
               RowDefinitions="Auto,Auto"
               Padding="8,4"
               VerticalOptions="Center">
@@ -61,7 +62,7 @@
                 </Border.GestureRecognizers>
             </Border>
             
-            <!-- Environment Name (Row 1 � secondary info) -->
+            <!-- Environment Name (Row 1 — secondary info) -->
             <Label Grid.Column="0"
                    Grid.Row="1"
                    Text="{Binding EnvironmentName}"
@@ -70,14 +71,7 @@
                    Margin="0,0,12,0"
                    VerticalOptions="Center"/>
 
-
             <!-- Usage Indicator -->
-            <!--
-                Shows "847 req · 42k tok" when data is available.
-                Colour: gray (normal) → orange (>70%) → red (>90%).
-                Tapping refreshes usage on demand.
-                Hidden until the first Groq call has been made.
-            -->
             <Label Grid.Column="1"
                    Grid.Row="1"
                    Grid.ColumnSpan="2"
@@ -98,25 +92,29 @@
                      BackgroundColor="Transparent"/>
 
             <!-- Badges: memory confirmation + offline queue -->
-            <HorizontalStackLayout Grid.Column="3"
+            <HorizontalStackLayout x:Name="BadgesLayout"
+                                   Grid.Column="3"
                                    Grid.Row="0"
                                    Spacing="4"
                                    VerticalOptions="Center">
 
-                <!-- Memory confirmation badge — tapping navigates to the Memory tab -->
-                <Frame BackgroundColor="#7C5CE6"
+                 <!-- Memory confirmation badge — tapping navigates to the Memory tab -->
+                <Frame x:Name="MemoryBadgeFrame"
+                       AutomationId="MemoryBadgeFrame"
+                       BackgroundColor="Transparent"
                        Padding="4,2"
                        CornerRadius="20"
-                       HasShadow="False"
-                       IsVisible="{Binding PendingMemoryConfirmationCount, Converter={StaticResource IntGreaterThanZeroConverter}}">
+                       HasShadow="False">
                     <Frame.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding GoToMemoryCommand}" />
                     </Frame.GestureRecognizers>
                     <HorizontalStackLayout Spacing="2">
-                        <Label Text="🧠"
+                        <Label x:Name="MemoryBadgeIcon"
+                               Text=""
                                FontSize="9"
                                VerticalOptions="Center" />
-                        <Label Text="{Binding PendingMemoryConfirmationCount}"
+                        <Label x:Name="MemoryBadgeLabel"
+                               Text=""
                                TextColor="White"
                                FontSize="10"
                                VerticalOptions="Center" />
@@ -142,28 +140,31 @@
     </Shell.TitleView>
 
     <TabBar>
-        <Tab Title="Chat">
+        <Tab Title="Chat" AutomationId="ChatTabItem">
             <ShellContent Route="Chat" ContentTemplate="{DataTemplate views:MainPage}"/>
         </Tab>
-        <Tab Title="Chats">
+        <Tab Title="Chats" AutomationId="ChatsTabItem">
             <ShellContent ContentTemplate="{DataTemplate views:ConversationsPage}"/>
         </Tab>
-        <Tab Title="Inbox">
+        <Tab Title="Inbox" AutomationId="InboxTabItem">
             <ShellContent ContentTemplate="{DataTemplate inbox:KnowledgeInboxPage}"/>
         </Tab>
-        <Tab Title="{Binding MemoryTabTitle}">
-            <ShellContent x:Name="MemoryShellContent"
-                          Route="Memory"
-                          ContentTemplate="{DataTemplate views:MemoryManagementPage}"/>
+        <Tab Title="Actions" AutomationId="ActionsTabItem">
+            <ShellContent Route="ActionDirectory" 
+                           ContentTemplate="{DataTemplate views:ActionDirectoryPage}"/>
         </Tab>
-        <Tab Title="Logs">
+        <Tab Title="Memory" x:Name="MemoryTab" AutomationId="MemoryTabItem">
+            <ShellContent x:Name="MemoryShellContent"
+                           Route="Memory"
+                           ContentTemplate="{DataTemplate views:MemoryManagementPage}"/>
+        </Tab>
+        <Tab Title="Logs" AutomationId="LogsTabItem">
             <ShellContent ContentTemplate="{DataTemplate views:LogsPage}" />
         </Tab>
-        <Tab Title="Settings">
+        <Tab Title="Settings" AutomationId="SettingsTabItem">
             <ShellContent Title="Settings"
-                          ContentTemplate="{DataTemplate views:SettingsPage}" />
+                           ContentTemplate="{DataTemplate views:SettingsPage}" />
         </Tab>
     </TabBar>
-
 
 </Shell>

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFrameworks>net9.0-android;net9.0-ios;net9.0-maccatalyst</TargetFrameworks>
@@ -237,5 +237,10 @@
 	  <Compile Remove="LocalAIAssistant.Core\**\*.cs" />
 	  <Compile Remove="LaaUnitTests\**\*.cs" />
 	</ItemGroup>
+
+	<Target Name="KillRunningProcesses" BeforeTargets="PrepareForBuild">
+		<Message Importance="high" Text="Killing running instances of LocalAIAssistant..." />
+		<Exec Command="taskkill /f /im LocalAIAssistant.Ui.Maui.exe 2&gt;nul || exit 0" IgnoreExitCode="true" />
+	</Target>
 
 </Project>

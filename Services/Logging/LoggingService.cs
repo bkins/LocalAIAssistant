@@ -193,7 +193,6 @@ public class SerilogLogEvent
 
 public enum Category
 {
-
     Unknown
   , Orchestrator
   , MemoryService
@@ -202,7 +201,10 @@ public enum Category
   , HybridIntentAnalyzer
   , LoggingService
   , CognitivePlatformClient
-   , MainPage
+  , MainPage
+  , ChatViewModel
+   , Ui
+   , PersonaAndContextEngine
 }
 
 public class LogEntry

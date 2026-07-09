@@ -1,4 +1,4 @@
-﻿using System.Collections.Specialized;
+using System.Collections.Specialized;
 using CP.Client.Core.Avails;
 using LocalAIAssistant.Services.Logging;
 using LocalAIAssistant.Services.Logging.Interfaces;
@@ -62,6 +62,8 @@ public partial class MainPage : ContentPage
 
         if (!ChatViewModel.HasBeenInitialized)
             await ChatViewModel.InitializeAsync();
+        else
+            ChatViewModel.RefreshCocoState();
 
         // The view owns scroll behaviour — wire up here, tear down in
         // OnDisappearing to avoid double-subscription on re-navigation.

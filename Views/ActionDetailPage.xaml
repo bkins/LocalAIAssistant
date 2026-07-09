@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             
+             xmlns:viewModels="clr-namespace:LocalAIAssistant.ViewModels"
+             xmlns:dtos="clr-namespace:LocalAIAssistant.CognitivePlatform.DTOs"
+             
+             x:Class="LocalAIAssistant.Views.ActionDetailPage"
+             x:DataType="viewModels:ActionDetailViewModel"
+             
+             Title="{Binding Action.Name}"
+             
+             BackgroundColor="{StaticResource AppBackgroundColor}">
+
+    <ScrollView>
+
+        <VerticalStackLayout Padding="20"
+                             Spacing="20">
+
+            <!-- ===================== -->
+            <!-- Header -->
+            <!-- ===================== -->
+
+            <Label Text="{Binding Action.Name}"
+                   FontSize="30"
+                   FontAttributes="Bold"
+                   TextColor="{StaticResource PrimaryTextColor}" />
+
+            <HorizontalStackLayout Spacing="8">
+
+                <Border BackgroundColor="{StaticResource Primary}"
+                        StrokeThickness="0"
+                        Padding="10,4">
+
+                    <Label Text="{Binding Action.Category}"
+                           FontAttributes="Bold"
+                           FontSize="12"
+                           TextColor="White" />
+
+                </Border>
+
+                <Border IsVisible="{Binding Action.IsFastPath}"
+                        BackgroundColor="#FF9800"
+                        StrokeThickness="0"
+                        Padding="10,4">
+
+                    <Label Text="⚡ Fast Path"
+                           FontSize="12"
+                           FontAttributes="Bold"
+                           TextColor="White" />
+
+                </Border>
+
+                <Border IsVisible="{Binding Action.IsDestructive}"
+                        BackgroundColor="#D32F2F"
+                        StrokeThickness="0"
+                        Padding="10,4">
+
+                    <Label Text="⚠ Destructive"
+                           FontSize="12"
+                           FontAttributes="Bold"
+                           TextColor="White" />
+
+                </Border>
+
+            </HorizontalStackLayout>
+
+            <!-- ===================== -->
+            <!-- Description -->
+            <!-- ===================== -->
+
+            <!-- <Label -->
+            <!--     Text="Description" -->
+            <!--     FontSize="22" -->
+            <!--     FontAttributes="Bold" -->
+            <!--     TextColor="{StaticResource PrimaryTextColor}" /> -->
+            <!-- -->
+            <!-- <BoxView -->
+            <!--     HeightRequest="1" -->
+            <!--     Color="{StaticResource SecondaryTextColor}" /> -->
+
+            <Label Text="{Binding Action.Description}"
+                   FontSize="16"
+                   TextColor="{StaticResource PrimaryTextColor}" />
+
+            <!-- ===================== -->
+            <!-- Examples -->
+            <!-- ===================== -->
+
+            <VerticalStackLayout IsVisible="{Binding HasExamples}">
+
+                <Label Text="Examples"
+                       FontSize="22"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource PrimaryTextColor}" />
+
+                <BoxView HeightRequest="1"
+                         Color="{StaticResource SecondaryTextColor}" />
+
+                <VerticalStackLayout Spacing="8"
+                                     BindableLayout.ItemsSource="{Binding Examples}">
+
+                    <BindableLayout.ItemTemplate>
+
+                        <DataTemplate   x:DataType="dtos:ExampleItem">
+
+                            <HorizontalStackLayout>
+
+                                <Label Text="•"
+                                       FontSize="18" />
+
+                                <Label Margin="8,0"
+                                       Text="{Binding Text}"
+                                       FontSize="15"
+                                       TextColor="white"/>
+                                       <!-- TextColor="{StaticResource PrimaryTextColor}" /> -->
+
+                            </HorizontalStackLayout>
+
+                        </DataTemplate>
+
+                    </BindableLayout.ItemTemplate>
+
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+
+            <!-- ===================== -->
+            <!-- Parameters -->
+            <!-- ===================== -->
+
+            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Action.Parameters}"
+                                 Spacing="10">
+
+                <BindableLayout.ItemTemplate>
+
+                    <DataTemplate x:DataType="dtos:ActionParameterDto">
+
+                        <Border Padding="15"
+                                Stroke="{StaticResource SecondaryTextColor}"
+                                StrokeThickness="1">
+
+                            <VerticalStackLayout Spacing="8">
+
+                                <Grid ColumnDefinitions="*,Auto">
+
+                                    <Label Text="{Binding Name}"
+                                           FontAttributes="Bold"
+                                           FontSize="18"/>
+
+                                    <Border Grid.Column="1"
+                                            BackgroundColor="#444"
+                                            Padding="8,2">
+
+                                        <Label Text="{Binding Type}"
+                                               FontSize="12"
+                                               TextColor="White"/>
+
+                                    </Border>
+
+                                </Grid>
+
+                                <Label Text="{Binding Description}" />
+
+                                <Label Text="{Binding IsRequired, StringFormat='Required: {0}'}"
+                                       FontAttributes="Italic"/>
+
+                            </VerticalStackLayout>
+
+                        </Border>
+
+                    </DataTemplate>
+
+                </BindableLayout.ItemTemplate>
+
+            </VerticalStackLayout>
+
+            <!-- ===================== -->
+            <!-- Try Button -->
+            <!-- ===================== -->
+
+            <Button Margin="0,30"
+                    HeightRequest="50"
+                    Text="Try This Action"
+                    Command="{Binding TryActionCommand}" />
+
+        </VerticalStackLayout>
+
+    </ScrollView>
+
+</ContentPage>

@@ -281,6 +281,16 @@
                     </CollectionView.ItemTemplate>
             </CollectionView>
 
+            <!-- Hidden label for UIA testing of Active Conversation ID -->
+            <Label Grid.Row="1"
+                   x:Name="ActiveConversationIdLabel"
+                   AutomationId="ActiveConversationIdLabel"
+                   Text="{Binding ConversationId}"
+                   HeightRequest="0"
+                   WidthRequest="0"
+                   Opacity="0"
+                   InputTransparent="True" />
+
             <!-- Input bar -->
             <Grid Grid.Row="2"
                   Padding="12"
@@ -320,6 +330,7 @@
                         IsEnabled="{Binding IsTyping, Converter={StaticResource InverseBoolConverter}}"
                         HeightRequest="44"
                         Padding="16,0"
+                        Margin="0,0,8,0"
                         BackgroundColor="#4CAF50" />
 
                 <Button Grid.Column="3"
@@ -329,7 +340,7 @@
                         IsEnabled="{Binding IsTyping, Converter={StaticResource InverseBoolConverter}}"
                         HeightRequest="44"
                         Padding="12,0"
-                        Margin="8,0,0,0"
+                        Margin="16,0,0,0"
                         BackgroundColor="#C62828" />
 
             </Grid>

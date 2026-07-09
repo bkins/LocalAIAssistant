@@ -58,6 +58,7 @@
         </VerticalStackLayout>
 
         <CollectionView x:Name="LogCollection"
+                        AutomationId="LogCollection"
                         Grid.Row="1"
                         ItemsSource="{Binding LogEntries}"
                         SelectionMode="Single"

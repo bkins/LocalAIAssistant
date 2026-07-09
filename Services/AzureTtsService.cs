@@ -55,6 +55,9 @@ public sealed class AzureTtsService : ITtsService
 
         await StopAsync();
 
+            // Brief delay for the TTS engine to fully release audio resources.
+            await Task.Delay(50, ct);
+
         try
         {
             var config = SpeechSdk.SpeechConfig.FromSubscription(key, ActiveRegion);
@@ -66,7 +69,7 @@ public sealed class AzureTtsService : ITtsService
             await using var cancelRegistration = ct.Register(
                 () => _ = _currentSynthesizer?.StopSpeakingAsync());
 
-            var result = await _currentSynthesizer.SpeakTextAsync(text);
+            var result = await _currentSynthesizer.SpeakTextAsync(TtsMarkdownCleaner.StripMarkdown(text));
 
             if (result.Reason == SpeechSdk.ResultReason.Canceled)
             {

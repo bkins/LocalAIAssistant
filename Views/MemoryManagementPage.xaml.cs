@@ -14,14 +14,14 @@ public partial class MemoryManagementPage : ContentPage
         
         System.Diagnostics.Debug.WriteLine($"MemoryManagementPage BindingContext is {BindingContext?.GetType().Name}");
     }
-    protected override async void OnAppearing()
+    protected override void OnAppearing()
     {
         base.OnAppearing();
         
         // Safely call LoadAsync to refresh the data
         if (BindingContext is MemoryManagementViewModel vm)
         {
-            await vm.LoadAsync();
+            vm.LoadCommand.Execute(null);
         }
     }
     // protected override async void OnAppearing()

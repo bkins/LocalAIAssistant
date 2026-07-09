@@ -79,7 +79,8 @@ public sealed class ElevenLabsTtsService : ITtsService
             request.Headers.Add("xi-api-key", key);
             request.Headers.Add("Accept", "audio/mpeg");
 
-            var body = JsonSerializer.Serialize(new { text, model_id = DefaultModelId });
+            var cleanText = TtsMarkdownCleaner.StripMarkdown(text);
+            var body = JsonSerializer.Serialize(new { text = cleanText, model_id = DefaultModelId });
             request.Content = new StringContent(body, TextEncoding.UTF8, "application/json");
 
             using var response = await _httpClient.SendAsync(request, ct);

@@ -300,6 +300,22 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
         }
     }
 
+    public override async Task<List<ActionMetadataDto>> GetActionsAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _httpClient.GetFromJsonAsync<List<ActionMetadataDto>>("api/system/actions"
+                                                                              , cancellationToken: ct)
+                ?? new List<ActionMetadataDto>();
+        }
+        catch (Exception ex)
+        {
+            _loggingService.LogWarning($"GetActionsAsync failed: {ex.Message}"
+                                      , Category.CognitivePlatformClient);
+            return new List<ActionMetadataDto>();
+        }
+    }
+
     public override string ToString()
         => $"{nameof(CognitivePlatformClient)} :: HttpClient -> {_httpClient.BaseAddress}";
 }

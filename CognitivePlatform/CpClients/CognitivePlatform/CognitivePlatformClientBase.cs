@@ -30,4 +30,6 @@ public abstract class CognitivePlatformClientBase
                                                   , [CallerMemberName] string member = "" );
 
     public abstract Task<GroqUsageDto> GetUsageAsync(CancellationToken ct = default);
+
+    public abstract Task<List<ActionMetadataDto>> GetActionsAsync(CancellationToken ct = default);
 }

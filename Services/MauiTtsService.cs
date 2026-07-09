@@ -12,6 +12,7 @@ public sealed class MauiTtsService : ITtsService
     private CancellationTokenSource? _speakCts;
     private bool                     _isTtsAvailable;
     private IReadOnlyList<Locale>?   _cachedLocales;
+    private readonly SemaphoreSlim _speakLock = new(1, 1);
 
     public bool IsTtsAvailable => _isTtsAvailable;
 
@@ -54,15 +55,27 @@ public sealed class MauiTtsService : ITtsService
         if (!_isTtsAvailable || !IsEnabled || string.IsNullOrWhiteSpace(text))
             return;
 
-        // Stop any in-progress speech before starting new utterance
-        await StopAsync();
-
-        _speakCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-
+        await _speakLock.WaitAsync(ct);
         try
         {
+            // Cancel any in-progress speech.
+            var oldCts = _speakCts;
+            if (oldCts is not null)
+            {
+                await oldCts.CancelAsync();
+                oldCts.Dispose();
+                _speakCts = null;
+            }
+
+            // Brief delay for the platform TTS engine to fully release audio resources.
+            // Without this, Android may clip the first ~100ms of the new utterance.
+            await Task.Delay(50, ct);
+
+            _speakCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+
+            var cleanText = TtsMarkdownCleaner.StripMarkdown(text);
             var options = BuildSpeechOptions();
-            await TextToSpeech.Default.SpeakAsync(text, options, _speakCts.Token);
+            await TextToSpeech.Default.SpeakAsync(cleanText, options, _speakCts.Token);
         }
         catch (OperationCanceledException)
         {
@@ -76,20 +89,26 @@ public sealed class MauiTtsService : ITtsService
         {
             _speakCts?.Dispose();
             _speakCts = null;
+            _speakLock.Release();
         }
     }
 
     public async Task StopAsync()
     {
-        var cts = _speakCts;
-        if (cts is null) return;
+        await _speakLock.WaitAsync();
+        try
+        {
+            var cts = _speakCts;
+            if (cts is null) return;
 
-        await cts.CancelAsync();
-        cts.Dispose();
-
-        // Only null out if it hasn't been replaced by a concurrent SpeakAsync
-        if (ReferenceEquals(_speakCts, cts))
+            await cts.CancelAsync();
+            cts.Dispose();
             _speakCts = null;
+        }
+        finally
+        {
+            _speakLock.Release();
+        }
     }
 
     public async Task<IReadOnlyList<VoiceInfo>> GetVoicesAsync()
@@ -115,6 +134,7 @@ public sealed class MauiTtsService : ITtsService
             return Array.Empty<VoiceInfo>();
         }
     }
+
 
     private SpeechOptions BuildSpeechOptions()
     {

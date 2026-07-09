@@ -108,6 +108,6 @@ public class PersonaAndContextEngine : IPersonaAndContextEngine
 
     private void LogEvent(string message)
     {
-        _logger.LogInformation($"[{ClassName}] {message}");
+        _logger.LogTrace($"[{ClassName}] {message}", Category.PersonaAndContextEngine);
     }
 }

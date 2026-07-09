@@ -28,8 +28,8 @@ public class HybridIntentAnalyzer : IIntentAnalyzer
 
     public async Task<IntentAnalysisResult> AnalyzeAsync(string input)
     {
-        _logger.LogInformation($"HybridIntentAnalyzer.AnalyzeAsync: was invoked, with `input` of {input}."
-                             , Category.HybridIntentAnalyzer);
+        _logger.LogTrace($"HybridIntentAnalyzer.AnalyzeAsync: was invoked, with `input` of {input}."
+                       , Category.HybridIntentAnalyzer);
 
         if (input.HasNoValue())
             return new IntentAnalysisResult { Intent = Intent.Unknown, Confidence = 0.0 };
@@ -43,8 +43,8 @@ public class HybridIntentAnalyzer : IIntentAnalyzer
             sb.Append(chunk);
         }
         
-        _logger.LogInformation("HybridIntentAnalyzer.AnalyzeAsync: chunks read."
-                             , Category.HybridIntentAnalyzer);
+        _logger.LogTrace("HybridIntentAnalyzer.AnalyzeAsync: chunks read."
+                       , Category.HybridIntentAnalyzer);
 
         var llmOutput   = sb.ToString();
         var cleanOutput = llmOutput.Trim().Split('\n', StringSplitOptions.RemoveEmptyEntries)[0].Trim();
@@ -53,8 +53,8 @@ public class HybridIntentAnalyzer : IIntentAnalyzer
 
         if (parsed.Not()) intent = Intent.Unknown;
         
-        _logger.LogInformation($"HybridIntentAnalyzer.AnalyzeAsync: Intent was defined as {intent.GetDescription()}."
-                             , Category.HybridIntentAnalyzer);
+        _logger.LogTrace($"HybridIntentAnalyzer.AnalyzeAsync: Intent was defined as {intent.GetDescription()}."
+                       , Category.HybridIntentAnalyzer);
 
         var llmResult = new IntentAnalysisResult
                         {

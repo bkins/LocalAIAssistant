@@ -89,7 +89,8 @@ public partial class ChatViewModel : ObservableObject
     public ObservableCollection<Message>     Messages      { get; } = new();
     public ObservableCollection<Personality> Personalities { get; } = new();
 
-    public string ConversationId    { get; private set; }
+    [ObservableProperty]
+    private string _conversationId = string.Empty;
     public bool   HasBeenInitialized { get; private set; }
 
     public ChatViewModel( ILlmService                      llmService
@@ -183,7 +184,7 @@ public partial class ChatViewModel : ObservableObject
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             // Server history unavailable — fall through to local STM.
-            _log.LogError(ex, "Failed to load conversation history from server; falling back to local STM");
+            _log.LogError(ex, "Failed to load conversation history from server; falling back to local STM", Category.ChatViewModel);
         }
 
         if (serverLoaded.Not())
@@ -243,6 +244,12 @@ public partial class ChatViewModel : ObservableObject
         
         var hotkey = Preferences.Default.Get(StringConsts.CocoHotkeyPrefKey, StringConsts.CocoDefaultHotkey);
         _hotkeyService.Register(hotkey);
+    }
+
+    public void RefreshCocoState()
+    {
+        InitializeCocoSidecar();
+        OnPropertyChanged(nameof(IsCocoToggleVisible));
     }
 
     private async Task InitializeTtsAsync()
@@ -305,6 +312,21 @@ public partial class ChatViewModel : ObservableObject
         var text = PromptText?.Trim() ?? string.Empty;
         if (text.HasNoValue()) return;
 
+        if (text.Equals("test:set_pending_memory", StringComparison.OrdinalIgnoreCase))
+        {
+            try { System.IO.File.AppendAllText(System.IO.Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, "debug_run_logs.txt"), "DEBUG: test:set_pending_memory hook hit!\n"); } catch {}
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                _appShellMasterViewModel.PendingMemoryConfirmationCount = 3;
+            });
+            PromptText = string.Empty;
+            return;
+        }
+
+        try { System.IO.File.AppendAllText(System.IO.Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, "debug_run_logs.txt"), "SendAsync text: " + text + "\n"); } catch {}
+
+        _log.LogInformation($"SendAsync: {text.Length} chars", Category.ChatViewModel);
+
         var userMessage = new Message
                           {
                                   Sender         = "user"
@@ -343,6 +365,8 @@ public partial class ChatViewModel : ObservableObject
         // 429, exception, and offline-enqueue paths leave assistantMsg as transient UI ephemera.
         var assistantSucceeded = false;
 
+        var sendStartedAt = DateTime.UtcNow;
+
         try
         {
             var cp = _cpFactory.Create();
@@ -361,6 +385,7 @@ public partial class ChatViewModel : ObservableObject
                     assistantMsg.Content = "Message saved to offline queue (currently offline).";
                 });
 
+                _log.LogInformation("SendAsync: API unavailable — message queued offline", Category.ChatViewModel);
                 await PersistToShortTermAsync(assistantMsg);
                 return;
             }
@@ -368,9 +393,10 @@ public partial class ChatViewModel : ObservableObject
             reachedApi = true;
 
             // ENH-32: intercept brain dump flow turns before normal converse routing.
-            if (_brainDumpFlow.IsActive 
+            if (_brainDumpFlow.IsActive
              || _brainDumpFlow.IsTrigger(text!))
             {
+                _log.LogInformation("SendAsync: routing to brain dump flow", Category.ChatViewModel);
                 await HandleBrainDumpTurnAsync(text!, assistantMsg, cp, modelToUse);
                 assistantSucceeded = true;
                 return;
@@ -379,6 +405,7 @@ public partial class ChatViewModel : ObservableObject
             // ENH-33: intercept media attachment intent before sending to LLM.
             if (IsMediaAttachTrigger(text!))
             {
+                _log.LogInformation("SendAsync: routing to media attach flow", Category.ChatViewModel);
                 await HandleMediaAttachAsync(assistantMsg);
                 assistantSucceeded = true;
                 
@@ -386,9 +413,10 @@ public partial class ChatViewModel : ObservableObject
             }
 
             // Intercept calendar actions when no Google Calendar token exists.
-            if (IsCalendarActionTrigger(text!) 
+            if (IsCalendarActionTrigger(text!)
              && _googleCalendar.HasToken.Not())
             {
+                _log.LogInformation("SendAsync: routing to calendar connect prompt", Category.ChatViewModel);
                 await HandleCalendarConnectPromptAsync(assistantMsg);
                 assistantSucceeded = true;
                 
@@ -402,9 +430,10 @@ public partial class ChatViewModel : ObservableObject
                                                     .Not()
                                && CodeIntentAnalyzer.IsCodeQuery(text!);
 
-            if (IsCocoMode 
+            if (IsCocoMode
              || isAutoCodeQuery)
             {
+                _log.LogInformation($"SendAsync: routing to Coco (autoRouted={isAutoCodeQuery && IsCocoMode.Not()})", Category.ChatViewModel);
                 await HandleCocoTurnAsync(text!
                                         , assistantMsg
                                         , wasAutoRouted: isAutoCodeQuery 
@@ -449,6 +478,7 @@ public partial class ChatViewModel : ObservableObject
 
                 if (response.Message.Contains("Groq API returned 429", StringComparison.CurrentCultureIgnoreCase))
                 {
+                    _log.LogWarning($"SendAsync: API returned 429 — {response.Message}", Category.ChatViewModel);
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
                         //assistantMsg.Content = $"⚠ {response.Message}";
@@ -501,6 +531,11 @@ public partial class ChatViewModel : ObservableObject
                         ScheduleTierNoticeDismiss(assistantMsg);
 
                     assistantSucceeded = true;
+                    var elapsed = DateTime.UtcNow - sendStartedAt;
+                    _log.LogInformation(
+                        $"SendAsync: response received — {elapsed.TotalMilliseconds:F0}ms, " +
+                        $"{response.Message.Length} chars, WasFastPath={response.WasFastPath}",
+                        Category.ChatViewModel);
                 }
             }
             else
@@ -533,10 +568,16 @@ public partial class ChatViewModel : ObservableObject
                 // empty InvokeOnMainThreadAsync ensures all prior chunks have been applied.
                 await MainThread.InvokeOnMainThreadAsync(() => { });
                 assistantSucceeded = true;
+                var elapsed = DateTime.UtcNow - sendStartedAt;
+                _log.LogInformation(
+                    $"SendAsync: stream complete — {elapsed.TotalMilliseconds:F0}ms, " +
+                    $"{assistantMsg.Content?.Length ?? 0} chars",
+                    Category.ChatViewModel);
             }
         }
         catch (Exception ex) when (ex is HttpRequestException || ex is TaskCanceledException || ex is System.Net.Sockets.SocketException)
         {
+            _log.LogWarning($"SendAsync: connectivity error — queuing offline: {ex.Message}", Category.ChatViewModel);
             try
             {
                 await _offlineQueueService.EnqueueAsync(ConversationId
@@ -553,6 +594,7 @@ public partial class ChatViewModel : ObservableObject
             }
             catch (Exception dbEx)
             {
+                _log.LogError(dbEx, "SendAsync: offline queue persist failed", Category.ChatViewModel);
                 var errorMessage = dbEx.Message;
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
@@ -568,6 +610,7 @@ public partial class ChatViewModel : ObservableObject
         }
         catch (Exception ex)
         {
+            _log.LogError(ex, "SendAsync: unhandled exception", Category.ChatViewModel);
             // ConfigureAwait(false) means this catch runs on a thread-pool thread.
             // All UI-bound operations must be marshalled back to the main thread.
             var errorMessage = ex.Message;
@@ -585,6 +628,8 @@ public partial class ChatViewModel : ObservableObject
         finally
         {
             StopThinking();
+            var totalElapsed = DateTime.UtcNow - sendStartedAt;
+            _log.LogInformation($"SendAsync: total elapsed {totalElapsed.TotalMilliseconds:F0}ms", Category.ChatViewModel);
 
             // IsTyping is an [ObservableProperty] — setting it from a background thread
             // (after ConfigureAwait(false)) causes a WinUI cross-thread exception.
@@ -727,7 +772,7 @@ public partial class ChatViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _log.LogError(ex, "Voice capture failed");
+            _log.LogError(ex, "Voice capture failed", Category.ChatViewModel);
             PromptText = originalPrompt;
             await Shell.Current.DisplayAlert("Voice Capture", "Failed to recognize speech. Please try again.", "OK");
         }
@@ -976,7 +1021,7 @@ public partial class ChatViewModel : ObservableObject
             // STM persistence is non-fatal — the message is still in the in-memory
             // Messages collection for the current session. Log and continue so a
             // SQLite hiccup doesn't break the chat UX.
-            _log.LogError(ex, "Failed to persist message to short-term memory");
+            _log.LogError(ex, "Failed to persist message to short-term memory", Category.ChatViewModel);
         }
     }
 

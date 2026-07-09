@@ -1,9 +1,10 @@
-using System.Diagnostics;
 using LocalAIAssistant.Core.Personality;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Personalities;
 using LocalAIAssistant.Services.Interfaces;
+using LocalAIAssistant.Services.Logging;
+using LocalAIAssistant.Services.Logging.Interfaces;
 
 namespace LocalAIAssistant.Services;
 
@@ -13,16 +14,19 @@ public class PersonalityService : IPersonalityService
     private readonly OllamaConfigService               _ollamaConfigService;
     private readonly IEnumerable<IPersonalityProvider> _personalityProviders;
     private readonly IPersonalityApiClient             _apiClient;
+    private readonly ILoggingService                   _logger;
 
     public Personality Current { get; private set; }
 
     public PersonalityService( IEnumerable<IPersonalityProvider> providers
                              , OllamaConfigService               configService
-                             , IPersonalityApiClient             apiClient )
+                             , IPersonalityApiClient             apiClient
+                             , ILoggingService                   logger )
     {
         _ollamaConfigService  = configService;
         _personalityProviders = providers;
         _apiClient            = apiClient;
+        _logger               = logger;
         _personalities        = new List<Personality>();
 
         foreach (var provider in _personalityProviders)
@@ -42,7 +46,9 @@ public class PersonalityService : IPersonalityService
         ApplyModelConfig(Current);
 
         _ = _apiClient?.ActivateAsync(personality.Id)
-                        .ContinueWith(task => Debug.WriteLine($"[PersonalityService] ActivateAsync failed: {task.Exception?.Message}")
+                        .ContinueWith(task => _logger.LogError(task.Exception!
+                                                             , "[PersonalityService] ActivateAsync failed"
+                                                             , Category.App)
                                     , TaskContinuationOptions.OnlyOnFaulted);
     }
 
@@ -56,7 +62,9 @@ public class PersonalityService : IPersonalityService
         ApplyModelConfig(Current);
 
         _ = _apiClient?.ActivateAsync(found.Id)
-                        .ContinueWith(task => Debug.WriteLine($"[PersonalityService] ActivateAsync failed: {task.Exception?.Message}")
+                        .ContinueWith(task => _logger.LogError(task.Exception!
+                                                             , "[PersonalityService] ActivateAsync failed"
+                                                             , Category.App)
                                     , TaskContinuationOptions.OnlyOnFaulted);
     }
 

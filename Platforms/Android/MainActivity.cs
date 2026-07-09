@@ -12,6 +12,7 @@ namespace LocalAIAssistant;
 [Activity(Theme = "@style/Maui.SplashTheme"
         , MainLauncher = true
         , LaunchMode = LaunchMode.SingleTop
+        , WindowSoftInputMode = Android.Views.SoftInput.AdjustResize
         , ConfigurationChanges = ConfigChanges.ScreenSize
                                | ConfigChanges.Orientation
                                | ConfigChanges.UiMode
