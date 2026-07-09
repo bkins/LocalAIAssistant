@@ -64,7 +64,10 @@
       "PowerShell(adb -s emulator-5554 shell \"cmd package resolve-activity --brief -c android.intent.category.LAUNCHER com.snikpoh.localaiassistant.debug\")",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\benho\\\\source\\\\repos\\\\ReleaseConsole\\\\ReleaseConsole\\\\Scripts\\\\\" -Filter \"*.ps1\" | Select-Object FullName)",
       "Bash(find 'C:\\\\Users\\\\benho\\\\source\\\\repos\\\\ReleaseConsole\\\\ReleaseConsole\\\\Scripts' -name '*.ps1' -type f)",
-      "Bash(cat \"C:\\\\Users\\\\benho\\\\source\\\\Application Documentation\\\\The CP Universe\\\\Natural Language Command System\\\\Developer Log.md\" | tail -60)"
+      "Bash(cat \"C:\\\\Users\\\\benho\\\\source\\\\Application Documentation\\\\The CP Universe\\\\Natural Language Command System\\\\Developer Log.md\" | tail -60)",
+      "Bash(grep -v \"^\\\\* master$\")",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\benho\\\\source\\\\repos\\\\LocalAIAssistant\" -Directory -Force)",
+      "Bash(Select-Object Name)"
     ]
   }
 }
