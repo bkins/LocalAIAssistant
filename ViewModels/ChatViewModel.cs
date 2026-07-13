@@ -240,7 +240,11 @@ public partial class ChatViewModel : ObservableObject
         
         if (cocoEnabled && clipboardMonitorEnabled) _clipboardMonitor.Start();
 
-        if (cocoEnabled.Not()) return;
+        if (cocoEnabled.Not())
+        {
+            IsCocoMode = false;
+            return;
+        }
         
         var hotkey = Preferences.Default.Get(StringConsts.CocoHotkeyPrefKey, StringConsts.CocoDefaultHotkey);
         _hotkeyService.Register(hotkey);
