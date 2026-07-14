@@ -239,6 +239,29 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
             var line = await reader.ReadLineAsync(ct) ?? string.Empty;
 
             if (line.HasNoValue()) continue;
+
+            if (line.TrimStart().StartsWith("{"))
+            {
+                var fullJson = line + await reader.ReadToEndAsync(ct);
+                string? messageToYield = null;
+                try
+                {
+                    var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var converseResponse = System.Text.Json.JsonSerializer.Deserialize<ConverseResponseDto>(fullJson, options);
+                    messageToYield = converseResponse?.Message;
+                }
+                catch
+                {
+                    // Ignore
+                }
+
+                if (messageToYield != null)
+                {
+                    yield return messageToYield;
+                }
+                yield break;
+            }
+
             if (line.StartsWith("data:", StringComparison.OrdinalIgnoreCase).Not()) continue;
 
             var payload = line["data:".Length..];
