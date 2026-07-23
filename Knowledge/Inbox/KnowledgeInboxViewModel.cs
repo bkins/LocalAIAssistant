@@ -96,7 +96,8 @@ public partial class KnowledgeInboxViewModel : ObservableObject
     {
         await _syncService.SyncAsync();
 
-        var items = _localStore.List();
+        var items = _localStore.List()
+                               .OrderByDescending(item => item.CreatedAt);
 
         foreach (var item in items)
             _items.Add(item);
@@ -106,12 +107,12 @@ public partial class KnowledgeInboxViewModel : ObservableObject
     {
         var pendingItems = await BuildPendingItemsAsync();
 
-        foreach (var item in pendingItems)
-            _items.Add(item);
-
         var localItems = _localStore.List();
 
-        foreach (var item in localItems)
+        var combined = pendingItems.Concat(localItems)
+                                   .OrderByDescending(item => item.CreatedAt);
+
+        foreach (var item in combined)
             _items.Add(item);
     }
 
@@ -119,7 +120,7 @@ public partial class KnowledgeInboxViewModel : ObservableObject
     {
         var queued = await _db.OfflineQueue
                               .Where(q => q.Status == OfflineQueueStatus.Pending)
-                              .OrderBy(q => q.CreatedUtc)
+                              .OrderByDescending(q => q.CreatedUtc)
                               .ToListAsync();
 
         return queued.Select(queueItem => new KnowledgeItem
@@ -179,7 +180,7 @@ public partial class KnowledgeInboxViewModel : ObservableObject
         var rebuilt = filtered
             .GroupBy(item => item.Kind)
             .OrderByDescending(group => group.Key)
-            .Select(group => new KnowledgeItemGroup(group.Key, group))
+            .Select(group => new KnowledgeItemGroup(group.Key, group.OrderByDescending(item => item.CreatedAt)))
             .ToList();
 
         GroupedItems = new ObservableCollection<KnowledgeItemGroup>(rebuilt);

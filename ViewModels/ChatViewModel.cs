@@ -141,6 +141,7 @@ public partial class ChatViewModel : ObservableObject
 
         _clipboardMonitor.CodeDetected += OnCodeDetectedInClipboard;
         _hotkeyService.HotkeyPressed   += OnCocoHotkeyPressed;
+        _offlineQueueService.QueueProcessed += OnQueueProcessed;
 
         // ENH-20: persist ConversationId across app restarts so server history can be retrieved.
         var savedConversationId = Preferences.Get(StringConsts.ActiveConversationIdKey, string.Empty);
@@ -228,6 +229,26 @@ public partial class ChatViewModel : ObservableObject
         InitializeCocoSidecar();
 
         HasBeenInitialized = true;
+    }
+
+    private void OnQueueProcessed(object? sender, QueueProcessedEventArgs args)
+    {
+        if (args.ReplayedCount <= 0) return;
+
+        var text = args.ReplayedCount == 1
+                       ? "🔄 Replayed 1 queued offline item."
+                       : $"🔄 Replayed {args.ReplayedCount} queued offline items.";
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            Messages.Add(new Message
+                         {
+                             Sender         = "assistant"
+                           , Content        = text
+                           , Timestamp      = DateTime.Now
+                           , ConversationId = ConversationId
+                         });
+        });
     }
 
     private void InitializeCocoSidecar()

@@ -10,6 +10,8 @@ namespace LocalAIAssistant.Services;
 
 public class OfflineQueueService: IOfflineQueueService
 {
+    public event EventHandler<QueueProcessedEventArgs>? QueueProcessed;
+
     private readonly IServiceProvider             _serviceProvider;
     private readonly CognitivePlatformClientBase _apiClient;
 
@@ -41,6 +43,7 @@ public class OfflineQueueService: IOfflineQueueService
         try
         {
             await db.SaveChangesAsync();
+            QueueProcessed?.Invoke(this, new QueueProcessedEventArgs(0));
         }
         catch (DbUpdateException ex)
         {
@@ -67,6 +70,8 @@ public class OfflineQueueService: IOfflineQueueService
                              .OrderBy(x => x.CreatedUtc)
                              .ToListAsync(ct);
 
+        var replayedCount = 0;
+
         foreach (var item in items)
         {
             ct.ThrowIfCancellationRequested();
@@ -91,6 +96,7 @@ public class OfflineQueueService: IOfflineQueueService
                 // If success:
                 db.OfflineQueue.Remove(item);
                 await db.SaveChangesAsync(ct);
+                replayedCount++;
             }
             catch (Exception ex) when (ex is HttpRequestException || ex is TaskCanceledException || ex is System.Net.Sockets.SocketException)
             {
@@ -109,6 +115,8 @@ public class OfflineQueueService: IOfflineQueueService
                 break;
             }
         }
+
+        QueueProcessed?.Invoke(this, new QueueProcessedEventArgs(replayedCount));
     }
 
 

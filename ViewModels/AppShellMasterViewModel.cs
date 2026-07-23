@@ -103,6 +103,10 @@ public partial class AppShellMasterViewModel : ObservableObject
         });
 
         _offlineQueueService = offlineQueueService;
+        _offlineQueueService.QueueProcessed += async (_, _) =>
+        {
+            await RefreshQueueCountAsync();
+        };
 
         UpdateStatusColor();
         DisplayEnvMismatchMessage();

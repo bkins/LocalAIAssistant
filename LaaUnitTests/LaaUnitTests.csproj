@@ -34,6 +34,7 @@
   <ItemGroup>
     <Compile Include="../Services/QueueReplayCoordinator.cs" Link="Linked/QueueReplayCoordinator.cs" />
     <Compile Include="../Services/Interfaces/IOfflineQueueService.cs" Link="Linked/IOfflineQueueService.cs" />
+    <Compile Include="../Services/Interfaces/QueueProcessedEventArgs.cs" Link="Linked/QueueProcessedEventArgs.cs" />
     <Compile Include="../Services/Logging/Interfaces/ILoggingService.cs" Link="Linked/ILoggingService.cs" />
     <Compile Include="../Services/Logging/Category.cs" Link="Linked/Category.cs" />
     <Compile Include="../Services/Logging/LogEntry.cs" Link="Linked/LogEntry.cs" />
