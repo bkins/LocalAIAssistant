@@ -431,3 +431,7 @@ FodyWeavers.xsd
 /.idea/.idea.LocalAIAssistant/.idea/libraries/playservicestasks_18_2_0.xml
 /.idea/.idea.LocalAIAssistant/.idea/libraries/runtime_annotation.xml
 /.idea/.idea.LocalAIAssistant/.idea/libraries/runtime_annotation_android.xml
+
+# JVM / Crash / Build logs
+*.log
+
