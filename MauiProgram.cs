@@ -224,7 +224,7 @@ public static class MauiProgram
 		builder.Services.AddTransient<ActionDetailPage>();
 		
 		builder.Services.AddSingleton<IOfflineQueueService, OfflineQueueService>();
-		// builder.Services.AddSingleton<QueueReplayCoordinator>();
+		builder.Services.AddSingleton<QueueReplayCoordinator>();
 		
 		builder.Services.AddSingleton<UsageService>();
 		builder.Services.AddSingleton<UsageViewModel>();
@@ -297,8 +297,8 @@ public static class MauiProgram
 		// Blocking is ok in this case
 		initializer.InitializeAsync().GetAwaiter().GetResult();
 		
-		// var coordinator = scope.ServiceProvider
-		//                        .GetRequiredService<QueueReplayCoordinator>();
+		var coordinator = scope.ServiceProvider
+		                       .GetRequiredService<QueueReplayCoordinator>();
 		return app;
 	}
 }
