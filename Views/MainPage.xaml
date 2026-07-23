@@ -128,6 +128,7 @@
                             AutomationId="MessagesView"
                             Margin="12"
                             ItemsSource="{Binding Messages}"
+                            ItemsUpdatingScrollMode="KeepLastItemInView"
                             ItemSizingStrategy="MeasureAllItems"
                             BackgroundColor="Transparent"
                             VerticalOptions="Fill">

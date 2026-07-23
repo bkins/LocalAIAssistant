@@ -87,16 +87,8 @@ public partial class MainPage : ContentPage
     {
         // Only scroll when a new message arrives, not on Clear() or Remove().
         if (e.Action != NotifyCollectionChangedAction.Add) return;
-        
-        // Yield allows the UI thread to process the layout of the newly added message
-        await Task.Yield();
-        var lastMessage = ChatViewModel.Messages.LastOrDefault();
-        if (lastMessage is null) return;
 
-        Dispatcher.Dispatch(() =>
-            MessagesView.ScrollTo(lastMessage
-                                , position: ScrollToPosition.End
-                                , animate: true));
+        ScrollToBottom();
     }
 
     private async void OnChatViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -107,11 +99,30 @@ public partial class MainPage : ContentPage
         if (e.PropertyName != nameof(ChatViewModel.IsTyping)) return;
         if (ChatViewModel.IsTyping) return;
 
-        // Give the layout pass time to measure the final content before scrolling.
-        await Task.Delay(100);
-        var lastMessage = ChatViewModel.Messages.LastOrDefault();
-        if (lastMessage is null) return;
-        MessagesView.ScrollTo(lastMessage, position: ScrollToPosition.End, animate: true);
+        // Multi-pass scroll after turn completion allows layout measurement of markdown content to settle.
+        ScrollToBottom();
+        await Task.Delay(150);
+        ScrollToBottom();
+    }
+
+    private void ScrollToBottom()
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            var lastMessage = ChatViewModel.Messages.LastOrDefault();
+            if (lastMessage is null) return;
+
+            try
+            {
+                MessagesView.ScrollTo(lastMessage
+                                    , position: ScrollToPosition.End
+                                    , animate: false);
+            }
+            catch
+            {
+                // Guard against potential transient scroll errors during view teardown
+            }
+        });
     }
 
     // ── Input handlers ────────────────────────────────────────────────────────

@@ -13,6 +13,7 @@
             <converters1:IntGreaterThanZeroConverter    x:Key="IntGtZero" />
             <converters1:NullToBoolConverter            x:Key="NullToBool" />
             <converters1:KnowledgeKindToColorConverter  x:Key="KindToColorConverter" />
+            <converters1:InverseBoolConverter           x:Key="InverseBool" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -238,8 +239,24 @@
             <CollectionView.EmptyView>
                 <VerticalStackLayout HorizontalOptions="Center" 
                                      VerticalOptions="Center"
-                                     Padding="20">
+                                     Padding="20"
+                                     Spacing="12">
+                    <!-- Loading state: Spinner + text -->
+                    <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                       IsVisible="{Binding IsLoading}"
+                                       HorizontalOptions="Center"
+                                       WidthRequest="36"
+                                       HeightRequest="36"
+                                       Color="#5588CC" />
+                    <Label Text="Loading inbox..."
+                           IsVisible="{Binding IsLoading}"
+                           HorizontalOptions="Center"
+                           FontSize="14"
+                           TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"/>
+
+                    <!-- Empty state: Text when loading completes and no items exist -->
                     <Label Text="No items in your inbox"
+                           IsVisible="{Binding IsLoading, Converter={StaticResource InverseBool}}"
                            HorizontalOptions="Center"
                            FontSize="16"
                            TextColor="{AppThemeBinding Light=#666, Dark=#AAA}"/>
