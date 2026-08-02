@@ -531,10 +531,15 @@ public partial class ChatViewModel : ObservableObject
                         (cleanMessage, tierNotice) = TierNoticeExtractor.Extract(response.Message);
                     }
 
+                    var responseDurationMs = (DateTime.UtcNow - sendStartedAt).TotalMilliseconds;
+
                     await MainThread.InvokeOnMainThreadAsync(() =>
                     {
-                        assistantMsg.Content     = cleanMessage;
-                        assistantMsg.WasFastPath = response.WasFastPath;
+                        assistantMsg.Content            = cleanMessage;
+                        assistantMsg.WasFastPath        = response.WasFastPath;
+                        assistantMsg.Provider           = response.Provider;
+                        assistantMsg.Model              = response.Model;
+                        assistantMsg.ResponseDurationMs = responseDurationMs;
                         _appShellMasterViewModel.PendingMemoryConfirmationCount = response.PendingMemoryCount;
                         if (tierNotice is not null)
                             assistantMsg.TierNotice = tierNotice;
@@ -591,7 +596,15 @@ public partial class ChatViewModel : ObservableObject
                 // Flush queued chunk callbacks so assistantMsg.Content reflects the final stream state
                 // before persisting. BeginInvokeOnMainThread runs FIFO on the dispatcher — awaiting an
                 // empty InvokeOnMainThreadAsync ensures all prior chunks have been applied.
-                await MainThread.InvokeOnMainThreadAsync(() => { });
+                var streamDurationMs = (DateTime.UtcNow - sendStartedAt).TotalMilliseconds;
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    assistantMsg.ResponseDurationMs = streamDurationMs;
+                    if (string.IsNullOrEmpty(assistantMsg.Provider))
+                        assistantMsg.Provider = "Groq";
+                    if (string.IsNullOrEmpty(assistantMsg.Model))
+                        assistantMsg.Model = modelToUse;
+                });
                 assistantSucceeded = true;
                 var elapsed = DateTime.UtcNow - sendStartedAt;
                 _log.LogInformation(

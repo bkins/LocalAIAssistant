@@ -31,6 +31,59 @@ public partial class Message : ObservableObject
 
     [ObservableProperty] private bool _isCalendarConnectPrompt;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasTelemetry))]
+    [NotifyPropertyChangedFor(nameof(TelemetryText))]
+    private string? _provider;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasTelemetry))]
+    [NotifyPropertyChangedFor(nameof(TelemetryText))]
+    private string? _model;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasTelemetry))]
+    [NotifyPropertyChangedFor(nameof(TelemetryText))]
+    private double _responseDurationMs;
+
+    public bool HasTelemetry =>
+        Sender?.Equals("assistant", StringComparison.OrdinalIgnoreCase) == true
+     || ResponseDurationMs > 0
+     || !string.IsNullOrEmpty(Provider)
+     || !string.IsNullOrEmpty(Model);
+
+    public string TelemetryText
+    {
+        get
+        {
+            var parts = new List<string>();
+
+            if (WasFastPath)
+            {
+                parts.Add("⚡ FastPath (No LLM)");
+            }
+            else
+            {
+                var providerStr = !string.IsNullOrEmpty(Provider) ? Provider : "LLM";
+                var modelStr    = !string.IsNullOrEmpty(Model) ? $" • {Model}" : string.Empty;
+                parts.Add($"🤖 {providerStr}{modelStr}");
+            }
+
+            if (ResponseDurationMs > 0)
+            {
+                var seconds = ResponseDurationMs / 1000.0;
+                parts.Add($"⏱ {seconds:F2}s");
+            }
+
+            if (Timestamp != default)
+            {
+                parts.Add($"📅 {Timestamp:g}");
+            }
+
+            return string.Join(" | ", parts);
+        }
+    }
+
     public Message()
     {
     }

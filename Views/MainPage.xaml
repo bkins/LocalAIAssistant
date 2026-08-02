@@ -276,6 +276,14 @@
                                         </Label>
                                     </Grid>
 
+                                    <!-- Response Telemetry Footer -->
+                                    <Label Text="{Binding TelemetryText}"
+                                           FontSize="10"
+                                           TextColor="{StaticResource SecondaryTextColor}"
+                                           Opacity="0.75"
+                                           Margin="0,4,0,0"
+                                           IsVisible="{Binding HasTelemetry}" />
+
                                 </VerticalStackLayout>
                             </Border>
                         </DataTemplate>

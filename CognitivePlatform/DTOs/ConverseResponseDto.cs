@@ -12,4 +12,6 @@ public class ConverseResponseDto
     public int                       PendingMemoryCount { get; set; }
     public bool                      IsConfirmationRequired { get; set; }
     public string?                   ConfirmationPrompt     { get; set; }
+    public string?                   Provider               { get; set; }
+    public string?                   Model                  { get; set; }
 }

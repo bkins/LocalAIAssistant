@@ -14,6 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
@@ -32,6 +33,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="../Data/Models/Message.cs" Link="Linked/Message.cs" />
+    <Compile Include="../CognitivePlatform/DTOs/ConverseResponseDto.cs" Link="Linked/ConverseResponseDto.cs" />
+    <Compile Include="../CognitivePlatform/DTOs/InsightDto.cs" Link="Linked/InsightDto.cs" />
     <Compile Include="../Services/QueueReplayCoordinator.cs" Link="Linked/QueueReplayCoordinator.cs" />
     <Compile Include="../Services/Interfaces/IOfflineQueueService.cs" Link="Linked/IOfflineQueueService.cs" />
     <Compile Include="../Services/Interfaces/QueueProcessedEventArgs.cs" Link="Linked/QueueProcessedEventArgs.cs" />
