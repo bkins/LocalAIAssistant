@@ -103,6 +103,10 @@ public sealed class HealthApiService : BackgroundService
                     await WriteJsonAsync(response, new { status = "ok" }, ct);
                     break;
 
+                case "/health/daily":
+                    await HandleDailySummaryEndpointAsync(response, request, ct);
+                    break;
+
                 case "/health/steps":
                     await HandleMetricEndpointAsync(response
                                                   , request
@@ -142,6 +146,36 @@ public sealed class HealthApiService : BackgroundService
             try { await WriteErrorAsync(response, 500, "Internal Server Error"); }
             catch { /* best effort on error path */ }
         }
+    }
+
+    private async Task HandleDailySummaryEndpointAsync(HttpListenerResponse response, HttpListenerRequest request, CancellationToken ct)
+    {
+        var query = request.QueryString;
+        var dateStr = query["date"];
+        var targetDate = DateTimeOffset.UtcNow.Date;
+
+        if (DateTimeOffset.TryParse(dateStr, out var parsedDate))
+        {
+            targetDate = parsedDate.Date;
+        }
+
+        var from = new DateTimeOffset(targetDate, TimeSpan.Zero);
+        var to = from.AddDays(1).AddTicks(-1);
+
+        var stepResult = await _healthConnect!.GetStepCountAsync(from, to, ct);
+        var distanceResult = await _healthConnect!.GetDistanceAsync(from, to, ct);
+        var heartRateResult = await _healthConnect!.GetHeartRateAsync(from, to, ct);
+
+        var payload = new
+        {
+            steps = stepResult.Steps,
+            distanceKm = distanceResult.Metres / 1000.0,
+            caloriesBurned = 0.0,
+            averageHeartRate = heartRateResult.AverageBpm,
+            date = targetDate
+        };
+
+        await WriteJsonAsync(response, payload, ct);
     }
 
     private async Task HandleMetricEndpointAsync<T>(HttpListenerResponse                         response
