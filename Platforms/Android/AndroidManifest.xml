@@ -25,6 +25,8 @@
   <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
   <uses-permission android:name="android.permission.health.READ_SLEEP" />
   <uses-permission android:name="android.permission.health.READ_DISTANCE" />
+  <!-- Notifications (Android 13+) -->
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
   <!-- Required so this app appears in Health Connect's "Connected apps" list -->
   <queries>
     <package android:name="com.google.android.apps.healthdata" />

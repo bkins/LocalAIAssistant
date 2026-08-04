@@ -7,6 +7,7 @@ namespace LocalAIAssistant.Core.Notifications;
 public interface INotificationScheduler
 {
     Task<bool> AreNotificationsEnabledAsync();
+    Task<bool> RequestPermissionAsync();
     void       CancelAll();
     Task       ScheduleAsync(int      notificationId
                            , string   title

@@ -22,6 +22,9 @@ public sealed class PluginLocalNotificationScheduler : INotificationScheduler
     public Task<bool> AreNotificationsEnabledAsync()
         => _notificationService.AreNotificationsEnabled(new NotificationPermission());
 
+    public Task<bool> RequestPermissionAsync()
+        => _notificationService.RequestNotificationPermission(new NotificationPermission());
+
     public void CancelAll()
         => _notificationService.CancelAll();
 

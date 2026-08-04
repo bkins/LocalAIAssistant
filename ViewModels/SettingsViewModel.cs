@@ -10,6 +10,9 @@ using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.Health;
 using LocalAIAssistant.Services.Interfaces;
+using LocalAIAssistant.Core.Notifications;
+using LocalAIAssistant.Services.Logging;
+using LocalAIAssistant.Services.Logging.Interfaces;
 
 namespace LocalAIAssistant.ViewModels;
 
@@ -23,6 +26,8 @@ public partial class SettingsViewModel : ObservableObject
     private readonly ICocoApiClientFactory?   _cocoFactory;
     private readonly IGoogleCalendarService   _googleCalendar;
     private readonly HealthPushService?       _healthPushService;
+    private readonly INotificationScheduler?  _notificationScheduler;
+    private readonly ILoggingService?         _loggingService;
     
     [ObservableProperty] private string _model;
     [ObservableProperty] private string _endpoint;
@@ -111,8 +116,10 @@ public partial class SettingsViewModel : ObservableObject
 
         _appShellMasterViewModel = appShellMasterViewModel;
 
-        _healthConnect = services.GetService<IHealthConnectManager>();
-        _healthPushService = services.GetService<HealthPushService>();
+        _healthConnect               = services.GetService<IHealthConnectManager>();
+        _healthPushService           = services.GetService<HealthPushService>();
+        _notificationScheduler       = services.GetService<INotificationScheduler>();
+        _loggingService              = services.GetService<ILoggingService>();
         if (_healthConnect is not null)
             _ = RefreshHealthStatus();
 
@@ -333,5 +340,54 @@ public partial class SettingsViewModel : ObservableObject
     private void CancelIndex()
     {
         _indexCts?.Cancel();
+    }
+
+    [RelayCommand]
+    public async Task SendTestNotificationAsync()
+    {
+        _loggingService?.LogInformation("SendTestNotificationAsync command triggered in settings view model.", Category.App);
+
+        if (Microsoft.Maui.Devices.DeviceInfo.Current.Platform == Microsoft.Maui.Devices.DevicePlatform.WinUI)
+        {
+            throw new PlatformNotSupportedException(
+                "Windows unpackaged development builds do not support local OS notifications (due to UWP/MSIX activation constraints).\n\n" +
+                "To verify and test notifications, please run the app on the Android emulator or a physical device.");
+        }
+
+        if (_notificationScheduler is null)
+        {
+            _loggingService?.LogWarning("NotificationScheduler is null in SettingsViewModel. Cannot send notification.", Category.App);
+            throw new InvalidOperationException("NotificationScheduler is null in DI container.");
+        }
+
+        if (!await _notificationScheduler.AreNotificationsEnabledAsync())
+        {
+            _loggingService?.LogInformation("Notifications not enabled. Requesting permission...", Category.App);
+            var permissionGranted = await _notificationScheduler.RequestPermissionAsync();
+            if (!permissionGranted)
+            {
+                _loggingService?.LogWarning("Notification permission denied.", Category.App);
+                throw new UnauthorizedAccessException(
+                    "Notification permission was denied. Please enable notifications for this app in your Android system settings to test notifications.");
+            }
+            _loggingService?.LogInformation("Notification permission granted.", Category.App);
+        }
+
+        try
+        {
+            _loggingService?.LogInformation("Scheduling test notification to fire in 5 seconds...", Category.App);
+            await _notificationScheduler.ScheduleAsync(
+                9999
+              , "Test Notification ⚡"
+              , "This is a test notification from the Cognitive Platform client."
+              , DateTime.Now.AddSeconds(5)
+              , "cp-reminders");
+            _loggingService?.LogInformation("Test notification successfully scheduled.", Category.App);
+        }
+        catch (Exception ex)
+        {
+            _loggingService?.LogError(ex, "Failed to schedule test notification.", Category.App);
+            throw;
+        }
     }
 }

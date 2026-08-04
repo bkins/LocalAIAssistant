@@ -461,6 +461,15 @@
             </Border>
 
             <!-- ═══════════════════════════════════════════ -->
+            <!-- Notification Test                           -->
+            <!-- ═══════════════════════════════════════════ -->
+            <Button Text="Send Test Notification (5s Delay)"
+                    Clicked="OnSendTestNotificationClicked"
+                    Margin="12,20,12,0"
+                    HeightRequest="48"
+                    BackgroundColor="#7C5CE6" />
+
+            <!-- ═══════════════════════════════════════════ -->
             <!-- Save                                        -->
             <!-- ═══════════════════════════════════════════ -->
             <Button Text="Save"
