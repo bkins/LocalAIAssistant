@@ -15,6 +15,7 @@
 // internal scope — do NOT call this on the UI thread without Task.Run.
 
 using Kotlin.Coroutines;
+using Serilog;
 
 namespace LocalAIAssistant.Platforms.Android.Health;
 
@@ -22,17 +23,30 @@ internal static class KotlinContinuationBridge
 {
     // Wraps one Kotlin suspend function call as a Task<TResult>.
     // Pass the lambda that forwards `cont` to the generated binding method.
-    internal static Task<TResult?> Invoke<TResult>(Action<IContinuation> coroutineAction)
+    internal static Task<TResult?> Invoke<TResult>(Func<IContinuation, Java.Lang.Object?> coroutineFunc)
         where TResult : Java.Lang.Object
     {
+        Log.Information("KotlinContinuationBridge.Invoke: starting coroutineFunc");
         var tcs  = new TaskCompletionSource<TResult?>(TaskCreationOptions.RunContinuationsAsynchronously);
         var cont = new TaskContinuation<TResult>(tcs);
         try
         {
-            coroutineAction(cont);
+            var result = coroutineFunc(cont);
+            Log.Information("KotlinContinuationBridge.Invoke: coroutineFunc returned result class: {ResultClass}", result?.Class?.Name ?? "null");
+            
+            if (result is not null && result.Class.Name == "kotlin.coroutines.intrinsics.CoroutineSingletons")
+            {
+                Log.Information("KotlinContinuationBridge.Invoke: asynchronous suspension (waiting for ResumeWith)");
+            }
+            else
+            {
+                Log.Information("KotlinContinuationBridge.Invoke: synchronous completion detected. Completing Task with result.");
+                cont.CompleteWithSynchronousResult(result);
+            }
         }
         catch (Exception ex)
         {
+            Log.Error(ex, "KotlinContinuationBridge.Invoke: coroutineFunc threw an immediate exception");
             tcs.TrySetException(ex);
         }
         return tcs.Task;
@@ -49,14 +63,39 @@ internal static class KotlinContinuationBridge
         // Coroutines will use whatever dispatcher the HC SDK uses internally.
         public ICoroutineContext Context => EmptyCoroutineContext.Instance;
 
+        public void CompleteWithSynchronousResult(Java.Lang.Object? result)
+        {
+            if (result is null)
+            {
+                _tcs.TrySetResult(null);
+            }
+            else if (result.Class.Name == "kotlin.Result$Failure")
+            {
+                try
+                {
+                    var field = result.Class.GetDeclaredField("exception");
+                    field.Accessible = true;
+                    var throwable = field.Get(result);
+                    Log.Error("KotlinContinuationBridge: synchronous failure result: {Throwable}", throwable);
+                    _tcs.TrySetException(new Exception($"Health Connect operation failed: {throwable}"));
+                }
+                catch (Exception reflectionEx)
+                {
+                    Log.Error(reflectionEx, "KotlinContinuationBridge: reflection failed to extract exception from failure");
+                    _tcs.TrySetException(reflectionEx);
+                }
+            }
+            else
+            {
+                _tcs.TrySetResult(result as TResult);
+            }
+        }
+
         // Called by the coroutine runtime when the suspend function completes.
         // `result` is either the boxed TResult (success) or a Kotlin.Result$Failure wrapper (error).
-        //
-        // Kotlin.Result is an inline value class; Kotlin.Result.Failure is NOT exposed in the
-        // C# binding. Detect failure by its JVM class name ("kotlin.Result$Failure") and extract
-        // the wrapped Throwable via Java reflection.
         public void ResumeWith(Java.Lang.Object result)
         {
+            Log.Information("KotlinContinuationBridge.ResumeWith called. Result class: {ClassName}", result?.Class?.Name ?? "null");
             if (result?.Class?.Name == "kotlin.Result$Failure")
             {
                 try
@@ -64,16 +103,19 @@ internal static class KotlinContinuationBridge
                     var field = result.Class.GetDeclaredField("exception");
                     field.Accessible = true;
                     var throwable = field.Get(result);
+                    Log.Error("KotlinContinuationBridge.ResumeWith: operation failed: {Throwable}", throwable);
                     _tcs.TrySetException(
                         new Exception($"Health Connect operation failed: {throwable}"));
                 }
                 catch (Exception reflectionEx)
                 {
+                    Log.Error(reflectionEx, "KotlinContinuationBridge.ResumeWith: reflection failed to extract exception");
                     _tcs.TrySetException(reflectionEx);
                 }
             }
             else
             {
+                Log.Information("KotlinContinuationBridge.ResumeWith: operation succeeded");
                 _tcs.TrySetResult(result as TResult);
             }
         }

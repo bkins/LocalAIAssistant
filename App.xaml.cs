@@ -1,5 +1,6 @@
-﻿using LocalAIAssistant.Core.Environment;
+using LocalAIAssistant.Core.Environment;
 using LocalAIAssistant.Services;
+using LocalAIAssistant.Services.Health;
 using LocalAIAssistant.Services.Interfaces;
 using LocalAIAssistant.Services.Logging;
 using LocalAIAssistant.Services.Logging.Interfaces;
@@ -15,13 +16,16 @@ public partial class App : Application
 	private readonly ILoggingService                 _loggingService;
 	private readonly AppShellMasterViewModel         _masterViewModel;
 	private readonly NotificationSyncService         _notificationSyncService;
+	private readonly HealthPushService               _healthPushService;
+	private readonly CancellationTokenSource         _appLifetime = new();
 
 	public App (ILlmService               ollamaApiService
 	          , ApiHealthService          apiHealthService
 	          , ApiHealthViewModel        apiHealthViewModel
 	          , ILoggingService           loggingService
 	          , AppShellMasterViewModel   masterViewModel
-	          , NotificationSyncService   notificationSyncService)
+	          , NotificationSyncService   notificationSyncService
+	          , HealthPushService         healthPushService)
 	{
 		InitializeComponent();
 
@@ -31,6 +35,7 @@ public partial class App : Application
 		_loggingService          = loggingService;
 		_masterViewModel         = masterViewModel;
 		_notificationSyncService = notificationSyncService;
+		_healthPushService       = healthPushService;
 
 		RegisterGlobalExceptionHandlers();
 
@@ -75,6 +80,10 @@ public partial class App : Application
 			var handshake = Handler?.MauiContext?.Services.GetRequiredService<StartupHandshakeService>();
 			if (handshake != null)
 				await handshake.RunAsync(BuildEnvironment.Name);
+
+			// Start the health data push loop. MAUI does not automatically start
+			// IHostedService instances — we must call StartAsync manually.
+			await _healthPushService.StartAsync(_appLifetime.Token).ConfigureAwait(false);
 		}
 		catch (Exception ex)
 		{

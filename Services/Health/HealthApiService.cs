@@ -45,15 +45,42 @@ public sealed class HealthApiService : BackgroundService
             return;
         }
 
-        var prefix   = $"http://+:{_config.Port}/health/";
+        var port = _config.Port > 0 ? _config.Port : 5050;
         using var listener = new HttpListener();
-        listener.Prefixes.Add(prefix);
+
+        // Try prefixes in order: wildcard +, wildcard *, and literal http://*:port/health/
+        var candidatePrefixes = new[]
+        {
+            $"http://+:{port}/health/",
+            $"http://*:{port}/health/"
+        };
+
+        var started = false;
+        foreach (var prefix in candidatePrefixes)
+        {
+            try
+            {
+                listener.Prefixes.Clear();
+                listener.Prefixes.Add(prefix);
+                listener.Start();
+                started = true;
+                _logger.LogInformation("Health API gateway listening with prefix {Prefix}", prefix);
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Health API gateway failed to bind prefix {Prefix}", prefix);
+            }
+        }
+
+        if (!started)
+        {
+            _logger.LogError("Health API gateway failed to start on any candidate prefix for port {Port}", port);
+            return;
+        }
 
         try
         {
-            listener.Start();
-            _logger.LogInformation("Health API gateway listening on port {Port}", _config.Port);
-
             while (!stoppingToken.IsCancellationRequested)
             {
                 HttpListenerContext context;

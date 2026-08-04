@@ -22,6 +22,7 @@ public partial class SettingsViewModel : ObservableObject
     private readonly IHealthConnectManager?   _healthConnect;
     private readonly ICocoApiClientFactory?   _cocoFactory;
     private readonly IGoogleCalendarService   _googleCalendar;
+    private readonly HealthPushService?       _healthPushService;
     
     [ObservableProperty] private string _model;
     [ObservableProperty] private string _endpoint;
@@ -111,6 +112,7 @@ public partial class SettingsViewModel : ObservableObject
         _appShellMasterViewModel = appShellMasterViewModel;
 
         _healthConnect = services.GetService<IHealthConnectManager>();
+        _healthPushService = services.GetService<HealthPushService>();
         if (_healthConnect is not null)
             _ = RefreshHealthStatus();
 
@@ -148,6 +150,34 @@ public partial class SettingsViewModel : ObservableObject
         if (_healthConnect is null) return;
         await _healthConnect.RequestPermissionsAsync();
         await RefreshHealthStatus();
+    }
+
+    [RelayCommand]
+    private async Task ForcePushHealth()
+    {
+        if (_healthPushService is null)
+        {
+            HealthStatusText = "Error: HealthPushService not registered";
+            return;
+        }
+
+        HealthStatusText = "Pushing snapshot…";
+        try
+        {
+            var result = await _healthPushService.PushNowAsync();
+            if (result.Success)
+            {
+                HealthStatusText = "Push successful: " + result.Message;
+            }
+            else
+            {
+                HealthStatusText = "Push failed: " + result.Message;
+            }
+        }
+        catch (Exception ex)
+        {
+            HealthStatusText = $"Push failed: {ex.Message}";
+        }
     }
 
     [RelayCommand]

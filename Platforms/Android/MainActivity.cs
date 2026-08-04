@@ -6,9 +6,6 @@ using AndroidX.Health.Connect.Client;
 
 namespace LocalAIAssistant;
 
-// Surfaces this app in Health Connect's "Connected apps" list so users can manage permissions.
-[IntentFilter(new[] { "android.intent.action.VIEW_PERMISSION_USAGE" }
-            , Categories = new[] { "android.intent.category.HEALTH_PERMISSIONS" })]
 [Activity(Theme = "@style/Maui.SplashTheme"
         , MainLauncher = true
         , LaunchMode = LaunchMode.SingleTop

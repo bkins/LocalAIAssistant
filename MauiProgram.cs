@@ -247,7 +247,8 @@ public static class MauiProgram
 #if ANDROID
 		builder.Services.AddSingleton<IHealthConnectManager, HealthConnectManager>();
 #endif
-		builder.Services.AddHostedService<HealthApiService>();
+		builder.Services.AddSingleton<CrashReportService>();
+		builder.Services.AddSingleton<HealthPushService>();
 
 		// Load bundled appsettings.json (FileGateway defaults and other sections)
 		try
@@ -299,6 +300,32 @@ public static class MauiProgram
 		
 		var coordinator = scope.ServiceProvider
 		                       .GetRequiredService<QueueReplayCoordinator>();
+
+		// Wire unhandled exception handlers so crashes are forwarded to CP API.
+		var crashReporter = app.Services.GetRequiredService<CrashReportService>();
+
+		AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+		{
+			var ex      = args.ExceptionObject as Exception;
+			var message = ex?.Message    ?? args.ExceptionObject?.ToString() ?? "Unknown error";
+			var stack   = ex?.StackTrace ?? string.Empty;
+			_ = Task.Run(() => crashReporter.ReportAsync(message, stack, "AppDomain.UnhandledException"));
+		};
+
+		TaskScheduler.UnobservedTaskException += (_, args) =>
+		{
+			args.SetObserved();
+			_ = Task.Run(() => crashReporter.ReportAsync(args.Exception.Message, args.Exception.StackTrace ?? string.Empty, "TaskScheduler.UnobservedTaskException"));
+		};
+
+#if ANDROID
+		Android.Runtime.AndroidEnvironment.UnhandledExceptionRaiser += (_, args) =>
+		{
+			args.Handled = true;
+			_ = Task.Run(() => crashReporter.ReportAsync(args.Exception.Message, args.Exception.StackTrace ?? string.Empty, "AndroidEnvironment.UnhandledExceptionRaiser"));
+		};
+#endif
+
 		return app;
 	}
 }
