@@ -18,15 +18,24 @@
 
 using AndroidX.Health.Connect.Client;
 using AndroidX.Health.Connect.Client.Records;
-using Serilog;
+using AndroidX.Health.Connect.Client.Records.Metadata;
 using AndroidX.Health.Connect.Client.Request;
 using AndroidX.Health.Connect.Client.Response;
 using AndroidX.Health.Connect.Client.Time;
+
+using LocalAIAssistant.Platforms.Android.Health;
 using LocalAIAssistant.Services.Health;
 using LocalAIAssistant.Services.Health.Models;
-using Microsoft.Maui.ApplicationModel;
 
-namespace LocalAIAssistant.Platforms.Android.Health;
+using Serilog;
+
+using static Android.Runtime.JNIEnv;
+
+using static Java.Lang.Class;
+
+using static Kotlin.Jvm.JvmClassMappingKt;
+
+namespace LocalAIAssistant.Health;
 
 public sealed class HealthConnectManager : IHealthConnectManager
 {
@@ -43,10 +52,15 @@ public sealed class HealthConnectManager : IHealthConnectManager
     {
         Log.Information("HealthConnectManager.CheckPermissionsAsync starting");
         var client = GetClientOrNull();
-        Log.Information("HealthConnectManager.CheckPermissionsAsync: GetClientOrNull returned client={IsNotNull}", client is not null);
+
+        Log.Information("HealthConnectManager.CheckPermissionsAsync: GetClientOrNull returned client={IsNotNull}"
+                      , client is not null);
         if (client is null) return false;
+
         var result = await HasPermissionsAsync(client);
-        Log.Information("HealthConnectManager.CheckPermissionsAsync: completed with result={Result}", result);
+
+        Log.Information("HealthConnectManager.CheckPermissionsAsync: completed with result={Result}"
+                      , result);
         return result;
     }
 
@@ -63,24 +77,29 @@ public sealed class HealthConnectManager : IHealthConnectManager
         // on all API levels because HC permissions live in HC's own permission store, not
         // the framework's runtime-permission store.
         var permSet = new Java.Util.HashSet();
-        foreach (var perm in RequiredPermissions)
-            permSet.Add(new Java.Lang.String(perm));
+        foreach (var perm in RequiredPermissions) permSet.Add(new Java.Lang.String(perm));
 
         MainActivity.HealthPermissionLauncher?.Launch(permSet);
     }
 
-    public async Task<StepCountResult> GetStepCountAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken ct = default)
+    public async Task<StepCountResult> GetStepCountAsync(DateTimeOffset from
+                                                       , DateTimeOffset to
+                                                       , CancellationToken ct = default)
     {
         var client = GetClientOrNull();
-        if (client is null || !await HasPermissionsAsync(client))
+        if (client is null
+         || ! await HasPermissionsAsync(client))
             return new StepCountResult { Steps = 0 };
 
-        var kClass   = Kotlin.Jvm.JvmClassMappingKt.GetKotlinClass(
-                           Java.Lang.Class.FromType(typeof(StepsRecord)));
-        var filter   = BuildTimeFilter(from, to);
-        var request  = new ReadRecordsRequest(kClass, filter, new List<AndroidX.Health.Connect.Client.Records.Metadata.DataOrigin>(), true, 1000, null);
-        var response = await KotlinContinuationBridge.Invoke<ReadRecordsResponse>(
-                           cont => client.ReadRecords(request, cont));
+        var kotlinClass = GetKotlinClass(FromType(typeof(StepsRecord)));
+        var filter      = BuildTimeFilter(from, to);
+        var request     = new ReadRecordsRequest(kotlinClass
+                                               , filter
+                                               , new List<DataOrigin>()
+                                               , true
+                                               , 1000
+                                               , null);
+        var response    = await KotlinContinuationBridge.Invoke<ReadRecordsResponse>(cont => client.ReadRecords(request, cont));
 
         if (response is null) return new StepCountResult { Steps = 0 };
 
@@ -90,24 +109,30 @@ public sealed class HealthConnectManager : IHealthConnectManager
         return new StepCountResult { Steps = steps };
     }
 
-    public async Task<SleepResult> GetSleepAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken ct = default)
+    public async Task<SleepResult> GetSleepAsync(DateTimeOffset from
+                                               , DateTimeOffset to
+                                               , CancellationToken ct = default)
     {
         var client = GetClientOrNull();
-        if (client is null || !await HasPermissionsAsync(client))
+        if (client is null
+         || ! await HasPermissionsAsync(client))
             return new SleepResult { TotalMinutes = 0, Sessions = 0 };
 
-        var kClass   = Kotlin.Jvm.JvmClassMappingKt.GetKotlinClass(
-                           Java.Lang.Class.FromType(typeof(SleepSessionRecord)));
-        var filter   = BuildTimeFilter(from, to);
-        var request  = new ReadRecordsRequest(kClass, filter, new List<AndroidX.Health.Connect.Client.Records.Metadata.DataOrigin>(), true, 1000, null);
-        var response = await KotlinContinuationBridge.Invoke<ReadRecordsResponse>(
-                           cont => client.ReadRecords(request, cont));
+        var kotlinClass = GetKotlinClass(FromType(typeof(SleepSessionRecord)));
+        var filter      = BuildTimeFilter(from, to);
+        var request     = new ReadRecordsRequest(kotlinClass
+                                               , filter
+                                               , (List<DataOrigin>)[]
+                                               , true, 1000, null);
+        var response = await KotlinContinuationBridge.Invoke<ReadRecordsResponse>(cont => client.ReadRecords(request, cont));
 
         if (response is null) return new SleepResult { TotalMinutes = 0, Sessions = 0 };
 
         var sessions     = response.Records.Cast<SleepSessionRecord>().ToList();
-        var totalMinutes = sessions.Sum(session =>
-                               (int)((session.EndTime.ToEpochMilli() - session.StartTime.ToEpochMilli()) / 60_000L));
+        var totalMinutes = sessions.Sum(session => (int)((session.EndTime
+                                                                 .ToEpochMilli()
+                                                        - session.StartTime
+                                                                 .ToEpochMilli()) / 60_000L));
         return new SleepResult
                {
                    TotalMinutes = totalMinutes
@@ -115,29 +140,29 @@ public sealed class HealthConnectManager : IHealthConnectManager
                };
     }
 
-    public async Task<HeartRateResult> GetHeartRateAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken ct = default)
+    public async Task<HeartRateResult> GetHeartRateAsync(DateTimeOffset from
+                                                       , DateTimeOffset to
+                                                       , CancellationToken ct = default)
     {
         var client = GetClientOrNull();
-        if (client is null || !await HasPermissionsAsync(client))
+        if (client is null
+         || ! await HasPermissionsAsync(client))
             return new HeartRateResult { AverageBpm = 0, Samples = 0 };
 
-        var kClass   = Kotlin.Jvm.JvmClassMappingKt.GetKotlinClass(
-                           Java.Lang.Class.FromType(typeof(HeartRateRecord)));
-        var filter   = BuildTimeFilter(from, to);
-        var request  = new ReadRecordsRequest(kClass, filter, new List<AndroidX.Health.Connect.Client.Records.Metadata.DataOrigin>(), true, 1000, null);
-        var response = await KotlinContinuationBridge.Invoke<ReadRecordsResponse>(
-                           cont => client.ReadRecords(request, cont));
+        var kotlinClass = GetKotlinClass(FromType(typeof(HeartRateRecord)));
+        var filter      = BuildTimeFilter(from, to);
+        var request     = new ReadRecordsRequest(kotlinClass, filter, new List<DataOrigin>(), true, 1000, null);
+        var response    = await KotlinContinuationBridge.Invoke<ReadRecordsResponse>(cont => client.ReadRecords(request, cont));
 
         if (response is null) return new HeartRateResult { AverageBpm = 0, Samples = 0 };
 
         var bpmSamples = response.Records
                                  .Cast<HeartRateRecord>()
-                                 .SelectMany(record => record.Samples.Cast<HeartRateRecord.Sample>())
+                                 .SelectMany(record => record.Samples)
                                  .Select(sample => (int)sample.BeatsPerMinute)
                                  .ToList();
 
-        if (bpmSamples.Count == 0)
-            return new HeartRateResult { AverageBpm = 0, Samples = 0 };
+        if (bpmSamples.Count == 0) return new HeartRateResult { AverageBpm = 0, Samples = 0 };
 
         return new HeartRateResult
                {
@@ -148,18 +173,19 @@ public sealed class HealthConnectManager : IHealthConnectManager
                };
     }
 
-    public async Task<DistanceResult> GetDistanceAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken ct = default)
+    public async Task<DistanceResult> GetDistanceAsync(DateTimeOffset from
+                                                     , DateTimeOffset to
+                                                     , CancellationToken ct = default)
     {
         var client = GetClientOrNull();
-        if (client is null || !await HasPermissionsAsync(client))
+        if (client is null
+         || ! await HasPermissionsAsync(client))
             return new DistanceResult { Metres = 0 };
 
-        var kClass   = Kotlin.Jvm.JvmClassMappingKt.GetKotlinClass(
-                           Java.Lang.Class.FromType(typeof(DistanceRecord)));
-        var filter   = BuildTimeFilter(from, to);
-        var request  = new ReadRecordsRequest(kClass, filter, new List<AndroidX.Health.Connect.Client.Records.Metadata.DataOrigin>(), true, 1000, null);
-        var response = await KotlinContinuationBridge.Invoke<ReadRecordsResponse>(
-                           cont => client.ReadRecords(request, cont));
+        var kotlinClass = GetKotlinClass(FromType(typeof(DistanceRecord)));
+        var filter      = BuildTimeFilter(from, to);
+        var request     = new ReadRecordsRequest(kotlinClass, filter, new List<DataOrigin>(), true, 1000, null);
+        var response    = await KotlinContinuationBridge.Invoke<ReadRecordsResponse>(cont => client.ReadRecords(request, cont));
 
         if (response is null) return new DistanceResult { Metres = 0 };
 
@@ -170,9 +196,10 @@ public sealed class HealthConnectManager : IHealthConnectManager
     }
 
     private static TimeRangeFilter BuildTimeFilter(DateTimeOffset from, DateTimeOffset to)
-        => TimeRangeFilter.Between(
-               Java.Time.Instant.OfEpochMilli(from.ToUnixTimeMilliseconds()),
-               Java.Time.Instant.OfEpochMilli(to.ToUnixTimeMilliseconds()));
+    {
+        return TimeRangeFilter.Between(Java.Time.Instant.OfEpochMilli(from.ToUnixTimeMilliseconds())
+                                     , Java.Time.Instant.OfEpochMilli(to.ToUnixTimeMilliseconds()));
+    }
 
     // Returns null when Health Connect is not installed or unavailable.
     // SdkAvailable=1, SdkUnavailable=2, SdkUnavailableProviderUpdateRequired=3.
@@ -180,10 +207,10 @@ public sealed class HealthConnectManager : IHealthConnectManager
     {
         try
         {
-            var context = Platform.CurrentActivity ?? global::Android.App.Application.Context;
-            if (HealthConnectClient.GetSdkStatus(context) != HealthConnectClient.SdkAvailable)
-                return null;
-            return HealthConnectClient.GetOrCreate(context);
+            var context = Platform.CurrentActivity ?? Android.App.Application.Context;
+            return HealthConnectClient.GetSdkStatus(context) != HealthConnectClient.SdkAvailable
+                           ? null
+                           : HealthConnectClient.GetOrCreate(context);
         }
         catch
         {
@@ -197,22 +224,24 @@ public sealed class HealthConnectManager : IHealthConnectManager
         try
         {
             Log.Information("HealthConnectManager.HasPermissionsAsync: calling KotlinContinuationBridge.Invoke for GetGrantedPermissions");
-            var grantedObj = await KotlinContinuationBridge.Invoke<Java.Lang.Object>(
-                                 cont => client.PermissionController.GetGrantedPermissions(cont));
+            var grantedObj = await KotlinContinuationBridge.Invoke<Java.Lang.Object>(cont => client.PermissionController
+                                                                                                   .GetGrantedPermissions(cont));
 
-            Log.Information("HealthConnectManager.HasPermissionsAsync: KotlinContinuationBridge.Invoke returned. grantedObj type: {Type}", grantedObj?.GetType().FullName ?? "null");
+            Log.Information("HealthConnectManager.HasPermissionsAsync: KotlinContinuationBridge.Invoke returned. grantedObj type: {Type}"
+                          , grantedObj?.GetType().FullName ?? "null");
 
-            int javaSize = -1;
-            string javaString = "unknown";
+            var javaSize = -1;
+            var javaString = "unknown";
+
             if (grantedObj is Java.Lang.Object javaObj)
             {
                 try
                 {
                     javaString = javaObj.ToString() ?? "null";
-                    var sizeMethod = global::Android.Runtime.JNIEnv.GetMethodID(javaObj.Class.Handle, "size", "()I");
+                    var sizeMethod = GetMethodID(javaObj.Class.Handle, "size", "()I");
                     if (sizeMethod != IntPtr.Zero)
                     {
-                        javaSize = global::Android.Runtime.JNIEnv.CallIntMethod(javaObj.Handle, sizeMethod);
+                        javaSize = CallIntMethod(javaObj.Handle, sizeMethod);
                     }
                 }
                 catch (Exception ex)
@@ -220,7 +249,9 @@ public sealed class HealthConnectManager : IHealthConnectManager
                     Log.Error(ex, "HealthConnectManager.HasPermissionsAsync: JNI reflection failed");
                 }
             }
-            Log.Information("HealthConnectManager.HasPermissionsAsync: Java-level size={Size}, toString={String}", javaSize, javaString);
+            Log.Information("HealthConnectManager.HasPermissionsAsync: Java-level size={Size}, toString={String}"
+                          , javaSize
+                          , javaString);
 
             var grantedSet = new HashSet<string?>();
             if (grantedObj is Java.Lang.IIterable iterable)
@@ -248,18 +279,23 @@ public sealed class HealthConnectManager : IHealthConnectManager
             {
                 try
                 {
-                    var toArrayMethod = global::Android.Runtime.JNIEnv.GetMethodID(javaObjForToArray.Class.Handle, "toArray", "()[Ljava/lang/Object;");
+                    var toArrayMethod = GetMethodID(javaObjForToArray.Class.Handle
+                                                  , "toArray"
+                                                  , "()[Ljava/lang/Object;");
                     if (toArrayMethod != IntPtr.Zero)
                     {
-                        var arrayHandle = global::Android.Runtime.JNIEnv.CallObjectMethod(javaObjForToArray.Handle, toArrayMethod);
+                        var arrayHandle = CallObjectMethod(javaObjForToArray.Handle, toArrayMethod);
                         if (arrayHandle != IntPtr.Zero)
                         {
-                            var elements = new global::Android.Runtime.JavaArray<Java.Lang.Object>(arrayHandle, global::Android.Runtime.JniHandleOwnership.TransferLocalRef);
-                            foreach (var el in elements)
+                            var elements = new Android.Runtime.JavaArray<Java.Lang.Object>(arrayHandle
+                                                                                         , Android.Runtime
+                                                                                                  .JniHandleOwnership
+                                                                                                  .TransferLocalRef);
+                            foreach (var element in elements)
                             {
-                                if (el is not null)
+                                if (element is not null)
                                 {
-                                    grantedSet.Add(el.ToString());
+                                    grantedSet.Add(element.ToString());
                                 }
                             }
                         }
@@ -271,12 +307,15 @@ public sealed class HealthConnectManager : IHealthConnectManager
                 }
             }
 
-            Log.Information("HealthConnectManager.HasPermissionsAsync: Granted permissions count={Count}. Set: {Set}", grantedSet.Count, string.Join(", ", grantedSet));
+            Log.Information("HealthConnectManager.HasPermissionsAsync: Granted permissions count={Count}. Set: {Set}"
+                          , grantedSet.Count
+                          , string.Join(", ", grantedSet));
 
             var missing = RequiredPermissions.Where(p => !grantedSet.Contains(p)).ToList();
-            if (missing.Any())
+            if (missing.Count != 0)
             {
-                Log.Warning("HealthConnectManager.HasPermissionsAsync: Missing permissions: {Missing}", string.Join(", ", missing));
+                Log.Warning("HealthConnectManager.HasPermissionsAsync: Missing permissions: {Missing}"
+                          , string.Join(", ", missing));
             }
             else
             {

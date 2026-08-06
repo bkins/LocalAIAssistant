@@ -16,6 +16,7 @@ using LocalAIAssistant.Core.Environment;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Extensions;
+// using LocalAIAssistant.Health;
 using LocalAIAssistant.Knowledge.Inbox;
 using LocalAIAssistant.Knowledge.Journals.ViewModels;
 using LocalAIAssistant.Knowledge.Tasks.ViewModels;
@@ -35,6 +36,7 @@ using Serilog;
 using Serilog.Formatting.Compact;
 
 #if ANDROID
+using LocalAIAssistant.Health;
 using LocalAIAssistant.Platforms.Android.Health;
 using LocalAIAssistant.Platforms.Android.Handlers;
 #endif
@@ -47,7 +49,7 @@ public static class MauiProgram
 	{
 		var logPath		   = Path.Combine(FileSystem.AppDataDirectory, "logs", "app-log.jsonl");
 		//var memoryFilePath = Path.Combine(FileSystem.AppDataDirectory, "ai_memory.jsonl");
-		
+
 		Log.Logger = new LoggerConfiguration().MinimumLevel.Information() // Log information, warnings, and errors
 		                                      .WriteTo.File(new CompactJsonFormatter()
 		                                                  , logPath
@@ -58,7 +60,7 @@ public static class MauiProgram
 		                                      .WriteTo.Debug()
 		                                      .CreateLogger();
 		Debug.WriteLine($"Configuring Serilog to log to: {logPath}");
-		
+
 		var builder = MauiApp.CreateBuilder();
 
 		builder.ConfigureFonts(fonts =>
@@ -84,7 +86,7 @@ public static class MauiProgram
 			                      client.BaseAddress = new Uri(BuildEnvironment.OllamaBaseUrl);
 		                      })
 		       .AddHttpMessageHandler<EnvironmentGuardHandler>();
-		
+
 		builder.Services.AddSingleton<ICognitivePlatformClientFactory, CognitivePlatformClientFactory>();
 		builder.Services.AddSingleton<IKnowledgeClientFactory, KnowledgeClientFactory>();
 		builder.Services.AddSingleton<IJournalApiClientFactory, JournalApiClientFactory>();
@@ -100,7 +102,7 @@ public static class MauiProgram
 		//Markdown formatters:
 		builder.Services.AddSingleton<IMarkdownFormatter<TaskDetailViewModel>, TaskMarkdownFormatter>();
 		builder.Services.AddSingleton<IMarkdownFormatter<JournalDetailViewModel>, JournalMarkdownFormatter>();
-		
+
 		// Bind Ollama config (with validation)
 		builder.Services
 		       .AddOptions<OllamaConfig>()
@@ -176,7 +178,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton(new CP.Client.Core.Web.ApiEnvironmentDescriptor(BuildEnvironment.Name
 		                                                                             , BuildEnvironment.ApiBaseUrl
 		                                                                             , BuildEnvironment.OllamaBaseUrl));
-		
+
 		builder.Services.AddSingleton<EnvironmentHandshakeState>();
 		builder.Services.AddSingleton<StartupHandshakeService>();
 		builder.Services.AddSingleton<WriteGuard>();
@@ -185,23 +187,23 @@ public static class MauiProgram
 
 		// Paths
 		var appDir = FileSystem.AppDataDirectory;
-		
+
 		var memoryFilePath 		 = Path.Combine(appDir, "ai_memory.jsonl"); // JSONL for messages
 		var factsFilePath  		 = Path.Combine(appDir, "facts.json");      // JSON for k/v facts
 		var ollamaConfigFilePath = Path.Combine(appDir, "OllamaConfig.json");
-		
+
 		if (File.Exists(ollamaConfigFilePath).Not())
 		{
 			File.WriteAllText(ollamaConfigFilePath, "{}");
 		}
-		
+
 		builder.Services
 		       .AddOptions<OllamaConfig>()
 		       .BindConfiguration("")
 		       .ValidateDataAnnotations();
-		
+
 		builder.Services.AddSingleton<IOptionsChangeTokenSource<OllamaConfig>>(new FileOptionsSource<OllamaConfig>(ollamaConfigFilePath));
-		
+
 		// Your SQLite connection string for STM
 		//var sqliteConnStr  = "TODO: your SQLite connection string";
 		builder.Services.AddDbContext<LocalAiAssistantDbContext>(options =>
@@ -211,7 +213,7 @@ public static class MauiProgram
 		});
 
 		builder.Services.AddScoped<DatabaseInitializer>();
-		
+
 		var localDbPath = Path.Combine(FileSystem.AppDataDirectory, "knowledge_local.db");
 
 		builder.Services.AddSingleton<ILocalKnowledgeStore>(_ => new SqliteLocalKnowledgeStore(localDbPath));
@@ -222,13 +224,13 @@ public static class MauiProgram
 		builder.Services.AddTransient<ActionDirectoryPage>();
 		builder.Services.AddTransient<ActionDetailViewModel>();
 		builder.Services.AddTransient<ActionDetailPage>();
-		
+
 		builder.Services.AddSingleton<IOfflineQueueService, OfflineQueueService>();
 		builder.Services.AddSingleton<QueueReplayCoordinator>();
-		
+
 		builder.Services.AddSingleton<UsageService>();
 		builder.Services.AddSingleton<UsageViewModel>();
-		
+
 		builder.Configuration.AddJsonFile(ollamaConfigFilePath, optional: false, reloadOnChange: true);
 
 		// Bind Ollama section (you can drop “Ollama” section wrapper if you just want flat file)
@@ -239,7 +241,7 @@ public static class MauiProgram
 
 		// IOptionsMonitor lets you subscribe to change notifications:
 		//builder.Services.AddSingleton<LlmService>();
-		
+
 		// Health Connect gateway
 		builder.Services
 		       .AddOptions<HealthGatewayConfig>()
@@ -275,10 +277,10 @@ public static class MauiProgram
 		                                   , memoryFilePath
 		                                   , factsFilePath
 		                                   , memoryFilePath);
-		
+
 		builder.Services.AddViewModels();
 		builder.Services.AddViews();
-		
+
 		// CP.Client.Core:
 		builder.Services.AddSingleton<ConnectivityState>();
 		builder.Services.AddSingleton<IConnectivityState>(sp => sp.GetRequiredService<ConnectivityState>());
@@ -289,15 +291,15 @@ public static class MauiProgram
 #endif
 
 		var app = builder.Build();
-	
+
 		using var scope = app.Services.CreateScope();
 
 		var db          = scope.ServiceProvider.GetRequiredService<LocalAiAssistantDbContext>();
 		var initializer = scope.ServiceProvider.GetRequiredService<DatabaseInitializer>();
-		
+
 		// Blocking is ok in this case
 		initializer.InitializeAsync().GetAwaiter().GetResult();
-		
+
 		var coordinator = scope.ServiceProvider
 		                       .GetRequiredService<QueueReplayCoordinator>();
 
