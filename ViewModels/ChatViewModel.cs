@@ -535,6 +535,11 @@ public partial class ChatViewModel : ObservableObject
 
                     await MainThread.InvokeOnMainThreadAsync(() =>
                     {
+                        // Cancel the thinking animation atomically on the main thread BEFORE
+                        // writing the real content. Any animation BeginInvokeOnMainThread
+                        // callbacks already queued will see the cancellation flag and skip.
+                        _thinkingCts?.Cancel();
+
                         assistantMsg.Content            = cleanMessage;
                         assistantMsg.WasFastPath        = response.WasFastPath;
                         assistantMsg.Provider           = response.Provider;
