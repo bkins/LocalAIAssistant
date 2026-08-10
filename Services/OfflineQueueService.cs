@@ -132,6 +132,19 @@ public class OfflineQueueService: IOfflineQueueService
         foreach (var item in stuckItems)
             item.Status = OfflineQueueStatus.Pending;
 
+        // Clean up toxic local model overrides (e.g. qwen2.5:14b) for all pending items in the queue
+        var allPending = await db.OfflineQueue
+                                  .Where(queueItem => queueItem.Status == OfflineQueueStatus.Pending)
+                                  .ToListAsync();
+
+        foreach (var item in allPending)
+        {
+            if (item.Model != null && item.Model.Contains("qwen", StringComparison.OrdinalIgnoreCase))
+            {
+                item.Model = string.Empty;
+            }
+        }
+
         await db.SaveChangesAsync();
     }
 

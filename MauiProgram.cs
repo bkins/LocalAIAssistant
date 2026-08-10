@@ -270,7 +270,7 @@ public static class MauiProgram
 		       .AddOptions<FileGatewayConfig>()
 		       .Bind(builder.Configuration.GetSection("FileGateway"));
 
-		builder.Services.AddHostedService<FileGatewayService>();
+		builder.Services.AddSingleton<FileGatewayService>();
 
 		builder.Services.AddAllServices(logPath, memoryFilePath);
 		builder.Services.AddAiMemoryServices(Path.Combine(FileSystem.AppDataDirectory, "Memory.db")

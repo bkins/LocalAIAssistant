@@ -225,6 +225,17 @@
 
   `JournalEntry` is immutable after creation. Mutations create a new `JournalRevision`. `LatestRevision` is always the authoritative content. Never write a test that mutates an entry directly.
 
+  ## MAUI Background Service Lifecycle Invariant
+
+  MAUI's generic host builder does not automatically start generic hosted services registered via `AddHostedService<T>()`.
+  * Always register background workers (like `FileGatewayService` or sync services) as Singletons.
+  * Explicitly resolve and start them manually via `.StartAsync(token)` in `App.xaml.cs`'s startup lifecycle (`OnStart`).
+
+  ## Offline Queue Model String Resiliency Invariant
+
+  Queue items that are saved with local model overrides (e.g. `qwen2.5:14b`) must be cleared of those overrides on client startup to prevent deadlocks when the active LLM provider changes.
+  * Clear or strip local model strings from all pending offline queue items on initialization in `OfflineQueueService.ResetProcessingItemsAsync()`.
+
   ------
 
   ## Running Tests

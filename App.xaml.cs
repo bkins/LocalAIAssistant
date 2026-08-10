@@ -5,6 +5,7 @@ using LocalAIAssistant.Services.Interfaces;
 using LocalAIAssistant.Services.Logging;
 using LocalAIAssistant.Services.Logging.Interfaces;
 using LocalAIAssistant.ViewModels;
+using LocalAIAssistant.Services.FileSync;
 
 namespace LocalAIAssistant;
 
@@ -17,6 +18,7 @@ public partial class App : Application
 	private readonly AppShellMasterViewModel         _masterViewModel;
 	private readonly NotificationSyncService         _notificationSyncService;
 	private readonly HealthPushService               _healthPushService;
+	private readonly FileGatewayService              _fileGatewayService;
 	private readonly CancellationTokenSource         _appLifetime = new();
 
 	public App (ILlmService               ollamaApiService
@@ -25,7 +27,8 @@ public partial class App : Application
 	          , ILoggingService           loggingService
 	          , AppShellMasterViewModel   masterViewModel
 	          , NotificationSyncService   notificationSyncService
-	          , HealthPushService         healthPushService)
+	          , HealthPushService         healthPushService
+	          , FileGatewayService        fileGatewayService)
 	{
 		InitializeComponent();
 
@@ -36,6 +39,7 @@ public partial class App : Application
 		_masterViewModel         = masterViewModel;
 		_notificationSyncService = notificationSyncService;
 		_healthPushService       = healthPushService;
+		_fileGatewayService      = fileGatewayService;
 
 		RegisterGlobalExceptionHandlers();
 
@@ -84,6 +88,9 @@ public partial class App : Application
 			// Start the health data push loop. MAUI does not automatically start
 			// IHostedService instances — we must call StartAsync manually.
 			await _healthPushService.StartAsync(_appLifetime.Token).ConfigureAwait(false);
+
+			// Start the file sync gateway listener.
+			await _fileGatewayService.StartAsync(_appLifetime.Token).ConfigureAwait(false);
 		}
 		catch (Exception ex)
 		{

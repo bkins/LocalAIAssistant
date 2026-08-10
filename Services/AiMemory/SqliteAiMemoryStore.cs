@@ -38,15 +38,40 @@ public class SqliteAiMemoryStore : IShortTermMemoryStore
         using var connection = new SqliteConnection(_connectionString);
         connection.Open();
 
-        using var command = connection.CreateCommand();
-        command.CommandText = $@"
-                CREATE TABLE IF NOT EXISTS {TableName} (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Timestamp TEXT NOT NULL,
-                    Content TEXT NOT NULL,
-                    Sender TEXT NOT NULL
-                );";
-        command.ExecuteNonQuery();
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = $@"
+                    CREATE TABLE IF NOT EXISTS {TableName} (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        Timestamp TEXT NOT NULL,
+                        Content TEXT NOT NULL,
+                        Sender TEXT NOT NULL
+                    );";
+            command.ExecuteNonQuery();
+        }
+
+        // Migrate schema by adding new telemetry columns if they don't exist
+        var columnsToAdd = new Dictionary<string, string>
+                           {
+                               { "WasFastPath", "INTEGER DEFAULT 0" }
+                             , { "Provider", "TEXT NULL" }
+                             , { "Model", "TEXT NULL" }
+                             , { "ResponseDurationMs", "REAL DEFAULT 0" }
+                           };
+
+        foreach (var col in columnsToAdd)
+        {
+            try
+            {
+                using var command = connection.CreateCommand();
+                command.CommandText = $"ALTER TABLE {TableName} ADD COLUMN {col.Key} {col.Value};";
+                command.ExecuteNonQuery();
+            }
+            catch (SqliteException ex) when (ex.SqliteErrorCode == 1) // Column already exists or table locked (SQLITE_ERROR)
+            {
+                // Column already exists, safe to swallow
+            }
+        }
     }
 
     public async Task SaveMessagesAsync(IEnumerable<Message> messages)
@@ -60,14 +85,22 @@ public class SqliteAiMemoryStore : IShortTermMemoryStore
         {
             using var cmd = connection.CreateCommand();
             cmd.CommandText = $@"
-                    INSERT INTO {TableName} (Timestamp, Content, Sender) 
-                    VALUES (@ts, @content, @sender);";
+                    INSERT INTO {TableName} (Timestamp, Content, Sender, WasFastPath, Provider, Model, ResponseDurationMs) 
+                    VALUES (@ts, @content, @sender, @wasFastPath, @provider, @model, @duration);";
             cmd.Parameters.AddWithValue("@ts"
-                                      , msg.Timestamp.ToString("o")); // ISO 8601 format
+                                       , msg.Timestamp.ToString("o")); // ISO 8601 format
             cmd.Parameters.AddWithValue("@content"
-                                      , msg.Content);
+                                       , msg.Content);
             cmd.Parameters.AddWithValue("@sender"
-                                      , msg.Sender);
+                                       , msg.Sender);
+            cmd.Parameters.AddWithValue("@wasFastPath"
+                                       , msg.WasFastPath ? 1 : 0);
+            cmd.Parameters.AddWithValue("@provider"
+                                       , (object?)msg.Provider ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@model"
+                                       , (object?)msg.Model ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@duration"
+                                       , msg.ResponseDurationMs);
             await cmd.ExecuteNonQueryAsync();
         }
 
@@ -83,14 +116,22 @@ public class SqliteAiMemoryStore : IShortTermMemoryStore
         await using var cmd = connection.CreateCommand();
         
         cmd.CommandText = $@"
-                    INSERT INTO {TableName} (Timestamp, Content, Sender) 
-                    VALUES (@ts, @content, @sender);";
+                    INSERT INTO {TableName} (Timestamp, Content, Sender, WasFastPath, Provider, Model, ResponseDurationMs) 
+                    VALUES (@ts, @content, @sender, @wasFastPath, @provider, @model, @duration);";
         cmd.Parameters.AddWithValue("@ts"
                                   , message.Timestamp.ToString("o")); // ISO 8601 format
         cmd.Parameters.AddWithValue("@content"
                                   , message.Content);
         cmd.Parameters.AddWithValue("@sender"
                                   , message.Sender);
+        cmd.Parameters.AddWithValue("@wasFastPath"
+                                  , message.WasFastPath ? 1 : 0);
+        cmd.Parameters.AddWithValue("@provider"
+                                  , (object?)message.Provider ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@model"
+                                  , (object?)message.Model ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@duration"
+                                  , message.ResponseDurationMs);
         await cmd.ExecuteNonQueryAsync();
 
 
@@ -106,7 +147,7 @@ public class SqliteAiMemoryStore : IShortTermMemoryStore
 
         using var cmd = connection.CreateCommand();
         cmd.CommandText = $@"
-                SELECT Id, Timestamp, Content, Sender 
+                SELECT Id, Timestamp, Content, Sender, WasFastPath, Provider, Model, ResponseDurationMs 
                 FROM {TableName} 
                 ORDER BY Timestamp ASC;";
 
@@ -115,10 +156,14 @@ public class SqliteAiMemoryStore : IShortTermMemoryStore
         {
             messages.Add(new Message
                          {
-                             Id        = reader.GetInt32(0)
-                           , Timestamp = DateTime.Parse(reader.GetString(1))
-                           , Content   = reader.GetString(2)
-                           , Sender    = reader.GetString(3)
+                             Id                 = reader.GetInt32(0)
+                           , Timestamp          = DateTime.Parse(reader.GetString(1))
+                           , Content            = reader.GetString(2)
+                           , Sender             = reader.GetString(3)
+                           , WasFastPath        = reader.GetInt32(4) == 1
+                           , Provider           = reader.IsDBNull(5) ? null : reader.GetString(5)
+                           , Model              = reader.IsDBNull(6) ? null : reader.GetString(6)
+                           , ResponseDurationMs = reader.GetDouble(7)
                          });
         }
 
@@ -137,17 +182,17 @@ public class SqliteAiMemoryStore : IShortTermMemoryStore
         if (since.HasValue)
         {
             cmd.CommandText = $@"
-                    SELECT Id, Timestamp, Content, Sender 
+                    SELECT Id, Timestamp, Content, Sender, WasFastPath, Provider, Model, ResponseDurationMs 
                     FROM {TableName} 
                     WHERE Timestamp >= @since 
                     ORDER BY Timestamp ASC;";
             cmd.Parameters.AddWithValue("@since"
-                                      , since.Value.ToString("o"));
+                                       , since.Value.ToString("o"));
         }
         else
         {
             cmd.CommandText = $@"
-                    SELECT Id, Timestamp, Content, Sender 
+                    SELECT Id, Timestamp, Content, Sender, WasFastPath, Provider, Model, ResponseDurationMs 
                     FROM {TableName} 
                     ORDER BY Timestamp ASC;";
         }
@@ -157,10 +202,14 @@ public class SqliteAiMemoryStore : IShortTermMemoryStore
         {
             messages.Add(new Message
                          {
-                             Id = reader.GetInt32(0)
-                           , Timestamp = DateTime.Parse(reader.GetString(1))
-                           , Content = reader.GetString(2)
-                           , Sender = reader.GetString(3)
+                             Id                 = reader.GetInt32(0)
+                           , Timestamp          = DateTime.Parse(reader.GetString(1))
+                           , Content            = reader.GetString(2)
+                           , Sender             = reader.GetString(3)
+                           , WasFastPath        = reader.GetInt32(4) == 1
+                           , Provider           = reader.IsDBNull(5) ? null : reader.GetString(5)
+                           , Model              = reader.IsDBNull(6) ? null : reader.GetString(6)
+                           , ResponseDurationMs = reader.GetDouble(7)
                          });
         }
 

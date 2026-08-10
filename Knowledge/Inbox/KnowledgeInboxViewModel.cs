@@ -96,10 +96,14 @@ public partial class KnowledgeInboxViewModel : ObservableObject
     {
         await _syncService.SyncAsync();
 
-        var items = _localStore.List()
-                               .OrderByDescending(item => item.CreatedAt);
+        var pendingItems = await BuildPendingItemsAsync();
 
-        foreach (var item in items)
+        var localItems = _localStore.List();
+
+        var combined = pendingItems.Concat(localItems)
+                                   .OrderByDescending(item => item.CreatedAt);
+
+        foreach (var item in combined)
             _items.Add(item);
     }
 

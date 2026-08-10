@@ -217,8 +217,6 @@ public partial class ChatViewModel : ObservableObject
         var lastPersonalityName = Preferences.Get(SelectedPersonalityPrefKey, Personalities.First().Name);
         SelectedPersonality = Personalities.FirstOrDefault(personality => personality.Name == lastPersonalityName)
                            ?? Personalities.First();
-        
-        _personalityService.SetCurrent(SelectedPersonality.Name);
 
         var offlineCount = await _offlineQueueService.GetPendingCountAsync();
         
@@ -312,7 +310,11 @@ public partial class ChatViewModel : ObservableObject
         var oldName = Preferences.Get(SelectedPersonalityPrefKey, Personalities.First().Name);
 
         Preferences.Set(SelectedPersonalityPrefKey, newValue.Name);
-        _personalityService.SetCurrent(newValue.Name);
+        
+        if (_personalityService.Current?.Name != newValue.Name)
+        {
+            _personalityService.SetCurrent(newValue.Name);
+        }
         
         if (oldName != newValue.Name)
         {
@@ -367,7 +369,7 @@ public partial class ChatViewModel : ObservableObject
         // Done before the API call so a network failure doesn't lose the user's typed input.
         await PersistToShortTermAsync(userMessage);
 
-        var modelToUse = "qwen2.5:14b";
+        var modelToUse = string.Empty;
 
         IsTyping = true;
 
@@ -533,6 +535,8 @@ public partial class ChatViewModel : ObservableObject
 
                     var responseDurationMs = (DateTime.UtcNow - sendStartedAt).TotalMilliseconds;
 
+                    List<Message>? insightMessages = null;
+
                     await MainThread.InvokeOnMainThreadAsync(() =>
                     {
                         // Cancel the thinking animation atomically on the main thread BEFORE
@@ -549,18 +553,32 @@ public partial class ChatViewModel : ObservableObject
                         if (tierNotice is not null)
                             assistantMsg.TierNotice = tierNotice;
 
-                        foreach (var insight in response.Insights)
+                        if (response.Insights.Count > 0)
                         {
-                            Messages.Add(new Message
-                                         {
-                                                 Sender         = "assistant"
-                                               , Content        = insight.Message
-                                               , IsInsight      = true
-                                               , Timestamp      = DateTime.Now
-                                               , ConversationId = ConversationId
-                                         });
+                            insightMessages = new List<Message>();
+                            foreach (var insight in response.Insights)
+                            {
+                                var insightMsg = new Message
+                                                 {
+                                                         Sender         = "assistant"
+                                                       , Content        = insight.Message
+                                                       , IsInsight      = true
+                                                       , Timestamp      = DateTime.Now
+                                                       , ConversationId = ConversationId
+                                                 };
+                                Messages.Add(insightMsg);
+                                insightMessages.Add(insightMsg);
+                            }
                         }
                     });
+
+                    if (insightMessages is not null)
+                    {
+                        foreach (var msg in insightMessages)
+                        {
+                            await PersistToShortTermAsync(msg);
+                        }
+                    }
 
                     if (tierNotice is not null)
                         ScheduleTierNoticeDismiss(assistantMsg);
