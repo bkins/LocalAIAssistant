@@ -111,6 +111,9 @@ public partial class AppShell : Shell
 		
 		Routing.RegisterRoute(nameof(ActionDetailPage)
 		                    , typeof(ActionDetailPage));
+
+		Routing.RegisterRoute(nameof(AgentChatPage)
+		                    , typeof(AgentChatPage));
 	}
 
 	protected override async void OnAppearing()

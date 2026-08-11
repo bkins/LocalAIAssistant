@@ -34,6 +34,8 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private int    _numPredict;
     [ObservableProperty] private float  _temperature;
     [ObservableProperty] private string _environment;
+    [ObservableProperty] private bool   _enableStartupProbes;
+    [ObservableProperty] private bool   _enableStartupDiagnostics;
 
     // ── TTS ───────────────────────────────────────────────────────────────────
     [ObservableProperty]
@@ -138,6 +140,8 @@ public partial class SettingsViewModel : ObservableObject
         _cocoProjectPath             = Preferences.Default.Get(StringConsts.CocoProjectPathPrefKey,              string.Empty);
         _cocoClipboardMonitorEnabled = Preferences.Default.Get(StringConsts.CocoClipboardMonitorEnabledPrefKey,  true);
         _cocoHotkey                  = Preferences.Default.Get(StringConsts.CocoHotkeyPrefKey,                   StringConsts.CocoDefaultHotkey);
+        _enableStartupProbes         = Preferences.Default.Get(StringConsts.EnableStartupProbesPrefKey,          true);
+        _enableStartupDiagnostics    = Preferences.Default.Get(StringConsts.EnableStartupDiagnosticsPrefKey,     true);
     }
 
     public Task RefreshHealthStatusAsync() => RefreshHealthStatus();
@@ -229,6 +233,9 @@ public partial class SettingsViewModel : ObservableObject
         Preferences.Default.Set(StringConsts.CocoProjectPathPrefKey,             CocoProjectPath);
         Preferences.Default.Set(StringConsts.CocoClipboardMonitorEnabledPrefKey, CocoClipboardMonitorEnabled);
         Preferences.Default.Set(StringConsts.CocoHotkeyPrefKey,                  CocoHotkey);
+
+        Preferences.Default.Set(StringConsts.EnableStartupProbesPrefKey,          EnableStartupProbes);
+        Preferences.Default.Set(StringConsts.EnableStartupDiagnosticsPrefKey,     EnableStartupDiagnostics);
     }
 
     // ── Google Calendar commands ──────────────────────────────────────────────

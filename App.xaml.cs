@@ -6,6 +6,7 @@ using LocalAIAssistant.Services.Logging;
 using LocalAIAssistant.Services.Logging.Interfaces;
 using LocalAIAssistant.ViewModels;
 using LocalAIAssistant.Services.FileSync;
+using LocalAIAssistant.Data;
 
 namespace LocalAIAssistant;
 
@@ -78,11 +79,11 @@ public partial class App : Application
 		try
 		{
 			var apiHealthService = Handler?.MauiContext?.Services.GetRequiredService<ApiHealthService>();
-			if (apiHealthService != null) 
+			if (apiHealthService != null && Preferences.Default.Get(StringConsts.EnableStartupProbesPrefKey, true)) 
 				await apiHealthService.InitializeAsync().ConfigureAwait(false);
         
 			var handshake = Handler?.MauiContext?.Services.GetRequiredService<StartupHandshakeService>();
-			if (handshake != null)
+			if (handshake != null && Preferences.Default.Get(StringConsts.EnableStartupDiagnosticsPrefKey, true))
 				await handshake.RunAsync(BuildEnvironment.Name);
 
 			// Start the health data push loop. MAUI does not automatically start

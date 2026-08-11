@@ -14,4 +14,7 @@ public class ConverseResponseDto
     public string?                   ConfirmationPrompt     { get; set; }
     public string?                   Provider               { get; set; }
     public string?                   Model                  { get; set; }
+    public bool                      RequiresAuth           { get; set; }
+    public string?                   AuthProvider           { get; set; }
+    public string?                   AuthUrl                { get; set; }
 }

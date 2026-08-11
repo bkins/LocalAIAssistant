@@ -503,6 +503,30 @@ public partial class ChatViewModel : ObservableObject
                     response = await cp.ConverseAsync(followUpText, ConversationId, modelToUse).ConfigureAwait(false);
                 }
 
+                if (response.RequiresAuth && !string.IsNullOrEmpty(response.AuthUrl))
+                {
+                    _ = MainThread.InvokeOnMainThreadAsync(async () =>
+                    {
+                        try
+                        {
+                            var open = await Shell.Current.DisplayAlert(
+                                "Re-authorisation Required",
+                                "Your Google Calendar session has expired or requires authorization. Would you like to open the authorization page in your browser?",
+                                "Open Browser",
+                                "Cancel");
+                            
+                            if (open)
+                            {
+                                await Browser.Default.OpenAsync(response.AuthUrl, BrowserLaunchMode.External);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _log.LogError(ex, "Failed to open auth browser", Category.ChatViewModel);
+                        }
+                    });
+                }
+
                 if (response.Message.Contains("Groq API returned 429", StringComparison.CurrentCultureIgnoreCase))
                 {
                     _log.LogWarning($"SendAsync: API returned 429 — {response.Message}", Category.ChatViewModel);

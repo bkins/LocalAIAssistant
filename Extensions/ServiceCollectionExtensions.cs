@@ -173,6 +173,8 @@ public static class ServiceCollectionExtensions
         ```        
          */
 
+        services.AddSingleton<AgentJobService>();
+
         return services;
     }
     
@@ -200,6 +202,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<EditTaskViewModel>();
 
         services.AddTransient<ConversationsViewModel>();
+        services.AddTransient<AgentChatViewModel>();
 
         return services;
     }
@@ -223,6 +226,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<EditTaskPage>();
 
         services.AddTransient<ConversationsPage>();
+        services.AddTransient<AgentChatPage>();
 
         return services;
     }

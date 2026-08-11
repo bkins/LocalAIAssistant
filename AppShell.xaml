@@ -146,6 +146,9 @@
         <Tab Title="Chats" AutomationId="ChatsTabItem">
             <ShellContent ContentTemplate="{DataTemplate views:ConversationsPage}"/>
         </Tab>
+        <Tab Title="Agent" AutomationId="AgentTabItem">
+            <ShellContent Route="AgentChat" ContentTemplate="{DataTemplate views:AgentChatPage}"/>
+        </Tab>
         <Tab Title="Inbox" AutomationId="InboxTabItem">
             <ShellContent ContentTemplate="{DataTemplate inbox:KnowledgeInboxPage}"/>
         </Tab>
