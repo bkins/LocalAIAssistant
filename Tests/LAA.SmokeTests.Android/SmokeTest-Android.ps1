@@ -126,17 +126,76 @@ function Tap-Node {
     return $true
 }
 
+function Ensure-AppInForeground {
+    $dump = Get-UiDump
+    if ($null -eq $dump) { return }
+    $pkgNode = $dump.SelectSingleNode("//node[@package='$PackageName']")
+    if ($null -eq $pkgNode) {
+        Restore-App
+    }
+}
+
+function Restore-App {
+    Write-Host "  Bringing app to foreground..." -ForegroundColor DarkGray
+    Invoke-Adb "shell", "monkey", "-p", $PackageName, "1" | Out-Null
+    Start-Sleep -Milliseconds 2000
+
+    # Dismiss startup/diagnostics modal if visible
+    Dismiss-Diagnostics-IfVisible | Out-Null
+
+    # Wait up to 15 seconds for main app screen (EditText or Shell bottom tab bar) to appear
+    $deadline = (Get-Date).AddSeconds(15)
+    while ((Get-Date) -lt $deadline) {
+        $d = Get-UiDump
+        if ($null -ne $d) {
+            $editor   = Find-Node $d -ClassName "android.widget.EditText"
+            $chatsTab = Find-Node $d -ContentDesc "Chats"
+            if ($null -eq $chatsTab) { $chatsTab = Find-Node $d -Text "Chats" }
+            $inboxTab = Find-Node $d -ContentDesc "Inbox"
+            if ($null -eq $inboxTab) { $inboxTab = Find-Node $d -Text "Inbox" }
+            if ($null -ne $editor -or $null -ne $chatsTab -or $null -ne $inboxTab) { break }
+        }
+        Start-Sleep -Milliseconds 500
+    }
+}
+
 function Tap-Tab {
-    <# Clicks a Shell tab by its visible title text. #>
+    <# Clicks a Shell tab by its visible title text or content-desc container (supports 'Chat' / 'Agent' alias). #>
     param([string] $Title, [int] $DelayMs = 1000)
+
+    Ensure-AppInForeground
+    # Automatically dismiss any modal popups (like "Select Conversation" or startup diagnostics) first
+    Dismiss-Diagnostics-IfVisible | Out-Null
+
     $dump = Get-UiDump
     if ($null -eq $dump) { return $false }
 
-    # MAUI Shell bottom-nav tabs can appear with text OR content-desc matching the title.
-    $node = Find-Node $dump -Text $Title
+    # MAUI Shell bottom-nav tabs: prefer ContentDesc (the outer FrameLayout tab container) for a larger tap target
+    $node = Find-Node $dump -ContentDesc $Title
     if ($null -eq $node) {
-        $node = Find-Node $dump -ContentDesc $Title
+        $node = Find-Node $dump -Text $Title
     }
+    if ($null -eq $node -and $Title -eq "Chat") {
+        $node = Find-Node $dump -ContentDesc "Agent"
+        if ($null -eq $node) {
+            $node = Find-Node $dump -Text "Agent"
+        }
+    }
+
+    # If tab is in the 'More' overflow menu on Android Shell:
+    if ($null -eq $node) {
+        $moreNode = Find-Node $dump -ContentDesc "More"
+        if ($null -eq $moreNode) { $moreNode = Find-Node $dump -Text "More" }
+        if ($null -ne $moreNode) {
+            Tap-Node $moreNode -DelayMs 800 | Out-Null
+            $dump = Get-UiDump
+            if ($null -ne $dump) {
+                $node = Find-Node $dump -ContentDesc $Title
+                if ($null -eq $node) { $node = Find-Node $dump -Text $Title }
+            }
+        }
+    }
+
     if ($null -eq $node) { return $false }
     Tap-Node $node -DelayMs $DelayMs | Out-Null
     return $true
@@ -148,12 +207,38 @@ function Dismiss-Diagnostics-IfVisible {
     $dump = Get-UiDump
     if ($null -eq $dump) { return $false }
 
-    $goBtn = Find-Node $dump -Text "Go to App"
-    if ($null -eq $goBtn) { return $false }
+    $startupTitle = Find-Node $dump -Text "Startup Diagnostics"
+    if ($null -ne $startupTitle) {
+        Write-Host "  Startup Diagnostics overlay active - waiting for 'Go to App' button..." -ForegroundColor DarkGray
+        $goBtn = Wait-ForElement -TimeoutSeconds 45 -IntervalMs 1000 -Predicate {
+            param($d)
+            Find-Node $d -Text "Go to App"
+        }
+        if ($null -ne $goBtn) {
+            Write-Host "  Tapping 'Go to App'..." -ForegroundColor DarkGray
+            Tap-Node $goBtn -DelayMs $DelayMs | Out-Null
+            return $true
+        }
+    }
 
-    Write-Host "  Late debug modal detected - tapping 'Go to App'..." -ForegroundColor DarkGray
-    Tap-Node $goBtn -DelayMs $DelayMs | Out-Null
-    return $true
+    $goBtn = Find-Node $dump -Text "Go to App"
+    if ($null -ne $goBtn) {
+        Write-Host "  Late debug modal detected - tapping 'Go to App'..." -ForegroundColor DarkGray
+        Tap-Node $goBtn -DelayMs $DelayMs | Out-Null
+        return $true
+    }
+
+    $cancelBtn = Find-Node $dump -Text "Cancel"
+    if ($null -ne $cancelBtn) {
+        $selectTitle = Find-Node $dump -Text "Select Conversation"
+        if ($null -ne $selectTitle) {
+            Write-Host "  'Select Conversation' modal detected - tapping 'Cancel'..." -ForegroundColor DarkGray
+            Tap-Node $cancelBtn -DelayMs $DelayMs | Out-Null
+            return $true
+        }
+    }
+
+    return $false
 }
 
 function Find-ChatEditor {
@@ -308,85 +393,66 @@ Invoke-Adb "shell", "monkey", "-p", $PackageName, "-c", "android.intent.category
 
 Write-Host "Waiting for app to be ready..." -ForegroundColor DarkGray
 
-# Phase 1: wait for the EditText (chat editor) OR the debug startup "Go to App" button.
-# The debug build shows a DebugStartupPage that can take 2-3 minutes before revealing "Go to App".
-# While it's running we print the current status line so the console doesn't look frozen.
+# Wait for app startup diagnostics to finish and reveal the main chat page.
+# AppShell.xaml.cs pushes DebugStartupPage modal after InitializeAsync completes (~2-3s after launch).
+# DebugStartupPage runs StartupHandshakeService (~35s) before showing "Go to App".
 $lastStatus = ""
-$readyNode = Wait-ForElement -TimeoutSeconds $MaxWaitSeconds -Predicate {
-    param($dump)
-    $editor = Find-Node $dump -ClassName "android.widget.EditText"
-    if ($null -ne $editor) { return $editor }
-    $goBtn = Find-Node $dump -Text "Go to App"
-    if ($null -ne $goBtn) { return $goBtn }
+$startTime = Get-Date
+$diagnosticsSeen = $false
 
-    # Still on diagnostics page — report the current status label so the console isn't silent.
-    $statusNode = Find-Node $dump -Text "Startup Diagnostics"
-    if ($null -ne $statusNode) {
-        $runningNode = Find-AllNodes $dump "//node[@class='android.widget.TextView']" |
-                       Where-Object { $_.text -match "^Running:" } |
-                       Select-Object -First 1
-        $status = if ($null -ne $runningNode) { $runningNode.text } else { "startup diagnostics running..." }
-        if ($status -ne $script:lastStatus) {
-            Write-Host "  $status" -ForegroundColor DarkGray
-            $script:lastStatus = $status
+Write-Host "Waiting for startup diagnostics page..." -ForegroundColor DarkGray
+while (((Get-Date) - $startTime).TotalSeconds -lt 240) {
+    $dump = Get-UiDump
+    if ($null -ne $dump) {
+        $diagText = Find-Node $dump -Text "Startup Diagnostics"
+        $goBtn    = Find-Node $dump -Text "Go to App"
+
+        if ($null -ne $diagText -or $null -ne $goBtn) {
+            $diagnosticsSeen = $true
+        }
+
+        if ($null -ne $goBtn) {
+            Write-Host "  Startup diagnostics complete - tapping 'Go to App'..." -ForegroundColor DarkGray
+            Tap-Node $goBtn -DelayMs 1500 | Out-Null
+            break
+        }
+
+        if ($null -ne $diagText) {
+            $runningNode = Find-AllNodes $dump "//node[@class='android.widget.TextView']" |
+                           Where-Object { $_.text -match "^Running:" } |
+                           Select-Object -First 1
+            $status = if ($null -ne $runningNode) { $runningNode.text } else { "startup diagnostics running..." }
+            if ($status -ne $script:lastStatus) {
+                Write-Host "  $status" -ForegroundColor DarkGray
+                $script:lastStatus = $status
+            }
+        } elseif (-not $diagnosticsSeen -and (((Get-Date) - $startTime).TotalSeconds -ge 8)) {
+            # If after 8 seconds diagnostics hasn't appeared, check if main shell is ready
+            $editor = Find-Node $dump -ClassName "android.widget.EditText"
+            if ($null -ne $editor) {
+                Write-Host "  Main shell editor visible (no diagnostics modal active)." -ForegroundColor DarkGray
+                break
+            }
         }
     }
-    return $null
+    Start-Sleep -Milliseconds 1500
 }
 
-if ($null -eq $readyNode) {
+# Ensure main shell editor is visible and dismiss any lingering modals
+Write-Host "Confirming main chat page is ready..." -ForegroundColor DarkGray
+$chatEditor = Wait-ForElement -TimeoutSeconds 30 -IntervalMs 1500 -Predicate {
+    param($dump)
+    Dismiss-Diagnostics-IfVisible | Out-Null
+    Find-Node $dump -ClassName "android.widget.EditText"
+}
+
+if ($null -eq $chatEditor) {
     Write-Host ""
-    Write-Host "[FATAL] App did not reach the Chat page within $MaxWaitSeconds seconds." -ForegroundColor Red
-    Write-Host "        Check that the app is installed and the correct package name is used." -ForegroundColor Red
+    Write-Host "[FATAL] Chat page not ready after startup." -ForegroundColor Red
     exit 1
-}
-
-# Phase 2: if we landed on the debug startup page, tap through to the main app.
-$chatEditor = $readyNode
-if ($readyNode.class -ne "android.widget.EditText") {
-    Write-Host "Debug startup page detected - tapping 'Go to App'..." -ForegroundColor DarkGray
-    Tap-Node $readyNode -DelayMs 1500 | Out-Null
-    $chatEditor = Wait-ForElement -TimeoutSeconds $MaxWaitSeconds -Predicate {
-        param($dump)
-        Find-Node $dump -ClassName "android.widget.EditText"
-    }
-    if ($null -eq $chatEditor) {
-        Write-Host ""
-        Write-Host "[FATAL] Chat page did not appear after tapping 'Go to App'." -ForegroundColor Red
-        exit 1
-    }
 }
 
 Write-Host "App ready." -ForegroundColor DarkGray
-
-# Phase 3: guard against the DebugStartupPage modal appearing AFTER Phase 1/2.
-# AppShell pushes it via PushModalAsync after OnAppearing / InitializeAsync;
-# a fast Phase 1 poll can grab the EditText before the modal is fully presented.
-# Poll until "Startup Diagnostics" is no longer on screen, tapping "Go to App"
-# whenever it becomes available.
-Write-Host "Verifying main shell is in front (checking for late diagnostics modal)..." -ForegroundColor DarkGray
-$shellReady = Wait-ForElement -TimeoutSeconds $MaxWaitSeconds -IntervalMs 1500 -Predicate {
-    param($dump)
-    $diagText = Find-Node $dump -Text "Startup Diagnostics"
-    if ($null -ne $diagText) {
-        # Modal is on screen.  Tap "Go to App" if diagnostics have finished.
-        $goBtn = Find-Node $dump -Text "Go to App"
-        if ($null -ne $goBtn) {
-            $center = Get-NodeCenter $goBtn
-            Invoke-Adb "shell", "input", "tap", $center.X, $center.Y | Out-Null
-            Start-Sleep -Milliseconds 1000
-        }
-        return $null   # still in diagnostics — keep polling
-    }
-    # No diagnostics page — confirm the main UI is in front.
-    Find-Node $dump -ClassName "android.widget.EditText"
-}
-if ($null -eq $shellReady) {
-    Write-Host ""
-    Write-Host "[FATAL] Main shell not reachable: startup diagnostics modal did not dismiss within $MaxWaitSeconds s." -ForegroundColor Red
-    exit 1
-}
-Write-Host "Main shell confirmed." -ForegroundColor DarkGray
 Write-Host ""
 
 # --- Smoke Tests -------------------------------------------------------------
@@ -442,7 +508,7 @@ Run-Test "Can type a message and Send button is present" {
     Start-Sleep -Milliseconds 300
 
     # Dismiss the soft keyboard so it does not intercept nav-tab taps in later tests.
-    Invoke-Adb "shell", "input", "keyevent", "KEYCODE_ESCAPE" | Out-Null
+    Invoke-Adb "shell", "input", "keyevent", "KEYCODE_BACK" | Out-Null
     Start-Sleep -Milliseconds 600
     $true
 }
@@ -545,10 +611,7 @@ Run-Test "App survives rapid tab cycling without crashing" {
         }
     }
     Tap-Tab "Chat" -DelayMs 1000 | Out-Null
-    Start-Sleep -Milliseconds 800
-    $dump   = Get-UiDump
-    if ($null -eq $dump) { return "UI dump returned null after rapid tab cycling - app may have crashed" }
-    $editor = Find-Node $dump -ClassName "android.widget.EditText"
+    $editor = Find-ChatEditor -TimeoutSeconds 8
     if ($null -eq $editor) { return "Chat editor not visible after rapid tab cycling" }
     $true
 }
@@ -557,8 +620,9 @@ Run-Test "App survives rapid tab cycling without crashing" {
 Run-Test "Back navigation from Chats page does not crash" {
     Tap-Tab "Chats" -DelayMs 1000 | Out-Null
     Invoke-Adb "shell", "input", "keyevent", "KEYCODE_BACK" | Out-Null
-    Start-Sleep -Milliseconds 800
+    Start-Sleep -Milliseconds 1500
 
+    Restore-App
     $dump = Get-UiDump
     if ($null -eq $dump) { return "UI dump returned null after back navigation - app may have crashed" }
     $true

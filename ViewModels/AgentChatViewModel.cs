@@ -152,11 +152,11 @@ public partial class AgentChatViewModel : ObservableObject
                     break;
                 }
 
-                if (updatedJob.Status == "Running")
+                if (updatedJob.Status == AgentJobStatus.Running)
                 {
                     StatusText = "Antigravity is executing the prompt on workstation...";
                 }
-                else if (updatedJob.Status == "Completed")
+                else if (updatedJob.Status == AgentJobStatus.Completed)
                 {
                     completed = true;
                     StatusText = string.Empty;
@@ -183,7 +183,7 @@ public partial class AgentChatViewModel : ObservableObject
                         }
                     }
                 }
-                else if (updatedJob.Status == "Failed")
+                else if (updatedJob.Status == AgentJobStatus.Failed)
                 {
                     completed = true;
                     StatusText = $"Job failed: {updatedJob.Error}";
