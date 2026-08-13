@@ -106,7 +106,7 @@
 
         <!-- Input / Action Bottom Bar -->
         <Grid Grid.Row="2"
-              RowDefinitions="Auto,Auto"
+              RowDefinitions="Auto,Auto,Auto"
               Padding="12"
               BackgroundColor="{StaticResource SurfaceColor}">
 
@@ -146,6 +146,24 @@
                         VerticalOptions="End"
                         Padding="16,10"/>
             </Grid>
+
+            <!-- Model Selector Row (Under Message Field) -->
+            <HorizontalStackLayout Grid.Row="2"
+                                   Spacing="8"
+                                   Margin="0,8,0,0"
+                                   VerticalOptions="Center">
+                <Label Text="Model:"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       VerticalOptions="Center"/>
+                <Picker ItemsSource="{Binding AvailableModels}"
+                        SelectedItem="{Binding SelectedModel, Mode=TwoWay}"
+                        TextColor="{StaticResource PrimaryTextColor}"
+                        Title="Select Model"
+                        FontSize="12"
+                        MinimumWidthRequest="180"
+                        VerticalOptions="Center"/>
+            </HorizontalStackLayout>
         </Grid>
     </Grid>
 </ContentPage>

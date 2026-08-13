@@ -23,9 +23,9 @@ public class AgentJobService
                        };
     }
 
-    public async Task<AgentJobDto> CreateJobAsync(string prompt, string? conversationId)
+    public async Task<AgentJobDto> CreateJobAsync(string prompt, string? conversationId, string? model = null)
     {
-        var payload = new { Prompt = prompt, ConversationId = conversationId };
+        var payload = new { Prompt = prompt, ConversationId = conversationId, Model = model };
         var response = await _httpClient.PostAsJsonAsync("api/agent/jobs", payload);
         response.EnsureSuccessStatusCode();
 

@@ -21,5 +21,6 @@ public class AgentJobDto
     public DateTimeOffset  CreatedUtc     { get; set; }
     public DateTimeOffset? StartedUtc     { get; set; }
     public DateTimeOffset? CompletedUtc   { get; set; }
+    public string?         Model          { get; set; }
     public string?         Error          { get; set; }
 }

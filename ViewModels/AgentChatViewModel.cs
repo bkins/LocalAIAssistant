@@ -15,6 +15,18 @@ public partial class AgentChatViewModel : ObservableObject
 {
     private readonly AgentJobService _agentJobService;
 
+    [ObservableProperty] private ObservableCollection<string> _availableModels = new()
+                                                                                   {
+                                                                                       "Default (Auto)"
+                                                                                     , "Gemini 2.5 Flash"
+                                                                                     , "Gemini 2.5 Flash Lite"
+                                                                                     , "Gemini 2.5 Pro"
+                                                                                     , "Llama 3.3 70B"
+                                                                                     , "Claude 3.5 Sonnet"
+                                                                                     , "DeepSeek R1"
+                                                                                   };
+    [ObservableProperty] private string _selectedModel = "Default (Auto)";
+
     [ObservableProperty] private ObservableCollection<ConversationMetadataDto> _conversations = new();
     [ObservableProperty] private ConversationMetadataDto? _selectedConversation;
     [ObservableProperty] private ObservableCollection<ConversationTurnDto> _messages = new();
@@ -130,7 +142,8 @@ public partial class AgentChatViewModel : ObservableObject
         try
         {
             var convoId = string.IsNullOrEmpty(SelectedConversation?.ConversationId) ? null : SelectedConversation.ConversationId;
-            var job = await _agentJobService.CreateJobAsync(prompt, convoId);
+            var modelToUse = SelectedModel == "Default (Auto)" ? null : SelectedModel;
+            var job = await _agentJobService.CreateJobAsync(prompt, convoId, modelToUse);
             var jobId = job.Id;
 
             StatusText = "Job queued on server. Waiting for workstation poller...";
@@ -162,10 +175,16 @@ public partial class AgentChatViewModel : ObservableObject
                     StatusText = string.Empty;
 
                     // Add assistant response visually
+                    var responseText = updatedJob.Response ?? "(No response content returned)";
+                    if (!string.IsNullOrWhiteSpace(updatedJob.Model))
+                    {
+                        responseText += $"\n\n*Model: {updatedJob.Model}*";
+                    }
+
                     var assistantTurn = new ConversationTurnDto
                                         {
                                             Role      = "assistant"
-                                          , Content   = updatedJob.Response ?? "(No response content returned)"
+                                          , Content   = responseText
                                           , Timestamp = updatedJob.CompletedUtc ?? DateTimeOffset.UtcNow
                                         };
                     Messages.Add(assistantTurn);
