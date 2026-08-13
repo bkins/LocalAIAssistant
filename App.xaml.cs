@@ -12,9 +12,7 @@ namespace LocalAIAssistant;
 
 public partial class App : Application
 {
-	private readonly ILlmService                     _ollamaApiService;
 	private readonly ApiHealthService                _apiHealthService;
-	private readonly ApiHealthViewModel              _apiHealthViewModel;
 	private readonly ILoggingService                 _loggingService;
 	private readonly AppShellMasterViewModel         _masterViewModel;
 	private readonly NotificationSyncService         _notificationSyncService;
@@ -22,9 +20,7 @@ public partial class App : Application
 	private readonly FileGatewayService              _fileGatewayService;
 	private readonly CancellationTokenSource         _appLifetime = new();
 
-	public App (ILlmService               ollamaApiService
-	          , ApiHealthService          apiHealthService
-	          , ApiHealthViewModel        apiHealthViewModel
+	public App (ApiHealthService          apiHealthService
 	          , ILoggingService           loggingService
 	          , AppShellMasterViewModel   masterViewModel
 	          , NotificationSyncService   notificationSyncService
@@ -33,9 +29,7 @@ public partial class App : Application
 	{
 		InitializeComponent();
 
-		_ollamaApiService        = ollamaApiService;
 		_apiHealthService        = apiHealthService;
-		_apiHealthViewModel      = apiHealthViewModel;
 		_loggingService          = loggingService;
 		_masterViewModel         = masterViewModel;
 		_notificationSyncService = notificationSyncService;
@@ -43,32 +37,9 @@ public partial class App : Application
 		_fileGatewayService      = fileGatewayService;
 
 		RegisterGlobalExceptionHandlers();
-
-		AppDomain.CurrentDomain.UnhandledException += OnCurrentDomainOnUnhandledException;
-
 	}
 
-	private void OnCurrentDomainOnUnhandledException(object                      sender
-	                                               , UnhandledExceptionEventArgs eventArgs)
-	{
-		var exception = eventArgs.ExceptionObject as Exception;
-		
-		if (exception == null) return;
-		
-		var message = $"Unhandled exception: {exception}";
-		
-		System.Diagnostics.Debug.WriteLine(message);
-			
-		_loggingService.LogError(exception
-		                       , $"Global Unhandled Exception occurred: {exception.Message}"
-		                       , Category.App);
-	}
 
-	private async void CheckApiAvailabilityAsync(ILlmService ollamaApiService)
-	{
-		var isAvailable = await ollamaApiService.CheckApiHealthAsync();
-		_apiHealthService.IsApiAvailable = isAvailable;
-	}
 	
 	protected override Window CreateWindow(IActivationState? activationState)
 	{
@@ -117,15 +88,24 @@ public partial class App : Application
 		// .NET unhandled exceptions (non-UI thread)
 		AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
 		{
-			var ex = args.ExceptionObject as Exception;
-			LogCrash("AppDomain.UnhandledException", ex);
+			if (args.ExceptionObject is Exception ex)
+			{
+				LogCrash("AppDomain.UnhandledException", ex);
+			}
+			else
+			{
+				LogCrash("AppDomain.UnhandledException", new Exception($"Non-exception object thrown: {args.ExceptionObject}"));
+			}
 		};
 
 		// Async void / Task exceptions that weren't awaited
 		TaskScheduler.UnobservedTaskException += (sender, args) =>
 		{
-			LogCrash("TaskScheduler.UnobservedTaskException", args.Exception);
-			args.SetObserved(); // Prevents process termination
+			if (args.Exception != null)
+			{
+				LogCrash("TaskScheduler.UnobservedTaskException", args.Exception);
+				args.SetObserved(); // Prevents process termination
+			}
 		};
 	}
 
