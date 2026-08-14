@@ -339,6 +339,62 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
         }
     }
 
+    public override async Task<VaultStatusDto> GetVaultStatusAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _httpClient.GetFromJsonAsync<VaultStatusDto>("api/secrets/status", ct).ConfigureAwait(false)
+                ?? new VaultStatusDto();
+        }
+        catch (Exception ex)
+        {
+            _loggingService.LogWarning($"GetVaultStatusAsync failed: {ex.Message}", Category.CognitivePlatformClient);
+            return new VaultStatusDto();
+        }
+    }
+
+    public override async Task<bool> UnlockVaultAsync(string pin, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/secrets/unlock", new { Pin = pin }, ct).ConfigureAwait(false);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            _loggingService.LogWarning($"UnlockVaultAsync failed: {ex.Message}", Category.CognitivePlatformClient);
+            return false;
+        }
+    }
+
+    public override async Task<bool> SetupVaultAsync(string pin, CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/secrets/setup", new { Pin = pin }, ct).ConfigureAwait(false);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            _loggingService.LogWarning($"SetupVaultAsync failed: {ex.Message}", Category.CognitivePlatformClient);
+            return false;
+        }
+    }
+
+    public override async Task<bool> LockVaultAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/secrets/lock", new { }, ct).ConfigureAwait(false);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            _loggingService.LogWarning($"LockVaultAsync failed: {ex.Message}", Category.CognitivePlatformClient);
+            return false;
+        }
+    }
+
     public override string ToString()
         => $"{nameof(CognitivePlatformClient)} :: HttpClient -> {_httpClient.BaseAddress}";
 }

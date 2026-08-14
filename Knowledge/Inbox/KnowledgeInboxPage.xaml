@@ -149,6 +149,12 @@
                                     Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}},
                                                       Path=BindingContext.ArchiveCommand}"
                                     CommandParameter="{Binding .}" />
+                                <SwipeItem
+                                    Text="Save to Vault"
+                                    BackgroundColor="#1E3A2A"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}},
+                                                      Path=BindingContext.SaveToVaultCommand}"
+                                    CommandParameter="{Binding .}" />
                             </SwipeItems>
                         </SwipeView.RightItems>
 

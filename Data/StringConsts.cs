@@ -22,6 +22,7 @@ public static class StringConsts
     public const string TtsAzureKeyPrefKey           = "TtsAzureKey";
     public const string TtsAzureRegionPrefKey        = "TtsAzureRegion";
     public const string TtsElevenLabsKeyPrefKey      = "TtsElevenLabsKey";
+    public const string StreamingEnabledPrefKey      = "StreamingEnabled";
     public const string EnableStartupProbesPrefKey       = "EnableStartupProbes";
     public const string EnableStartupDiagnosticsPrefKey  = "EnableStartupDiagnostics";
 

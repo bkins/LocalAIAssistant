@@ -24,6 +24,8 @@ using LocalAIAssistant.Services.Google;
 using LocalAIAssistant.Services.Logging;
 using LocalAIAssistant.Services.Logging.Interfaces;
 using Microsoft.Extensions.Options;
+using CommunityToolkit.Maui.Views;
+using CommunityToolkit.Maui.Extensions;
 
 namespace LocalAIAssistant.ViewModels;
 
@@ -58,13 +60,13 @@ public partial class ChatViewModel : ObservableObject
     [ObservableProperty] private bool _isOffline;
 
     // ── UI state ──────────────────────────────────────────────────────────────
-    [ObservableProperty] private bool        _useStreaming        = false; // TODO: This needs to be determined dynamically
+    [ObservableProperty] private bool        _useStreaming        = true;
     [ObservableProperty] private string      _promptText          = string.Empty;
     [ObservableProperty] private bool        _isBusy;
     [ObservableProperty] private bool        _isTyping;
     [ObservableProperty] private Personality _selectedPersonality;
     [ObservableProperty] private int         _pendingQueueCount;
-    [ObservableProperty] private bool        _showStreamingOption = false;
+    [ObservableProperty] private bool        _showStreamingOption = true;
     [ObservableProperty] private bool        _isCocoMode;
 
     [ObservableProperty]
@@ -225,6 +227,7 @@ public partial class ChatViewModel : ObservableObject
 
         await InitializeTtsAsync();
         InitializeCocoSidecar();
+        UseStreaming = Preferences.Default.Get(StringConsts.StreamingEnabledPrefKey, true);
 
         HasBeenInitialized = true;
     }
@@ -327,6 +330,11 @@ public partial class ChatViewModel : ObservableObject
     partial void OnTtsSelectedVoiceChanged(string value)
     {
         if (value.HasValue()) _ttsService.PreferredVoiceName = value;
+    }
+
+    partial void OnUseStreamingChanged(bool value)
+    {
+        Preferences.Default.Set(StringConsts.StreamingEnabledPrefKey, value);
     }
 
     public Task StopSpeakingAsync() => _ttsService.StopAsync();
@@ -476,6 +484,24 @@ public partial class ChatViewModel : ObservableObject
                                                     , ConversationId
                                                     , modelToUse)
                                        .ConfigureAwait(false);
+
+                if (response.IsVaultUnlockRequired || response.IsVaultSetupRequired)
+                {
+                    var unlocked = await MainThread.InvokeOnMainThreadAsync(async () =>
+                    {
+                        var popup = new Views.VaultAuthPopup(response.IsVaultSetupRequired);
+                        var result = await Shell.Current.CurrentPage.ShowPopupAsync<bool>(popup);
+                        return result?.Result is true;
+                    }).ConfigureAwait(false);
+
+                    if (unlocked)
+                    {
+                        response = await cp.ConverseAsync(text
+                                                            , ConversationId
+                                                            , modelToUse)
+                                               .ConfigureAwait(false);
+                    }
+                }
 
                 if (response.IsConfirmationRequired)
                 {

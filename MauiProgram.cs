@@ -278,6 +278,12 @@ public static class MauiProgram
 		                                   , factsFilePath
 		                                   , memoryFilePath);
 
+#if WINDOWS
+		Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<Services.IBiometricService, Platforms.Windows.WindowsBiometricService>(builder.Services);
+#else
+		Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<Services.IBiometricService, Services.DummyBiometricService>(builder.Services);
+#endif
+
 		builder.Services.AddViewModels();
 		builder.Services.AddViews();
 

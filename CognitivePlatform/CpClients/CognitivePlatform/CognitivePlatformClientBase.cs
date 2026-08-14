@@ -32,4 +32,9 @@ public abstract class CognitivePlatformClientBase
     public abstract Task<GroqUsageDto> GetUsageAsync(CancellationToken ct = default);
 
     public abstract Task<List<ActionMetadataDto>> GetActionsAsync(CancellationToken ct = default);
+
+    public abstract Task<VaultStatusDto> GetVaultStatusAsync(CancellationToken ct = default);
+    public abstract Task<bool> UnlockVaultAsync(string pin, CancellationToken ct = default);
+    public abstract Task<bool> SetupVaultAsync(string pin, CancellationToken ct = default);
+    public abstract Task<bool> LockVaultAsync(CancellationToken ct = default);
 }

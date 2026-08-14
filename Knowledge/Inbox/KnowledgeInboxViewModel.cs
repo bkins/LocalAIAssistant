@@ -1,8 +1,12 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Maui.Views;
+using CommunityToolkit.Maui.Extensions;
 using CP.Client.Core.Avails;
 using LocalAIAssistant.CognitivePlatform.CpClients.Knowledge;
+using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
+using LocalAIAssistant.CognitivePlatform.DTOs;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Knowledge.Journals.Views;
@@ -13,10 +17,11 @@ namespace LocalAIAssistant.Knowledge.Inbox;
 
 public partial class KnowledgeInboxViewModel : ObservableObject
 {
-    private readonly IKnowledgeClientFactory   _clientFactory;
-    private readonly IKnowledgeSyncService     _syncService;
-    private readonly ILocalKnowledgeStore      _localStore;
-    private readonly LocalAiAssistantDbContext _db;
+    private readonly IKnowledgeClientFactory         _clientFactory;
+    private readonly IKnowledgeSyncService           _syncService;
+    private readonly ILocalKnowledgeStore            _localStore;
+    private readonly LocalAiAssistantDbContext       _db;
+    private readonly ICognitivePlatformClientFactory _cpClientFactory;
 
     public ObservableCollection<KnowledgeItem> Items => _items;
 
@@ -49,15 +54,17 @@ public partial class KnowledgeInboxViewModel : ObservableObject
     private KnowledgeKind? _activeTypeFilter;     // null = All
     private string?        _activeWorkspaceFilter; // null = All
 
-    public KnowledgeInboxViewModel(IKnowledgeClientFactory   clientFactory
-                                 , IKnowledgeSyncService     syncService
-                                 , ILocalKnowledgeStore      localStore
-                                 , LocalAiAssistantDbContext db )
+    public KnowledgeInboxViewModel(IKnowledgeClientFactory         clientFactory
+                                 , IKnowledgeSyncService           syncService
+                                 , ILocalKnowledgeStore            localStore
+                                 , LocalAiAssistantDbContext       db
+                                 , ICognitivePlatformClientFactory cpClientFactory )
     {
-        _clientFactory = clientFactory;
-        _syncService   = syncService;
-        _localStore    = localStore;
-        _db            = db;
+        _clientFactory   = clientFactory;
+        _syncService     = syncService;
+        _localStore      = localStore;
+        _db              = db;
+        _cpClientFactory = cpClientFactory;
     }
 
     [RelayCommand]
@@ -225,6 +232,85 @@ public partial class KnowledgeInboxViewModel : ObservableObject
 
         Items.Remove(item);
         RebuildGroups();
+    }
+
+    [RelayCommand]
+    private async Task SaveToVaultAsync(KnowledgeItem item)
+    {
+        if (item is null)
+            return;
+
+        if (item.Kind == KnowledgeKind.Pending)
+        {
+            var queueItem = await _db.OfflineQueue.FirstOrDefaultAsync(q => q.Id == item.Id);
+            if (queueItem is null)
+                return;
+
+            var cpClient = _cpClientFactory.Create();
+            var prompt = $"save secret \"{item.Title}\" is \"{queueItem.Input}\" under category \"Pending\"";
+
+            var response = await cpClient.ConverseAsync(prompt, "default", string.Empty);
+
+            if (response.IsVaultUnlockRequired || response.IsVaultSetupRequired)
+            {
+                var unlocked = await HandleVaultAuthFlowAsync(response);
+                if (unlocked)
+                {
+                    response = await cpClient.ConverseAsync(prompt, "default", string.Empty);
+                }
+                else
+                {
+                    return;
+                }
+            }
+
+            if (response.Message.Contains("saved successfully", StringComparison.OrdinalIgnoreCase))
+            {
+                _db.OfflineQueue.Remove(queueItem);
+                await _db.SaveChangesAsync();
+
+                Items.Remove(item);
+                RebuildGroups();
+            }
+        }
+        else
+        {
+            var client = _clientFactory.Create();
+            var response = await client.ArchiveInboxItemToVaultAsync(item.Id, item.Kind.ToString());
+
+            if (response.IsVaultUnlockRequired || response.IsVaultSetupRequired)
+            {
+                var unlocked = await HandleVaultAuthFlowAsync(response);
+                if (unlocked)
+                {
+                    response = await client.ArchiveInboxItemToVaultAsync(item.Id, item.Kind.ToString());
+                }
+                else
+                {
+                    return;
+                }
+            }
+
+            if (response.Success)
+            {
+                Items.Remove(item);
+                RebuildGroups();
+            }
+        }
+    }
+
+    private async Task<bool> HandleVaultAuthFlowAsync(ConverseResponseDto response)
+    {
+        if (response.IsVaultUnlockRequired || response.IsVaultSetupRequired)
+        {
+            return await Microsoft.Maui.ApplicationModel.MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                var popup = new Views.VaultAuthPopup(response.IsVaultSetupRequired);
+                var result = await Shell.Current.CurrentPage.ShowPopupAsync<bool>(popup);
+                return result?.Result is true;
+            });
+        }
+        return false;
     }
 
     // ── Open (navigate to detail) ─────────────────────────────────────────────

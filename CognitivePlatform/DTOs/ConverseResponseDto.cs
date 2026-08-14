@@ -4,6 +4,7 @@ public class ConverseResponseDto
 {
     public string                    Message        { get; set; } = "";
     public string                    ConversationId { get; set; } = "default";
+    public bool                      Success        { get; set; } = true;
     public bool                      WasFastPath    { get; set; }
     public IReadOnlyList<InsightDto> Insights       { get; set; } = Array.Empty<InsightDto>();
     // Populated when the API falls back to a lower model tier.
@@ -12,6 +13,8 @@ public class ConverseResponseDto
     public int                       PendingMemoryCount { get; set; }
     public bool                      IsConfirmationRequired { get; set; }
     public string?                   ConfirmationPrompt     { get; set; }
+    public bool                      IsVaultUnlockRequired  { get; set; }
+    public bool                      IsVaultSetupRequired   { get; set; }
     public string?                   Provider               { get; set; }
     public string?                   Model                  { get; set; }
     public bool                      RequiresAuth           { get; set; }

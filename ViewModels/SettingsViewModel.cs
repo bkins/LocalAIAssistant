@@ -36,6 +36,7 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string _environment;
     [ObservableProperty] private bool   _enableStartupProbes;
     [ObservableProperty] private bool   _enableStartupDiagnostics;
+    [ObservableProperty] private bool   _streamingEnabled;
 
     // ── TTS ───────────────────────────────────────────────────────────────────
     [ObservableProperty]
@@ -142,6 +143,7 @@ public partial class SettingsViewModel : ObservableObject
         _cocoHotkey                  = Preferences.Default.Get(StringConsts.CocoHotkeyPrefKey,                   StringConsts.CocoDefaultHotkey);
         _enableStartupProbes         = Preferences.Default.Get(StringConsts.EnableStartupProbesPrefKey,          true);
         _enableStartupDiagnostics    = Preferences.Default.Get(StringConsts.EnableStartupDiagnosticsPrefKey,     true);
+        _streamingEnabled            = Preferences.Default.Get(StringConsts.StreamingEnabledPrefKey,              true);
     }
 
     public Task RefreshHealthStatusAsync() => RefreshHealthStatus();
@@ -236,6 +238,7 @@ public partial class SettingsViewModel : ObservableObject
 
         Preferences.Default.Set(StringConsts.EnableStartupProbesPrefKey,          EnableStartupProbes);
         Preferences.Default.Set(StringConsts.EnableStartupDiagnosticsPrefKey,     EnableStartupDiagnostics);
+        Preferences.Default.Set(StringConsts.StreamingEnabledPrefKey,              StreamingEnabled);
     }
 
     // ── Google Calendar commands ──────────────────────────────────────────────

@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using LocalAIAssistant.Knowledge.Inbox;
+using LocalAIAssistant.CognitivePlatform.DTOs;
 
 namespace LocalAIAssistant.CognitivePlatform.CpClients.Knowledge;
 
@@ -38,5 +39,24 @@ public sealed class KnowledgeApiClient : IKnowledgeApiClient
                                                        , HttpCompletionOption.ResponseHeadersRead);
 
         response.EnsureSuccessStatusCode();
+    }
+
+    public async Task<ConverseResponseDto> ArchiveInboxItemToVaultAsync(Guid itemId, string kind)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, "api/secrets/archive-inbox-item")
+                            {
+                                    Content = JsonContent.Create(new
+                                                                 {
+                                                                         ItemId = itemId
+                                                                       , Kind   = kind
+                                                                 })
+                            };
+
+        using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadFromJsonAsync<ConverseResponseDto>()
+            ?? new ConverseResponseDto { Message = "Failed to archive item to vault." };
     }
 }

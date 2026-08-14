@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<toolkit:Popup 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    x:Class="LocalAIAssistant.Views.VaultAuthPopup"
+    x:TypeArguments="x:Boolean">
+
+    <Border 
+        WidthRequest="320"
+        BackgroundColor="#1E1E1E"
+        Stroke="#333"
+        StrokeThickness="1"
+        StrokeShape="RoundRectangle 16"
+        Padding="24"
+        VerticalOptions="Center"
+        HorizontalOptions="Center">
+
+        <VerticalStackLayout Spacing="16" HorizontalOptions="Center">
+            
+            <!-- Title -->
+            <Label 
+                x:Name="TitleLabel"
+                Text="Secrets Vault Locked"
+                FontSize="18"
+                FontAttributes="Bold"
+                TextColor="#FFFFFF"
+                HorizontalTextAlignment="Center" />
+
+            <!-- Subtitle/Description -->
+            <Label 
+                x:Name="DescriptionLabel"
+                Text="Enter your secure PIN to unlock the vault."
+                FontSize="12"
+                TextColor="#888888"
+                HorizontalTextAlignment="Center" />
+
+            <!-- Masked PIN Display -->
+            <Label 
+                x:Name="PinDisplayLabel"
+                Text=" "
+                FontSize="28"
+                FontAttributes="Bold"
+                TextColor="#AACC88"
+                CharacterSpacing="6"
+                HorizontalTextAlignment="Center"
+                Margin="0,10" />
+
+            <!-- Error Label -->
+            <Label 
+                x:Name="ErrorLabel"
+                Text=""
+                TextColor="#FF6666"
+                FontSize="12"
+                HorizontalTextAlignment="Center"
+                IsVisible="False" />
+
+            <!-- Keypad Grid -->
+            <Grid ColumnDefinitions="*,*,*" RowDefinitions="*,*,*,*" ColumnSpacing="12" RowSpacing="12" WidthRequest="240" HeightRequest="300">
+                <!-- Row 1 -->
+                <Button Grid.Row="0" Grid.Column="0" Text="1" Clicked="OnKeypadClicked" Style="{StaticResource KeypadButtonStyle}" />
+                <Button Grid.Row="0" Grid.Column="1" Text="2" Clicked="OnKeypadClicked" Style="{StaticResource KeypadButtonStyle}" />
+                <Button Grid.Row="0" Grid.Column="2" Text="3" Clicked="OnKeypadClicked" Style="{StaticResource KeypadButtonStyle}" />
+
+                <!-- Row 2 -->
+                <Button Grid.Row="1" Grid.Column="0" Text="4" Clicked="OnKeypadClicked" Style="{StaticResource KeypadButtonStyle}" />
+                <Button Grid.Row="1" Grid.Column="1" Text="5" Clicked="OnKeypadClicked" Style="{StaticResource KeypadButtonStyle}" />
+                <Button Grid.Row="1" Grid.Column="2" Text="6" Clicked="OnKeypadClicked" Style="{StaticResource KeypadButtonStyle}" />
+
+                <!-- Row 3 -->
+                <Button Grid.Row="2" Grid.Column="0" Text="7" Clicked="OnKeypadClicked" Style="{StaticResource KeypadButtonStyle}" />
+                <Button Grid.Row="2" Grid.Column="1" Text="8" Clicked="OnKeypadClicked" Style="{StaticResource KeypadButtonStyle}" />
+                <Button Grid.Row="2" Grid.Column="2" Text="9" Clicked="OnKeypadClicked" Style="{StaticResource KeypadButtonStyle}" />
+
+                <!-- Row 4 -->
+                <!-- Backspace Button -->
+                <Button Grid.Row="3" Grid.Column="0" Text="⌫" Clicked="OnBackspaceClicked" Style="{StaticResource KeypadControlButtonStyle}" />
+                <Button Grid.Row="3" Grid.Column="1" Text="0" Clicked="OnKeypadClicked" Style="{StaticResource KeypadButtonStyle}" />
+                <!-- Biometric/Submit Button -->
+                <Button x:Name="BioOrSubmitButton" Grid.Row="3" Grid.Column="2" Text="🔑" Clicked="OnBioOrSubmitClicked" Style="{StaticResource KeypadControlButtonStyle}" />
+            </Grid>
+
+            <!-- Bottom Cancel Button -->
+            <Button 
+                Text="Cancel"
+                TextColor="#888888"
+                BackgroundColor="Transparent"
+                BorderWidth="0"
+                Clicked="OnCancelClicked"
+                Margin="0,8,0,0" />
+            
+        </VerticalStackLayout>
+    </Border>
+
+    <toolkit:Popup.Resources>
+        <ResourceDictionary>
+            <Style x:Key="KeypadButtonStyle" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="#2A2A2A" />
+                <Setter Property="TextColor" Value="#FFFFFF" />
+                <Setter Property="FontSize" Value="20" />
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="CornerRadius" Value="30" />
+                <Setter Property="WidthRequest" Value="60" />
+                <Setter Property="HeightRequest" Value="60" />
+                <Setter Property="Padding" Value="0" />
+            </Style>
+
+            <Style x:Key="KeypadControlButtonStyle" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="#333333" />
+                <Setter Property="TextColor" Value="#AACC88" />
+                <Setter Property="FontSize" Value="18" />
+                <Setter Property="CornerRadius" Value="30" />
+                <Setter Property="WidthRequest" Value="60" />
+                <Setter Property="HeightRequest" Value="60" />
+                <Setter Property="Padding" Value="0" />
+            </Style>
+        </ResourceDictionary>
+    </toolkit:Popup.Resources>
+
+</toolkit:Popup>
