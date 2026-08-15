@@ -690,6 +690,33 @@ Run-Test "Chat editor is accessible after Phase 3+4 changes (regression guard)" 
     $true
 }
 
+# ── 18. Meal and food command execution via Chat ──────────────────────────────
+Run-Test "Meal and nutrition command execution via Chat" {
+    $ok = Click-Tab "Chat" -DelayMs 800
+    if (-not $ok) { return "Could not navigate to Chat tab" }
+
+    $editor = Find-ById $script:Window "ChatEditor" -TimeoutSeconds 8
+    if (-not $editor) { return "ChatEditor not found" }
+
+    $ok = Set-ElementValue $editor "/meal list"
+    Start-Sleep -Milliseconds 300
+    if (-not $ok) { return "Could not type /meal list into ChatEditor" }
+
+    $send = Find-ById $script:Window "SendButton" -TimeoutSeconds 5
+    if (-not $send) { return "SendButton not found" }
+
+    $ok = Invoke-Element $send
+    if (-not $ok) { return "Could not click SendButton" }
+
+    Start-Sleep -Seconds 2
+
+    # Verify app is still running and stable
+    if ($script:Proc.HasExited) { return "App process crashed after sending /meal list" }
+
+    Clear-ElementValue $editor | Out-Null
+    $true
+}
+
 if ($ForceFailure) {
     Run-Test "Forced failure to test screenshots" {
         throw "Forced failure to verify screenshot functionality."

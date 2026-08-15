@@ -753,6 +753,36 @@ Run-Test "Chat Send button present after returning from Inbox and typing" {
     $true
 }
 
+# -- 17. Meal and nutrition command execution in Chat -------------------------
+Run-Test "Meal and nutrition command execution in Chat" {
+    $ok = Tap-Tab "Chat" -DelayMs 1200
+    if (-not $ok) { return "Could not find 'Chat' tab in the bottom navigation bar" }
+
+    $editor = Find-ChatEditor -TimeoutSeconds 8
+    if ($null -eq $editor) { return "Chat editor not found on Chat tab" }
+
+    Tap-Node $editor | Out-Null
+    Start-Sleep -Milliseconds 300
+
+    Invoke-Adb "shell", "input", "text", "%2Fmeal%20list" | Out-Null
+    Start-Sleep -Milliseconds 600
+
+    $dump = Get-UiDump
+    $send = Find-Node $dump -Text "Send"
+    if ($null -eq $send) { return "Send button not found after typing meal command" }
+
+    Tap-Node $send | Out-Null
+    Start-Sleep -Seconds 2
+
+    # Clear editor and dismiss keyboard.
+    Invoke-Adb "shell", "input", "keyevent", "KEYCODE_CTRL_A" | Out-Null
+    Invoke-Adb "shell", "input", "keyevent", "KEYCODE_DEL"     | Out-Null
+    Start-Sleep -Milliseconds 300
+    Invoke-Adb "shell", "input", "keyevent", "KEYCODE_ESCAPE"  | Out-Null
+    Start-Sleep -Milliseconds 400
+    $true
+}
+
 if ($ForceFailure) {
     Run-Test "Forced failure to test screenshots" {
         throw "Forced failure to verify screenshot functionality."
