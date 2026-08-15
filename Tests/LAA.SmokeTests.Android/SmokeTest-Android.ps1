@@ -51,20 +51,29 @@ function Invoke-Adb {
 function Get-UiDump {
     <#
     Captures a UIAutomator hierarchy XML.
-    Returns $null and prints a warning when the dump times out or the file is empty.
+    Retries up to 3 times to handle transient transitions or temporary accessibility bridge lock.
     #>
-    $remote  = "/sdcard/laa_smoke_dump.xml"
-    $local   = Join-Path $env:TEMP "laa_smoke_dump.xml"
+    $remote = "/sdcard/laa_smoke_dump.xml"
+    $local  = Join-Path $env:TEMP "laa_smoke_dump.xml"
 
-    Invoke-Adb "shell", "uiautomator", "dump", $remote | Out-Null
-    Invoke-Adb "pull", $remote, $local | Out-Null
+    if (Test-Path $local) { Remove-Item -Force $local -ErrorAction SilentlyContinue }
 
-    if (-not (Test-Path $local)) { return $null }
-    $content = Get-Content $local -Raw -Encoding UTF8
-    if ([string]::IsNullOrWhiteSpace($content)) { return $null }
-
-    try   { return [xml]$content }
-    catch { Write-Warning "Failed to parse UI dump XML: $_"; return $null }
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        Invoke-Adb "shell", "rm", "-f", $remote 2>$null | Out-Null
+        $dumpResult = Invoke-Adb "shell", "uiautomator", "dump", $remote 2>&1
+        
+        if ($dumpResult -match "dumped to") {
+            Invoke-Adb "pull", $remote, $local 2>$null | Out-Null
+            if (Test-Path $local) {
+                $content = Get-Content $local -Raw -Encoding UTF8
+                if (-not [string]::IsNullOrWhiteSpace($content)) {
+                    try { return [xml]$content } catch { }
+                }
+            }
+        }
+        Start-Sleep -Milliseconds 400
+    }
+    return $null
 }
 
 function Find-Node {
@@ -137,7 +146,7 @@ function Ensure-AppInForeground {
 
 function Restore-App {
     Write-Host "  Bringing app to foreground..." -ForegroundColor DarkGray
-    Invoke-Adb "shell", "monkey", "-p", $PackageName, "1" | Out-Null
+    Invoke-Adb "shell", "monkey", "-p", $PackageName, "1" 2>&1 | Out-Null
     Start-Sleep -Milliseconds 2000
 
     # Dismiss startup/diagnostics modal if visible
@@ -389,7 +398,7 @@ Invoke-Adb "shell", "am", "force-stop", $PackageName | Out-Null
 Start-Sleep -Milliseconds 400
 
 # Launch via monkey (resolves the launcher activity automatically).
-Invoke-Adb "shell", "monkey", "-p", $PackageName, "-c", "android.intent.category.LAUNCHER", "1" | Out-Null
+Invoke-Adb "shell", "monkey", "-p", $PackageName, "-c", "android.intent.category.LAUNCHER", "1" 2>&1 | Out-Null
 
 Write-Host "Waiting for app to be ready..." -ForegroundColor DarkGray
 

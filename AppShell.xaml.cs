@@ -1,3 +1,4 @@
+using LocalAIAssistant.Data;
 using LocalAIAssistant.Knowledge.Inbox;
 using LocalAIAssistant.Knowledge.Journals.Views;
 using LocalAIAssistant.Knowledge.Tasks.Views;
@@ -124,7 +125,10 @@ public partial class AppShell : Shell
 #if ANDROID
 		// Show startup diagnostics as a modal so AppShell is always the window root.
 		// Avoids the ContentPage→Shell platform transition that breaks Android touch dispatch.
-		if (!_debugPageShown)
+		var isProd             = string.Equals(BuildEnvironment.Name, "PROD", StringComparison.OrdinalIgnoreCase);
+		var diagnosticsEnabled = Preferences.Default.Get(StringConsts.EnableStartupDiagnosticsPrefKey, !isProd);
+
+		if (!_debugPageShown && diagnosticsEnabled)
 		{
 			_debugPageShown = true;
 			await Navigation.PushModalAsync(new Views.DebugStartupPage(), animated: false);

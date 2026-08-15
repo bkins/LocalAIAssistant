@@ -141,8 +141,11 @@ public partial class SettingsViewModel : ObservableObject
         _cocoProjectPath             = Preferences.Default.Get(StringConsts.CocoProjectPathPrefKey,              string.Empty);
         _cocoClipboardMonitorEnabled = Preferences.Default.Get(StringConsts.CocoClipboardMonitorEnabledPrefKey,  true);
         _cocoHotkey                  = Preferences.Default.Get(StringConsts.CocoHotkeyPrefKey,                   StringConsts.CocoDefaultHotkey);
+        var isProd                    = string.Equals(BuildEnvironment.Name, "PROD", StringComparison.OrdinalIgnoreCase);
+        var defaultDiagnosticsEnabled = !isProd;
+
         _enableStartupProbes         = Preferences.Default.Get(StringConsts.EnableStartupProbesPrefKey,          true);
-        _enableStartupDiagnostics    = Preferences.Default.Get(StringConsts.EnableStartupDiagnosticsPrefKey,     true);
+        _enableStartupDiagnostics    = Preferences.Default.Get(StringConsts.EnableStartupDiagnosticsPrefKey,     defaultDiagnosticsEnabled);
         _streamingEnabled            = Preferences.Default.Get(StringConsts.StreamingEnabledPrefKey,              true);
     }
 
