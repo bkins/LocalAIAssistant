@@ -25,6 +25,7 @@ using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.FileSync;
 using LocalAIAssistant.Services.Health;
 using LocalAIAssistant.Services.Interfaces;
+using LocalAIAssistant.Services.Logging.Interfaces;
 using LocalAIAssistant.ViewModels;
 using LocalAIAssistant.Views;
 using Microsoft.EntityFrameworkCore;
@@ -94,6 +95,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<INotificationApiClientFactory, NotificationApiClientFactory>();
 		builder.Services.AddSingleton<IBrainDumpApiClientFactory, BrainDumpApiClientFactory>();
 		builder.Services.AddSingleton<ICocoApiClientFactory, CocoApiClientFactory>();
+		builder.Services.AddSingleton<IMealsClient>(sp => new MealsClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(HttpClientNames.CpApi), sp.GetRequiredService<ILoggingService>()));
 		// Guard rules (MaxPerDay, MinGapMinutes, QuietHoursStart/End) are server-side.
 		// Change them in CognitivePlatform/appsettings.json under "Notifications".
 		builder.Services.AddSingleton<INotificationScheduler, PluginLocalNotificationScheduler>();
