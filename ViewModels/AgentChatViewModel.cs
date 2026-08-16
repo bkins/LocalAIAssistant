@@ -13,7 +13,8 @@ namespace LocalAIAssistant.ViewModels;
 
 public partial class AgentChatViewModel : ObservableObject
 {
-    private readonly AgentJobService _agentJobService;
+    private readonly AgentJobService         _agentJobService;
+    private          CancellationTokenSource? _pollCts;
 
     [ObservableProperty] private ObservableCollection<string> _availableModels = new()
                                                                                    {
@@ -120,6 +121,12 @@ public partial class AgentChatViewModel : ObservableObject
     }
 
     [RelayCommand]
+    public void CancelPolling()
+    {
+        _pollCts?.Cancel();
+    }
+
+    [RelayCommand]
     private async Task SendPromptAsync()
     {
         if (string.IsNullOrWhiteSpace(PromptText))
@@ -139,6 +146,11 @@ public partial class AgentChatViewModel : ObservableObject
                        };
         Messages.Add(userTurn);
 
+        _pollCts?.Cancel();
+        _pollCts?.Dispose();
+        _pollCts = new CancellationTokenSource();
+        var ct = _pollCts.Token;
+
         try
         {
             var convoId = string.IsNullOrEmpty(SelectedConversation?.ConversationId) ? null : SelectedConversation.ConversationId;
@@ -153,9 +165,9 @@ public partial class AgentChatViewModel : ObservableObject
             var maxAttempts = 60; // 2 minutes timeout
             var attempts = 0;
 
-            while (!completed && attempts < maxAttempts)
+            while (!completed && attempts < maxAttempts && !ct.IsCancellationRequested)
             {
-                await Task.Delay(2000);
+                await Task.Delay(2000, ct);
                 attempts++;
 
                 var updatedJob = await _agentJobService.GetJobAsync(jobId);
@@ -217,13 +229,19 @@ public partial class AgentChatViewModel : ObservableObject
                 }
             }
 
-            if (!completed)
+            if (!completed && !ct.IsCancellationRequested)
             {
                 StatusText = "Timeout: Antigravity did not respond within 2 minutes. The task is still running on the workstation.";
             }
         }
+        catch (OperationCanceledException)
+        {
+            StatusText = "Job monitoring cancelled.";
+        }
         catch (Exception ex)
         {
+            PromptText = prompt;
+            Messages.Remove(userTurn);
             StatusText = $"Error submitting job: {ex.Message}";
         }
         finally

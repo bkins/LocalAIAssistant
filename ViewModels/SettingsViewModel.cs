@@ -207,10 +207,10 @@ public partial class SettingsViewModel : ObservableObject
         _configService.UpdateConfig(currentPersonality.OllamConfiguration);
         
         //TODO: UI fields not updating (this is not being hit when the page opens)
-        _model       = currentPersonality.OllamConfiguration.Model;
-        _numPredict  = currentPersonality.OllamConfiguration.NumPredict;
-        _temperature = currentPersonality.OllamConfiguration.Temperature;
-        _endpoint    = currentPersonality.OllamConfiguration.Host;
+        Model       = currentPersonality.OllamConfiguration.Model;
+        NumPredict  = currentPersonality.OllamConfiguration.NumPredict;
+        Temperature = currentPersonality.OllamConfiguration.Temperature;
+        Endpoint    = currentPersonality.OllamConfiguration.Host;
     }
     
     [RelayCommand]
