@@ -2,17 +2,17 @@ namespace LocalAIAssistant.Extensions;
 
 public static class StringExtensions
 {
-    public static bool IsEmptyNullOrWhiteSpace (this string value)
+    public static bool IsEmptyNullOrWhiteSpace (this string? value)
     {
         return string.IsNullOrEmpty(value) || string.IsNullOrWhiteSpace (value);
     }
 
-    public static bool HasValue (this string value)
+    public static bool HasValue (this string? value)
     {
         return IsEmptyNullOrWhiteSpace(value).Not();
     }
 
-    public static bool HasNoValue(this string value)
+    public static bool HasNoValue(this string? value)
     {
         return HasValue (value).Not();
     }

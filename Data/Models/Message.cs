@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using LocalAIAssistant.Core.Parsing;
+using LocalAIAssistant.Extensions;
 
 namespace LocalAIAssistant.Data.Models;
 
@@ -27,7 +28,7 @@ public partial class Message : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasTierNotice))]
     private string? _tierNotice;
 
-    public bool HasTierNotice => !string.IsNullOrEmpty(_tierNotice);
+    public bool HasTierNotice => TierNotice.HasValue();
 
     [ObservableProperty] private bool _isCalendarConnectPrompt;
 

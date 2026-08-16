@@ -66,6 +66,9 @@ public partial class App : Application
 
 			// Start the file sync gateway listener.
 			await _fileGatewayService.StartAsync(_appLifetime.Token).ConfigureAwait(false);
+
+			// Synchronize proactive notifications with the OS notification scheduler.
+			await _notificationSyncService.SyncAsync().ConfigureAwait(false);
 		}
 		catch (Exception ex)
 		{
