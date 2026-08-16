@@ -10,10 +10,11 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <ScrollView>
-    <VerticalStackLayout x:Name="MainLayout">
-        <!-- Pending memory confirmation badge banner -->
-        <Border Margin="15,10,15,5"
+    <Grid x:Name="MainLayout"
+          RowDefinitions="Auto,Auto,*">
+        <!-- Row 0: Pending memory confirmation badge banner -->
+        <Border Grid.Row="0"
+                Margin="15,10,15,5"
                 Padding="15,12"
                 StrokeShape="RoundRectangle 8"
                 StrokeThickness="1"
@@ -35,7 +36,11 @@
             </HorizontalStackLayout>
         </Border>
 
-        <HorizontalStackLayout Padding="10" Spacing="15" HorizontalOptions="Center">
+        <!-- Row 1: Action Buttons -->
+        <HorizontalStackLayout Grid.Row="1"
+                               Padding="10"
+                               Spacing="15"
+                               HorizontalOptions="Center">
             <!--Command="{Binding ClearShortTermAsyncCommand}" -->
             <Button x:Name="ClearShorTermButton"
                     AutomationId="ClearShorTermButton"
@@ -62,18 +67,22 @@
                     CornerRadius="8"/>
         </HorizontalStackLayout>
     
-        <Grid Padding="10"
+        <!-- Row 2: Short & Long Term Memory CollectionViews -->
+        <Grid Grid.Row="2"
+              Padding="10"
               ColumnDefinitions="*,*"
               RowDefinitions="Auto,*"
               ColumnSpacing="10">
 
             <!-- Column headers -->
-            <Label Grid.Column="0"
+            <Label Grid.Row="0"
+                   Grid.Column="0"
                    Text="Short Term Memory"
                    FontAttributes="Bold"
                    FontSize="Medium"
                    HorizontalOptions="Center"/>
-            <Label Grid.Column="1"
+            <Label Grid.Row="0"
+                   Grid.Column="1"
                    Text="Long Term Memory"
                    FontAttributes="Bold"
                    FontSize="Medium"
@@ -130,7 +139,6 @@
             </CollectionView>
 
         </Grid>
-    </VerticalStackLayout>
-</ScrollView>
+    </Grid>
 
 </ContentPage>

@@ -206,12 +206,23 @@ public sealed class FileGatewayService : BackgroundService
             return;
         }
 
-        var entries = Directory.EnumerateFileSystemEntries(resolvedPath)
-                               .Select(entryFullPath => BuildEntry(entryFullPath))
-                               .ToList();
+        try
+        {
+            var entries = Directory.EnumerateFileSystemEntries(resolvedPath)
+                                   .Select(entryFullPath => BuildEntry(entryFullPath))
+                                   .ToList();
 
-        var payload = JsonSerializer.Serialize(entries, JsonOptions);
-        await WriteJsonAsync(response, 200, payload, ct);
+            var payload = JsonSerializer.Serialize(entries, JsonOptions);
+            await WriteJsonAsync(response, 200, payload, ct);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            await WriteErrorAsync(response, 403, $"Access denied (scoped storage): {ex.Message}", ct);
+        }
+        catch (Exception ex)
+        {
+            await WriteErrorAsync(response, 500, $"Failed to list directory: {ex.Message}", ct);
+        }
     }
 
     private async Task HandleDownloadAsync( HttpListenerRequest  request
@@ -231,12 +242,23 @@ public sealed class FileGatewayService : BackgroundService
             return;
         }
 
-        response.StatusCode  = 200;
-        response.ContentType = "application/octet-stream";
+        try
+        {
+            response.StatusCode  = 200;
+            response.ContentType = "application/octet-stream";
 
-        await using var fileStream = File.OpenRead(resolvedPath);
-        response.ContentLength64 = fileStream.Length;
-        await fileStream.CopyToAsync(response.OutputStream, ct);
+            await using var fileStream = File.OpenRead(resolvedPath);
+            response.ContentLength64 = fileStream.Length;
+            await fileStream.CopyToAsync(response.OutputStream, ct);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            await WriteErrorAsync(response, 403, $"Access denied (scoped storage): {ex.Message}", ct);
+        }
+        catch (Exception ex)
+        {
+            await WriteErrorAsync(response, 500, $"Failed to download file: {ex.Message}", ct);
+        }
     }
 
     private async Task HandleUploadAsync( HttpListenerRequest  request
@@ -250,14 +272,25 @@ public sealed class FileGatewayService : BackgroundService
             return;
         }
 
-        var directory = Path.GetDirectoryName(resolvedPath);
-        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-            Directory.CreateDirectory(directory);
+        try
+        {
+            var directory = Path.GetDirectoryName(resolvedPath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                Directory.CreateDirectory(directory);
 
-        await using var fileStream = File.Create(resolvedPath);
-        await request.InputStream.CopyToAsync(fileStream, ct);
+            await using var fileStream = File.Create(resolvedPath);
+            await request.InputStream.CopyToAsync(fileStream, ct);
 
-        await WriteJsonAsync(response, 200, """{"status":"ok"}""", ct);
+            await WriteJsonAsync(response, 200, """{"status":"ok"}""", ct);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            await WriteErrorAsync(response, 403, $"Access denied (scoped storage): {ex.Message}", ct);
+        }
+        catch (Exception ex)
+        {
+            await WriteErrorAsync(response, 500, $"Failed to upload file: {ex.Message}", ct);
+        }
     }
 
     private async Task HandleDeleteAsync( HttpListenerRequest  request
@@ -277,8 +310,19 @@ public sealed class FileGatewayService : BackgroundService
             return;
         }
 
-        File.Delete(resolvedPath);
-        await WriteJsonAsync(response, 200, """{"status":"ok"}""", ct);
+        try
+        {
+            File.Delete(resolvedPath);
+            await WriteJsonAsync(response, 200, """{"status":"ok"}""", ct);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            await WriteErrorAsync(response, 403, $"Access denied (scoped storage): {ex.Message}", ct);
+        }
+        catch (Exception ex)
+        {
+            await WriteErrorAsync(response, 500, $"Failed to delete file: {ex.Message}", ct);
+        }
     }
 
     // -----------------------------------------------------------------------

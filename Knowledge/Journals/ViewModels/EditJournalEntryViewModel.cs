@@ -98,8 +98,9 @@ public sealed partial class EditJournalEntryViewModel : ObservableObject
                 photo = await MediaPicker.Default.PickPhotoAsync();
             });
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            SetError($"Failed to pick photo: {ex.Message}");
             return;
         }
 
@@ -123,10 +124,12 @@ public sealed partial class EditJournalEntryViewModel : ObservableObject
         }
         catch (FeatureNotSupportedException)
         {
+            SetError("Camera capture is not supported on this device.");
             return;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            SetError($"Camera capture failed: {ex.Message}");
             return;
         }
 
@@ -136,52 +139,88 @@ public sealed partial class EditJournalEntryViewModel : ObservableObject
 
     private async Task UploadPickedFileAsync(FileResult fileResult)
     {
-        await using var stream      = await fileResult.OpenReadAsync();
-        var             contentType = fileResult.ContentType ?? "application/octet-stream";
+        try
+        {
+            await using var stream      = await fileResult.OpenReadAsync();
+            var             contentType = fileResult.ContentType ?? "application/octet-stream";
 
-        var dto = await _mediaClient.UploadAsync(_journalId
-                                               , fileResult.FileName
-                                               , contentType
-                                               , stream);
-        if (dto is null) return;
+            var dto = await _mediaClient.UploadAsync(_journalId
+                                                   , fileResult.FileName
+                                                   , contentType
+                                                   , stream);
+            if (dto is null)
+            {
+                SetError("Failed to upload attachment: API returned empty response.");
+                return;
+            }
 
-        Attachments.Add(new AttachmentViewModel(dto, BuildEnvironment.ApiBaseUrl, DeleteAttachmentAsync));
-        OnPropertyChanged(nameof(HasAttachments));
+            Attachments.Add(new AttachmentViewModel(dto, BuildEnvironment.ApiBaseUrl, DeleteAttachmentAsync));
+            OnPropertyChanged(nameof(HasAttachments));
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to upload attachment: {ex.Message}");
+        }
     }
 
     private async Task DeleteAttachmentAsync(Guid id)
     {
-        var success = await _mediaClient.DeleteAsync(id);
-        if (!success) return;
-
-        var toRemove = Attachments.FirstOrDefault(chip => chip.Id == id);
-        if (toRemove is not null)
+        try
         {
-            Attachments.Remove(toRemove);
-            OnPropertyChanged(nameof(HasAttachments));
+            var success = await _mediaClient.DeleteAsync(id);
+            if (!success)
+            {
+                SetError("Failed to delete attachment from server.");
+                return;
+            }
+
+            var toRemove = Attachments.FirstOrDefault(chip => chip.Id == id);
+            if (toRemove is not null)
+            {
+                Attachments.Remove(toRemove);
+                OnPropertyChanged(nameof(HasAttachments));
+            }
         }
+        catch (Exception ex)
+        {
+            SetError($"Failed to delete attachment: {ex.Message}");
+        }
+    }
+
+    private void SetError(string message)
+    {
+        HasError     = true;
+        ErrorMessage = message;
+        OnPropertyChanged(nameof(HasError));
+        OnPropertyChanged(nameof(ErrorMessage));
     }
 
     private void SetDtoError( JournalEntryDto? entry )
     {
         if (entry?.Error is null) return;
 
-        HasError     = true;
-        ErrorMessage = entry.Error.Message;
+        SetError(entry.Error.Message);
     }
 
     [RelayCommand]
     private async Task SaveAsync()
     {
-        var client = _clientFactory.Create();
+        try
+        {
+            var client = _clientFactory.Create();
 
-        await client.EditEntryAsync(_journalId
-                                 , Text
-                                 , ParseTags(Tags)
-                                 , Mood
-                                 , MoodScore);
+            await client.EditEntryAsync(_journalId
+                                     , Text
+                                     , ParseTags(Tags)
+                                     , Mood
+                                     , MoodScore);
 
-        await Shell.Current.GoToAsync("..");
+            await Shell.Current.GoToAsync("..");
+        }
+        catch (Exception ex)
+        {
+            SetError($"Failed to save journal entry: {ex.Message}");
+        }
     }
 
     [RelayCommand]
