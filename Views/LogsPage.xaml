@@ -105,20 +105,13 @@
 
             <CollectionView.EmptyView>
                 <VerticalStackLayout HorizontalOptions="Center" 
-                                     VerticalOptions="Center">
+                                     VerticalOptions="Center"
+                                     Spacing="4">
                     <Label Text="No log entries found"
                            HorizontalOptions="Center"
                            FontSize="16"
                            TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
-                    <Label Text="If you just cleared the log, please restart app to reinitiate the logger."
-                           HorizontalOptions="Center"
-                           FontSize="16"
-                           TextColor="Red"/>
-                    <Label Text="TODO: Fix this!!"
-                           HorizontalOptions="Center"
-                           FontSize="16"
-                           TextColor="Green"/>
-                    <Label Text="Otherwise, try adding some test logs or check your filters"
+                    <Label Text="Try adding test logs or adjust your filter selection."
                            HorizontalOptions="Center"
                            FontSize="12"
                            TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray500}}"/>

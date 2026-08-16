@@ -11,7 +11,7 @@ using LocalAIAssistant.Services.Interfaces;
 
 namespace LocalAIAssistant.ViewModels;
 
-public partial class AppShellMasterViewModel : ObservableObject
+public partial class AppShellMasterViewModel : ObservableObject, IDisposable
 {
     private ApiEnvironmentDescriptor _environment;
 
@@ -19,6 +19,9 @@ public partial class AppShellMasterViewModel : ObservableObject
     private static   IConnectivityState              _connectivity;
     private readonly ICognitivePlatformClientFactory _cpClientFactory;
     private readonly IOfflineQueueService            _offlineQueueService;
+    private readonly System.ComponentModel.PropertyChangedEventHandler _environmentPropertyChangedHandler;
+    private readonly EventHandler                                      _connectivityChangedHandler;
+    private readonly EventHandler                                      _queueProcessedHandler;
 
     [ObservableProperty] private int _pendingQueueCount;
 
@@ -42,7 +45,6 @@ public partial class AppShellMasterViewModel : ObservableObject
     public string EnvironmentName => _environment.Name;
 
     private static Color _statusColor;
-    private static Timer _timer;
     private readonly EnvironmentHandshakeResult _currentEnv;
 
     public Color StatusColor
@@ -77,17 +79,18 @@ public partial class AppShellMasterViewModel : ObservableObject
         _statusColor     = Colors.Red;
 
         _environment = environment;
-        _environment.PropertyChanged += (_, __) =>
+        _environmentPropertyChangedHandler = (_, __) =>
         {
             OnPropertyChanged(nameof(EnvironmentName));
             UpdateStatusColor();
         };
+        _environment.PropertyChanged += _environmentPropertyChangedHandler;
 
         _handshakeState = handshakeState;
         _currentEnv     = _handshakeState.Current;
 
         _connectivity = connectivity;
-        _connectivity.ConnectivityChanged += (_, _) =>
+        _connectivityChangedHandler = (_, _) =>
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
@@ -95,6 +98,7 @@ public partial class AppShellMasterViewModel : ObservableObject
                 UpdateStatusColor();
             });
         };
+        _connectivity.ConnectivityChanged += _connectivityChangedHandler;
 
         CheckStatusCommand = new Command(async void () =>
         {
@@ -103,10 +107,11 @@ public partial class AppShellMasterViewModel : ObservableObject
         });
 
         _offlineQueueService = offlineQueueService;
-        _offlineQueueService.QueueProcessed += async (_, _) =>
+        _queueProcessedHandler = async (_, _) =>
         {
             await RefreshQueueCountAsync();
         };
+        _offlineQueueService.QueueProcessed += _queueProcessedHandler;
 
         UpdateStatusColor();
         DisplayEnvMismatchMessage();
@@ -160,4 +165,22 @@ public partial class AppShellMasterViewModel : ObservableObject
     }
 
     public string TimeSinceLastCheck => ApiHealthViewModel.TimeSinceLastCheck;
+
+    public void Dispose()
+    {
+        if (_environment is not null && _environmentPropertyChangedHandler is not null)
+        {
+            _environment.PropertyChanged -= _environmentPropertyChangedHandler;
+        }
+
+        if (_connectivity is not null && _connectivityChangedHandler is not null)
+        {
+            _connectivity.ConnectivityChanged -= _connectivityChangedHandler;
+        }
+
+        if (_offlineQueueService is not null && _queueProcessedHandler is not null)
+        {
+            _offlineQueueService.QueueProcessed -= _queueProcessedHandler;
+        }
+    }
 }

@@ -140,14 +140,15 @@ public class OfflineQueueService: IOfflineQueueService
         foreach (var item in stuckItems)
             item.Status = OfflineQueueStatus.Pending;
 
-        // Clean up toxic local model overrides (e.g. qwen2.5:14b) for all pending items in the queue
+        // Clean up local model overrides (e.g. local Ollama models) for all pending items in the queue
+        // to prevent dispatch deadlocks when the active LLM provider or network topology changes.
         var allPending = await db.OfflineQueue
                                   .Where(queueItem => queueItem.Status == OfflineQueueStatus.Pending)
                                   .ToListAsync();
 
         foreach (var item in allPending)
         {
-            if (item.Model != null && item.Model.Contains("qwen", StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(item.Model))
             {
                 item.Model = string.Empty;
             }

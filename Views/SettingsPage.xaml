@@ -141,11 +141,8 @@
                     <RoundRectangle CornerRadius="10" />
                 </Border.StrokeShape>
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="Personalities not yet configured."
+                    <Label Text="Active Personality &amp; System Configuration"
                            FontSize="13"
-                           TextColor="{StaticResource SecondaryTextColor}" />
-                    <Label Text="ENH-10 / EPIC-05 will add a personality picker here once the JSON catalog is wired up."
-                           FontSize="11"
                            TextColor="{StaticResource SecondaryTextColor}" />
                     <Button Text="Apply Personality Settings"
                             Command="{Binding ApplyPersonalityCommand}"

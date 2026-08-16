@@ -6,7 +6,7 @@ using LocalAIAssistant.Services.Logging.Interfaces;
 
 namespace LocalAIAssistant.Services;
 
-public class QueueReplayCoordinator
+public class QueueReplayCoordinator : IDisposable
 {
     private readonly IOfflineQueueService _queue;
     private readonly IConnectivityState   _connectivity;
@@ -59,5 +59,13 @@ public class QueueReplayCoordinator
                 Interlocked.Exchange(ref _isProcessing, 0);
             }
         });
+    }
+
+    public void Dispose()
+    {
+        if (_connectivity is not null)
+        {
+            _connectivity.ConnectivityChanged -= OnConnectivityChanged;
+        }
     }
 }

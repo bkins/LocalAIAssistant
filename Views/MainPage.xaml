@@ -290,7 +290,7 @@
                     </CollectionView.ItemTemplate>
             </CollectionView>
 
-            <!-- Hidden label for UIA testing of Active Conversation ID -->
+            <!-- Automation helper: Accessible element for UI automation and Smoke Tests to inspect active conversation ID -->
             <Label Grid.Row="1"
                    x:Name="ActiveConversationIdLabel"
                    AutomationId="ActiveConversationIdLabel"
