@@ -15,6 +15,8 @@ public class OfflineQueueService: IOfflineQueueService
     private readonly IServiceProvider             _serviceProvider;
     private readonly CognitivePlatformClientBase _apiClient;
 
+    public const int MaxRetries = 5;
+
     public OfflineQueueService( IServiceProvider                serviceProvider
                               , ICognitivePlatformClientFactory clientFactory  )
     {
@@ -100,8 +102,11 @@ public class OfflineQueueService: IOfflineQueueService
             }
             catch (Exception ex) when (ex is HttpRequestException || ex is TaskCanceledException || ex is System.Net.Sockets.SocketException)
             {
-                item.Status = OfflineQueueStatus.Pending;
                 item.RetryCount++;
+                item.Status = item.RetryCount >= MaxRetries
+                                  ? OfflineQueueStatus.Failed
+                                  : OfflineQueueStatus.Pending;
+
                 await db.SaveChangesAsync(ct);
 
                 // Stop processing further items if the API fails
@@ -109,8 +114,11 @@ public class OfflineQueueService: IOfflineQueueService
             }
             catch (Exception)
             {
-                item.Status = OfflineQueueStatus.Pending;
                 item.RetryCount++;
+                item.Status = item.RetryCount >= MaxRetries
+                                  ? OfflineQueueStatus.Failed
+                                  : OfflineQueueStatus.Pending;
+
                 await db.SaveChangesAsync(ct);
                 break;
             }
