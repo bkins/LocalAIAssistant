@@ -254,14 +254,14 @@ public class SqliteObjectStore : IObjectStore
 
         var effectiveId = explicitId;
 
-        if (effectiveId.DoesNotHaveValueOrIsNullOrEmpty() && idProperty is not null)
+        if (effectiveId.HasNoValue() && idProperty is not null)
         {
             var current                               = idProperty.GetValue(value);
             var currentString                         = current?.ToString();
             if (currentString.HasValue()) effectiveId = currentString;
         }
 
-        if (string.IsNullOrWhiteSpace(effectiveId))
+        if (effectiveId.HasNoValue())
             effectiveId = Guid.NewGuid().ToString("N");
 
         // Only write back if the property can actually accept a string
