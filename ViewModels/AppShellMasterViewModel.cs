@@ -15,13 +15,13 @@ public partial class AppShellMasterViewModel : ObservableObject, IDisposable
 {
     private ApiEnvironmentDescriptor _environment;
 
-    private readonly EnvironmentHandshakeState       _handshakeState;
-    private static   IConnectivityState              _connectivity;
-    private readonly ICognitivePlatformClientFactory _cpClientFactory;
-    private readonly IOfflineQueueService            _offlineQueueService;
-    private readonly System.ComponentModel.PropertyChangedEventHandler _environmentPropertyChangedHandler;
-    private readonly EventHandler                                      _connectivityChangedHandler;
-    private readonly EventHandler                                      _queueProcessedHandler;
+    private readonly EnvironmentHandshakeState                                         _handshakeState;
+    private static   IConnectivityState                                                _connectivity;
+    private readonly ICognitivePlatformClientFactory                                   _cpClientFactory;
+    private readonly IOfflineQueueService                                              _offlineQueueService;
+    private readonly System.ComponentModel.PropertyChangedEventHandler?                _environmentPropertyChangedHandler;
+    private readonly EventHandler<CP.Client.Core.Common.ConnectivityToApi.ConnectivityStatus>? _connectivityChangedHandler;
+    private readonly EventHandler<global::LocalAIAssistant.Services.Interfaces.QueueProcessedEventArgs>? _queueProcessedHandler;
 
     [ObservableProperty] private int _pendingQueueCount;
 
