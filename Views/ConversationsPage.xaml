@@ -27,7 +27,7 @@
                     AutomationId="NewChatButton"
                     Text="New Chat"
                     Command="{Binding NewConversationCommand}"
-                    BackgroundColor="#4CAF50"
+                    BackgroundColor="{StaticResource SuccessColor}"
                     TextColor="White"
                     Padding="12,6"
                     CornerRadius="6"/>

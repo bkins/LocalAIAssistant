@@ -18,8 +18,8 @@
                 Padding="15,12"
                 StrokeShape="RoundRectangle 8"
                 StrokeThickness="1"
-                Stroke="#8B5CF6"
-                BackgroundColor="#1D1430"
+                Stroke="{StaticResource Primary}"
+                BackgroundColor="{StaticResource PurpleSurface}"
                 IsVisible="{Binding HasPendingMemoryConfirmation}">
             <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
                 <Label Text="🧠" FontSize="24" VerticalOptions="Center" />
@@ -27,11 +27,11 @@
                     <Label Text="Provisional Memories Pending" 
                            FontAttributes="Bold" 
                            FontSize="14" 
-                           TextColor="#DFD8F7"
+                           TextColor="{StaticResource Secondary}"
                            AutomationId="ProvisionalMemoriesPendingLabel" />
                     <Label Text="{Binding PendingMemoryConfirmationCount, StringFormat='You have {0} provisional memories waiting for confirmation.'}" 
                            FontSize="12" 
-                           TextColor="#B3B3B3" />
+                           TextColor="{StaticResource SecondaryTextColor}" />
                 </VerticalStackLayout>
             </HorizontalStackLayout>
         </Border>
@@ -46,7 +46,7 @@
                     AutomationId="ClearShorTermButton"
                     Text="Clear Short Term" 
                     Clicked="ClearShorTermButton_OnClicked"
-                    BackgroundColor="#FF6F61" 
+                    BackgroundColor="{StaticResource DangerColor}" 
                     TextColor="White"
                     CornerRadius="8"/>
             <!--Command="{Binding ClearLongTermAsyncCommand}" -->
@@ -54,7 +54,7 @@
                     AutomationId="ClearLongTermButton"
                     Text="Clear Long Term" 
                     Clicked="ClearLongTermButton_OnClicked"
-                    BackgroundColor="#FFB74D" 
+                    BackgroundColor="{StaticResource WarningColor}" 
                     TextColor="White"
                     CornerRadius="8"/>
             <!--Command="{Binding RefreshAsyncCommand}"-->
@@ -62,7 +62,7 @@
                     AutomationId="RefreshButton"
                     Text="Refresh" 
                     Clicked="RefreshButton_OnClicked"
-                    BackgroundColor="#4CAF50" 
+                    BackgroundColor="{StaticResource SuccessColor}" 
                     TextColor="White"
                     CornerRadius="8"/>
         </HorizontalStackLayout>

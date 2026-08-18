@@ -66,13 +66,13 @@
                                 <DataTrigger TargetType="Border"
                                              Binding="{Binding Role}"
                                              Value="user">
-                                    <Setter Property="BackgroundColor"   Value="#4CAF50" />
+                                    <Setter Property="BackgroundColor"   Value="{StaticResource SuccessColor}" />
                                     <Setter Property="HorizontalOptions" Value="End" />
                                 </DataTrigger>
                                 <DataTrigger TargetType="Border"
                                              Binding="{Binding Role}"
                                              Value="assistant">
-                                    <Setter Property="BackgroundColor"   Value="#7C5CE6" />
+                                    <Setter Property="BackgroundColor"   Value="{StaticResource PurpleAccent}" />
                                     <Setter Property="HorizontalOptions" Value="Start" />
                                 </DataTrigger>
                             </Border.Triggers>
@@ -114,7 +114,7 @@
             <Label Grid.Row="0"
                    Text="{Binding StatusText}"
                    FontSize="12"
-                   TextColor="#FFD700"
+                   TextColor="{StaticResource GoldAccent}"
                    HorizontalTextAlignment="Center"
                    Margin="0,0,0,8"
                    IsVisible="{Binding HasStatusText}"/>
@@ -140,7 +140,7 @@
                         Text="Send"
                         Command="{Binding SendPromptCommand}"
                         IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}"
-                        BackgroundColor="#7C5CE6"
+                        BackgroundColor="{StaticResource PurpleAccent}"
                         TextColor="White"
                         CornerRadius="6"
                         VerticalOptions="End"

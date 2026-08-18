@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <?xaml-comp compile="true" ?>
 <ResourceDictionary 
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -27,6 +27,14 @@
     <!-- <Color x:Key="InputBackgroundColor">#1E1E1E</Color> -->
     <Color x:Key="InputBackgroundColor">#242424</Color>
     <Color x:Key="InputBorderColor">#24212A</Color>
+
+    <!-- Semantic feedback & accent colors -->
+    <Color x:Key="SuccessColor">#4CAF50</Color>
+    <Color x:Key="WarningColor">#FFB74D</Color>
+    <Color x:Key="DangerColor">#FF6F61</Color>
+    <Color x:Key="GoldAccent">#FFD700</Color>
+    <Color x:Key="PurpleAccent">#7C5CE6</Color>
+    <Color x:Key="PurpleSurface">#1D1430</Color>
 
     <!-- Accent -->
     <Color x:Key="AccentColor">#8B5CF6</Color>
