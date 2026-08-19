@@ -30,6 +30,17 @@ public partial class Message : ObservableObject
 
     public bool HasTierNotice => TierNotice.HasValue();
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasReasoning))]
+    private string _reasoningContent = string.Empty;
+
+    public bool HasReasoning => ReasoningContent.HasValue()
+                             && !ReasoningContent.StartsWith("Fast-Path", StringComparison.OrdinalIgnoreCase)
+                             && !ReasoningContent.StartsWith("Standard Completion", StringComparison.OrdinalIgnoreCase);
+
+    [ObservableProperty] private bool   _isReasoningExpanded;
+    [ObservableProperty] private string _reasoningSummary = "Thought for 0s";
+
     [ObservableProperty] private bool _isCalendarConnectPrompt;
 
     [ObservableProperty]

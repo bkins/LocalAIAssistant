@@ -608,11 +608,17 @@ public partial class ChatViewModel : ObservableObject
                         // callbacks already queued will see the cancellation flag and skip.
                         _thinkingCts?.Cancel();
 
-                        assistantMsg.Content            = cleanMessage;
-                        assistantMsg.WasFastPath        = response.WasFastPath;
-                        assistantMsg.Provider           = response.Provider;
-                        assistantMsg.Model              = response.Model;
-                        assistantMsg.ResponseDurationMs = responseDurationMs;
+                        assistantMsg.Content             = cleanMessage;
+                        assistantMsg.WasFastPath         = response.WasFastPath;
+                        assistantMsg.Provider            = response.Provider;
+                        assistantMsg.Model               = response.Model;
+                        assistantMsg.ResponseDurationMs  = responseDurationMs;
+                        assistantMsg.ReasoningContent    = response.ReasoningContent ?? string.Empty;
+                        assistantMsg.IsReasoningExpanded = false;
+                        if (assistantMsg.HasReasoning)
+                        {
+                            assistantMsg.ReasoningSummary = $"Thought for {(responseDurationMs / 1000.0):F1}s";
+                        }
                         _appShellMasterViewModel.PendingMemoryConfirmationCount = response.PendingMemoryCount;
                         if (tierNotice is not null)
                             assistantMsg.TierNotice = tierNotice;
@@ -692,6 +698,16 @@ public partial class ChatViewModel : ObservableObject
                         assistantMsg.Provider = "Groq";
                     if (string.IsNullOrEmpty(assistantMsg.Model))
                         assistantMsg.Model = modelToUse;
+
+                    if (string.IsNullOrWhiteSpace(assistantMsg.ReasoningContent))
+                    {
+                        assistantMsg.ReasoningContent = "Standard Completion (Direct response generation; no Chain-of-Thought reasoning emitted)";
+                    }
+                    assistantMsg.IsReasoningExpanded = false;
+                    if (assistantMsg.HasReasoning)
+                    {
+                        assistantMsg.ReasoningSummary = $"Thought for {(streamDurationMs / 1000.0):F1}s";
+                    }
 
                     var (cleanMessage, tierNotice) = TierNoticeExtractor.Extract(assistantMsg.Content);
                     if (tierNotice is not null)
@@ -1421,5 +1437,14 @@ public partial class ChatViewModel : ObservableObject
             if (trimmed.StartsWith(verb)) return true;
         }
         return false;
+    }
+
+    [RelayCommand]
+    private void ToggleReasoningExpansion(Message? message)
+    {
+        if (message is not null)
+        {
+            message.IsReasoningExpanded = !message.IsReasoningExpanded;
+        }
     }
 }
