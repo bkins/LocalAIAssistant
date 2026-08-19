@@ -52,4 +52,28 @@ public class ConversationApiClient : IConversationApiClient
             return false;
         }
     }
+
+    public async Task<SyncResponseDto?> SyncConversationsAsync(string? workspace = null, DateTimeOffset? since = null, CancellationToken ct = default)
+    {
+        try
+        {
+            var uri = $"{ConversationRoute}/sync";
+            var queryParams = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(workspace))
+                queryParams.Add($"workspace={Uri.EscapeDataString(workspace)}");
+
+            if (since.HasValue)
+                queryParams.Add($"since={Uri.EscapeDataString(since.Value.ToString("O"))}");
+
+            if (queryParams.Count > 0)
+                uri = $"{uri}?{string.Join("&", queryParams)}";
+
+            return await _httpClient.GetFromJsonAsync<SyncResponseDto>(uri, ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return null;
+        }
+    }
 }

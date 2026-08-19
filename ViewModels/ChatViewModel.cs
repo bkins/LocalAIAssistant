@@ -55,6 +55,7 @@ public partial class ChatViewModel : ObservableObject
     private readonly IGlobalHotkeyService             _hotkeyService;
     private readonly IGoogleCalendarService           _googleCalendar;
     private readonly ISpeechToTextService             _speechToText;
+    private readonly IConversationApiClient?          _conversationClient;
 
     // ── Connectivity ──────────────────────────────────────────────────────────
     [ObservableProperty] private bool _isOffline;
@@ -116,7 +117,8 @@ public partial class ChatViewModel : ObservableObject
                         , IClipboardMonitorService         clipboardMonitor
                         , IGlobalHotkeyService             hotkeyService
                         , IGoogleCalendarService           googleCalendar
-                        , ISpeechToTextService             speechToTextService )
+                        , ISpeechToTextService             speechToTextService
+                        , IConversationApiClient?          conversationClient = null )
     {
         _llmService              = llmService;
         _conversationMemory      = conversationMemory;
@@ -140,6 +142,7 @@ public partial class ChatViewModel : ObservableObject
         _hotkeyService           = hotkeyService;
         _googleCalendar          = googleCalendar;
         _speechToText            = speechToTextService;
+        _conversationClient      = conversationClient;
 
         _clipboardMonitor.CodeDetected += OnCodeDetectedInClipboard;
         _hotkeyService.HotkeyPressed   += OnCocoHotkeyPressed;
@@ -1445,6 +1448,44 @@ public partial class ChatViewModel : ObservableObject
         if (message is not null)
         {
             message.IsReasoningExpanded = !message.IsReasoningExpanded;
+        }
+    }
+
+    public async Task SyncOnResumeAsync(CancellationToken cancellationToken = default)
+    {
+        if (_conversationClient is null || string.IsNullOrWhiteSpace(ConversationId))
+            return;
+
+        try
+        {
+            var syncResult = await _conversationClient.SyncConversationsAsync(null, DateTimeOffset.UtcNow.AddHours(-12), cancellationToken);
+            if (syncResult?.UpdatedConversations is { Count: > 0 })
+            {
+                var matchingConv = syncResult.UpdatedConversations.FirstOrDefault(conv => conv.Id.EqualsIgnoreCase(ConversationId));
+                if (matchingConv?.Messages is { Count: > 0 })
+                {
+                    foreach (var msg in matchingConv.Messages)
+                    {
+                        var exists = Messages.Any(existing => existing.Content.EqualsIgnoreCase(msg.Content) &&
+                                                              existing.Sender.EqualsIgnoreCase(msg.Sender));
+                        if (!exists)
+                        {
+                            Messages.Add(new Message
+                            {
+                                Sender           = msg.Sender
+                              , Content          = msg.Content
+                              , ReasoningContent = msg.ReasoningContent
+                              , Timestamp        = msg.TimestampUtc.LocalDateTime
+                              , ConversationId   = ConversationId
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _log.LogWarning($"SyncOnResume failed: {ex.Message}");
         }
     }
 }

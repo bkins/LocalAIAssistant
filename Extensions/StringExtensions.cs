@@ -41,6 +41,11 @@ public static class StringExtensions
                            , comparisonType);
     }
 
+    public static bool EqualsIgnoreCase (this string? source, string? other)
+    {
+        return string.Equals(source, other, StringComparison.OrdinalIgnoreCase);
+    }
+
     public static bool IsInt (this string value)
     {
         return int.TryParse(value, out _);
