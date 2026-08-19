@@ -34,6 +34,7 @@
 
   <ItemGroup>
     <Compile Include="../Data/Models/Message.cs" Link="Linked/Message.cs" />
+    <Compile Include="../Data/StringConsts.cs" Link="Linked/StringConsts.cs" />
     <Compile Include="../CognitivePlatform/DTOs/ConverseResponseDto.cs" Link="Linked/ConverseResponseDto.cs" />
     <Compile Include="../CognitivePlatform/DTOs/InsightDto.cs" Link="Linked/InsightDto.cs" />
     <Compile Include="../Services/QueueReplayCoordinator.cs" Link="Linked/QueueReplayCoordinator.cs" />

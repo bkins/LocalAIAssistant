@@ -154,8 +154,22 @@ public partial class ChatViewModel : ObservableObject
         }
         ConversationId = savedConversationId;
 
+        _promptText = Preferences.Get(StringConsts.ChatDraftPromptPrefKey, string.Empty);
+
         _apiState.ConnectivityChanged += (_, _) => MainThread.BeginInvokeOnMainThread(() => IsOffline = _apiState.IsOffline);
 
+    }
+
+    partial void OnPromptTextChanged(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value.Equals("Listening... Speak now!", StringComparison.OrdinalIgnoreCase))
+        {
+            Preferences.Remove(StringConsts.ChatDraftPromptPrefKey);
+        }
+        else
+        {
+            Preferences.Set(StringConsts.ChatDraftPromptPrefKey, value);
+        }
     }
 
     public async Task InitializeAsync()

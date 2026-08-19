@@ -15,6 +15,7 @@ public static class StringConsts
     public const string PersonalitiesLocalFileName = "Personalities.local.json";
     public const string SelectedPersonalityPrefKey  = "SelectedPersonalityName";
     public const string ActiveConversationIdKey     = "ActiveConversationId";
+    public const string ChatDraftPromptPrefKey      = "ChatDraftPrompt";
 
     public const string TtsEnabledPrefKey            = "TtsEnabled";
     public const string TtsPreferredVoiceNamePrefKey = "TtsPreferredVoiceName";

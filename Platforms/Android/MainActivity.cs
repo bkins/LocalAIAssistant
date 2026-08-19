@@ -2,6 +2,7 @@ using Android.App;
 using Android.Content.PM;
 using Android.OS;
 using AndroidX.Activity.Result;
+using AndroidX.Core.View;
 using AndroidX.Health.Connect.Client;
 
 namespace LocalAIAssistant;
@@ -24,17 +25,11 @@ public class MainActivity : MauiAppCompatActivity
     // lifecycle rules: the launcher must be registered before the Activity reaches STARTED.
     internal static ActivityResultLauncher? HealthPermissionLauncher { get; private set; }
 
-    protected override void OnCreate(Bundle savedInstanceState)
+    protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
 
-        // Match status bar and navigation bar to the app's dark theme.
-        // Do NOT set DecorView.SystemUiVisibility here — MAUI .NET 9 owns those flags
-        // (edge-to-edge layout via WindowCompat.SetDecorFitsSystemWindows).  Overwriting
-        // them after base.OnCreate strips LAYOUT_FULLSCREEN / LAYOUT_HIDE_NAVIGATION,
-        // which breaks MAUI's inset math and makes all touch targets misaligned.
-        Window.SetStatusBarColor(Android.Graphics.Color.ParseColor("#000000"));
-        Window.SetNavigationBarColor(Android.Graphics.Color.ParseColor("#000000"));
+        ApplySystemBarTheming();
 
         // Use the HC-specific contract so the Health Connect permission screen is shown
         // on all supported API levels (26+), not the standard runtime-permission dialog
@@ -42,6 +37,30 @@ public class MainActivity : MauiAppCompatActivity
         HealthPermissionLauncher = RegisterForActivityResult(
             PermissionController.CreateRequestPermissionResultContract()
           , new NoOpPermissionCallback());
+    }
+
+    private void ApplySystemBarTheming()
+    {
+        if (Window is null)
+        {
+            return;
+        }
+
+        var isDarkTheme = (Resources?.Configuration?.UiMode & Android.Content.Res.UiMode.NightMask) == Android.Content.Res.UiMode.NightYes;
+
+        var barColor = isDarkTheme
+            ? Android.Graphics.Color.ParseColor("#121212")
+            : Android.Graphics.Color.ParseColor("#FFFFFF");
+
+        Window.SetStatusBarColor(barColor);
+        Window.SetNavigationBarColor(barColor);
+
+        var controller = WindowCompat.GetInsetsController(Window, Window.DecorView);
+        if (controller is not null)
+        {
+            controller.AppearanceLightStatusBars = !isDarkTheme;
+            controller.AppearanceLightNavigationBars = !isDarkTheme;
+        }
     }
 
     // The granted-permission set returned by the HC dialog is ignored here.

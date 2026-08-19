@@ -91,4 +91,42 @@ public class QueueReplayCoordinatorTests
 
         _queueMock.Verify(q => q.ProcessQueueAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    [Fact]
+    public void ProcessQueue_WhenPendingItemsRemain_SchedulesRetry()
+    {
+        _connectivityMock.Setup(conn => conn.IsOffline).Returns(false);
+        _queueMock.SetupSequence(q => q.GetPendingCountAsync())
+                  .ReturnsAsync(2)
+                  .ReturnsAsync(0);
+
+        var coordinator = new QueueReplayCoordinator(_queueMock.Object, _connectivityMock.Object, _loggerMock.Object)
+        {
+            InitialRetryInterval = TimeSpan.FromMilliseconds(50)
+        };
+
+        Thread.Sleep(150);
+
+        _queueMock.Verify(q => q.ProcessQueueAsync(It.IsAny<CancellationToken>()), Times.AtLeast(2));
+    }
+
+    [Fact]
+    public void ProcessQueue_WhenExceptionThrown_SchedulesRetry()
+    {
+        _connectivityMock.Setup(conn => conn.IsOffline).Returns(false);
+        _queueMock.SetupSequence(q => q.ProcessQueueAsync(It.IsAny<CancellationToken>()))
+                  .ThrowsAsync(new HttpRequestException("Transient network glitch 502"))
+                  .Returns(Task.CompletedTask);
+        _queueMock.Setup(q => q.GetPendingCountAsync()).ReturnsAsync(0);
+
+        var coordinator = new QueueReplayCoordinator(_queueMock.Object, _connectivityMock.Object, _loggerMock.Object)
+        {
+            InitialRetryInterval = TimeSpan.FromMilliseconds(50)
+        };
+
+        Thread.Sleep(150);
+
+        _queueMock.Verify(q => q.ProcessQueueAsync(It.IsAny<CancellationToken>()), Times.AtLeast(2));
+    }
 }
+

@@ -143,14 +143,6 @@ public static class MauiProgram
 #if ANDROID
 			       lifecycle.AddAndroid(android =>
 			       {
-				       android.OnCreate((activity, bundle) =>
-				       {
-					       Android.Runtime.AndroidEnvironment.UnhandledExceptionRaiser += (sender, args) =>
-					       {
-						       Debug.WriteLine($"[ANDROID CRASH] {args.Exception}");
-						       args.Handled = true; // Prevents hard crash — remove once you've identified issues
-					       };
-				       });
 			       });
 #endif
 #if WINDOWS
@@ -319,12 +311,14 @@ public static class MauiProgram
 			var ex      = args.ExceptionObject as Exception;
 			var message = ex?.Message    ?? args.ExceptionObject?.ToString() ?? "Unknown error";
 			var stack   = ex?.StackTrace ?? string.Empty;
+			Log.Error(ex, "[AppDomain.UnhandledException] {Message}", message);
 			_ = Task.Run(() => crashReporter.ReportAsync(message, stack, "AppDomain.UnhandledException"));
 		};
 
 		TaskScheduler.UnobservedTaskException += (_, args) =>
 		{
 			args.SetObserved();
+			Log.Error(args.Exception, "[TaskScheduler.UnobservedTaskException] {Message}", args.Exception.Message);
 			_ = Task.Run(() => crashReporter.ReportAsync(args.Exception.Message, args.Exception.StackTrace ?? string.Empty, "TaskScheduler.UnobservedTaskException"));
 		};
 
@@ -332,6 +326,7 @@ public static class MauiProgram
 		Android.Runtime.AndroidEnvironment.UnhandledExceptionRaiser += (_, args) =>
 		{
 			args.Handled = true;
+			Log.Error(args.Exception, "[AndroidEnvironment.UnhandledExceptionRaiser] {Message}", args.Exception.Message);
 			_ = Task.Run(() => crashReporter.ReportAsync(args.Exception.Message, args.Exception.StackTrace ?? string.Empty, "AndroidEnvironment.UnhandledExceptionRaiser"));
 		};
 #endif

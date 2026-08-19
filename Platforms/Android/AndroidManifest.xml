@@ -10,6 +10,10 @@
         <data android:scheme="ai.cognitiveplatform" android:host="oauth-callback" />
       </intent-filter>
     </activity>
+    <!-- Foreground data sync service declaration for Android 14+ -->
+    <service android:name="androidx.work.impl.foreground.SystemForegroundService"
+             android:foregroundServiceType="dataSync"
+             android:exported="false" />
   </application>
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
   <uses-permission android:name="android.permission.INTERNET" />
