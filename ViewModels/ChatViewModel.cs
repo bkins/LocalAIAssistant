@@ -686,11 +686,20 @@ public partial class ChatViewModel : ObservableObject
                 var streamDurationMs = (DateTime.UtcNow - sendStartedAt).TotalMilliseconds;
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
+                    _thinkingCts?.Cancel();
                     assistantMsg.ResponseDurationMs = streamDurationMs;
                     if (string.IsNullOrEmpty(assistantMsg.Provider))
                         assistantMsg.Provider = "Groq";
                     if (string.IsNullOrEmpty(assistantMsg.Model))
                         assistantMsg.Model = modelToUse;
+
+                    var (cleanMessage, tierNotice) = TierNoticeExtractor.Extract(assistantMsg.Content);
+                    if (tierNotice is not null)
+                    {
+                        assistantMsg.Content = cleanMessage;
+                        assistantMsg.TierNotice = tierNotice;
+                        ScheduleTierNoticeDismiss(assistantMsg);
+                    }
                 });
                 assistantSucceeded = true;
                 var elapsed = DateTime.UtcNow - sendStartedAt;
