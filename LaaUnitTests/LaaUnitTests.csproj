@@ -34,9 +34,25 @@
 
   <ItemGroup>
     <Compile Include="../Data/Models/Message.cs" Link="Linked/Message.cs" />
+    <Compile Include="../Data/Models/DtoError.cs" Link="Linked/DtoError.cs" />
     <Compile Include="../Data/StringConsts.cs" Link="Linked/StringConsts.cs" />
+    <Compile Include="../Knowledge/Tasks/Models/TasksDto.cs" Link="Linked/TasksDto.cs" />
+    <Compile Include="../Knowledge/Tasks/Models/TaskPriorityDto.cs" Link="Linked/TaskPriorityDto.cs" />
+    <Compile Include="../Knowledge/Journals/Models/JournalEntryDto.cs" Link="Linked/JournalEntryDto.cs" />
+    <Compile Include="../Knowledge/Journals/Models/JournalRevisionDto.cs" Link="Linked/JournalRevisionDto.cs" />
+    <Compile Include="../Knowledge/Inbox/KnowledgeItem.cs" Link="Linked/KnowledgeItem.cs" />
     <Compile Include="../CognitivePlatform/DTOs/ConverseResponseDto.cs" Link="Linked/ConverseResponseDto.cs" />
     <Compile Include="../CognitivePlatform/DTOs/InsightDto.cs" Link="Linked/InsightDto.cs" />
+    <Compile Include="../CognitivePlatform/DTOs/MealDto.cs" Link="Linked/MealDto.cs" />
+    <Compile Include="../CognitivePlatform/DTOs/NutritionSummaryDto.cs" Link="Linked/NutritionSummaryDto.cs" />
+    <Compile Include="../CognitivePlatform/CpClients/Tasks/ITaskApiClient.cs" Link="Linked/ITaskApiClient.cs" />
+    <Compile Include="../CognitivePlatform/CpClients/Tasks/TaskApiClient.cs" Link="Linked/TaskApiClient.cs" />
+    <Compile Include="../CognitivePlatform/CpClients/Journal/IJournalApiClient.cs" Link="Linked/IJournalApiClient.cs" />
+    <Compile Include="../CognitivePlatform/CpClients/Journal/JournalApiClient.cs" Link="Linked/JournalApiClient.cs" />
+    <Compile Include="../CognitivePlatform/CpClients/Knowledge/IKnowledgeApiClient.cs" Link="Linked/IKnowledgeApiClient.cs" />
+    <Compile Include="../CognitivePlatform/CpClients/Knowledge/KnowledgeApiClient.cs" Link="Linked/KnowledgeApiClient.cs" />
+    <Compile Include="../Services/Interfaces/IMealsClient.cs" Link="Linked/IMealsClient.cs" />
+    <Compile Include="../Services/MealsClient.cs" Link="Linked/MealsClient.cs" />
     <Compile Include="../Services/QueueReplayCoordinator.cs" Link="Linked/QueueReplayCoordinator.cs" />
     <Compile Include="../Services/Interfaces/IOfflineQueueService.cs" Link="Linked/IOfflineQueueService.cs" />
     <Compile Include="../Services/Interfaces/QueueProcessedEventArgs.cs" Link="Linked/QueueProcessedEventArgs.cs" />
