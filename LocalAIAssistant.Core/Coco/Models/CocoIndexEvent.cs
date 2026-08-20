@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace LocalAIAssistant.Core.Coco.Models;
 
@@ -16,6 +16,6 @@ public class CocoIndexEvent
     [JsonPropertyName("operation")]    public string?  Operation    { get; init; }
     [JsonPropertyName("correlationId")] public string? CorrelationId { get; init; }
 
-    public bool IsCompleted => string.Equals(Status, "Completed", StringComparison.OrdinalIgnoreCase);
-    public bool IsError     => string.Equals(Status, "Error",     StringComparison.OrdinalIgnoreCase);
+    public bool IsCompleted => Status.EqualsIgnoreCase("Completed");
+    public bool IsError     => Status.EqualsIgnoreCase("Error");
 }

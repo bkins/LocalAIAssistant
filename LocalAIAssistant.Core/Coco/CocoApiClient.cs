@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -32,7 +32,7 @@ public sealed class CocoApiClient : ICocoApiClient
             response.EnsureSuccessStatusCode();
 
             var body = await response.Content.ReadAsStringAsync(ct);
-            return string.IsNullOrWhiteSpace(body) ? null : body;
+            return body.HasNoValue() ? null : body;
         }
         catch (OperationCanceledException)
         {

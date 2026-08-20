@@ -1,4 +1,4 @@
-
+﻿
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -141,7 +141,7 @@ public partial class SettingsViewModel : ObservableObject
         CocoProjectPath             = Preferences.Default.Get(StringConsts.CocoProjectPathPrefKey,              string.Empty);
         CocoClipboardMonitorEnabled = Preferences.Default.Get(StringConsts.CocoClipboardMonitorEnabledPrefKey,  true);
         CocoHotkey                  = Preferences.Default.Get(StringConsts.CocoHotkeyPrefKey,                   StringConsts.CocoDefaultHotkey);
-        var isProd                    = string.Equals(BuildEnvironment.Name, "PROD", StringComparison.OrdinalIgnoreCase);
+        var isProd                    = BuildEnvironment.Name.EqualsIgnoreCase("PROD");
         var defaultDiagnosticsEnabled = !isProd;
 
         EnableStartupProbes         = Preferences.Default.Get(StringConsts.EnableStartupProbesPrefKey,          true);
@@ -252,7 +252,7 @@ public partial class SettingsViewModel : ObservableObject
         // Save the client ID before attempting the OAuth flow.
         Preferences.Default.Set(StringConsts.GoogleCalendarClientIdPrefKey, GoogleCalendarClientId);
 
-        if (string.IsNullOrWhiteSpace(GoogleCalendarClientId))
+        if (GoogleCalendarClientId.HasNoValue())
         {
             GoogleCalendarStatusText = "Enter your Client ID first";
             return;
@@ -298,7 +298,7 @@ public partial class SettingsViewModel : ObservableObject
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(CocoProjectPath))
+        if (CocoProjectPath.HasNoValue())
         {
             CocoStatusText = "Enter a project path first";
             return;

@@ -1,4 +1,4 @@
-namespace LocalAIAssistant.Core.Tts;
+﻿namespace LocalAIAssistant.Core.Tts;
 
 public static class TtsMarkdownCleaner
 {
@@ -7,7 +7,7 @@ public static class TtsMarkdownCleaner
     /// </summary>
     public static string StripMarkdown(string text)
     {
-        if (string.IsNullOrWhiteSpace(text))
+        if (text.HasNoValue())
             return string.Empty;
 
         var cleaned = text.Replace("###", "").Replace("##", "").Replace("# ", "")

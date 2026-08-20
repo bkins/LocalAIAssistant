@@ -1,4 +1,4 @@
-using LocalAIAssistant.Core.Environment;
+﻿using LocalAIAssistant.Core.Environment;
 using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.Health;
 using LocalAIAssistant.Services.Interfaces;
@@ -49,7 +49,7 @@ public partial class App : Application
 	{
 		try
 		{
-			var isProd                    = string.Equals(BuildEnvironment.Name, "PROD", StringComparison.OrdinalIgnoreCase);
+			var isProd                    = BuildEnvironment.Name.EqualsIgnoreCase("PROD");
 			var defaultDiagnosticsEnabled = !isProd;
 
 			var apiHealthService = Handler?.MauiContext?.Services.GetRequiredService<ApiHealthService>();

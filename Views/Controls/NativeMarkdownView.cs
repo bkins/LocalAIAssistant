@@ -1,4 +1,4 @@
-using Markdig;
+﻿using Markdig;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 using Microsoft.Maui.Controls.Shapes;
@@ -47,7 +47,7 @@ public class NativeMarkdownView : VerticalStackLayout
     private void Render( string? markdown )
     {
         Children.Clear();
-        if (string.IsNullOrWhiteSpace(markdown))
+        if (markdown.HasNoValue())
         {
             // Explicitly re-measure even when clearing to empty so the bubble
             // collapses rather than retaining the height of the previous content.
@@ -120,7 +120,7 @@ public class NativeMarkdownView : VerticalStackLayout
 
     private static bool LooksLikeRawText(string text)
     {
-        if (string.IsNullOrWhiteSpace(text))
+        if (text.HasNoValue())
             return false;
 
         return text.Contains("{")

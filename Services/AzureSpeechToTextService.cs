@@ -1,4 +1,4 @@
-using LocalAIAssistant.Data;
+﻿using LocalAIAssistant.Data;
 using LocalAIAssistant.Services.Interfaces;
 using SpeechSdk = Microsoft.CognitiveServices.Speech;
 
@@ -14,12 +14,12 @@ public sealed class AzureSpeechToTextService : ISpeechToTextService
     private static string ActiveRegion
         => Preferences.Default.Get(StringConsts.TtsAzureRegionPrefKey, "eastus");
 
-    public bool IsAvailable => !string.IsNullOrEmpty(ActiveKey);
+    public bool IsAvailable => ActiveKey.HasValue();
 
     public async Task<string?> RecognizeSpeechAsync(CancellationToken cancellationToken = default)
     {
         var key = ActiveKey;
-        if (string.IsNullOrEmpty(key))
+        if (key.IsNullOrEmpty())
         {
             return null;
         }

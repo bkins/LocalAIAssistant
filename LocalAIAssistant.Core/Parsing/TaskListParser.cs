@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using CP.Client.Core.Avails;
 
 namespace LocalAIAssistant.Core.Parsing;
@@ -30,8 +30,8 @@ public static class TaskListParser
                                  ? match.Groups["tags"].Value.Split(',', StringSplitOptions.TrimEntries)
                                  : Array.Empty<string>();
 
-            var importance = status.Contains("Important", StringComparison.OrdinalIgnoreCase);
-            var urgent     = status.Contains("Urgent",    StringComparison.OrdinalIgnoreCase);
+            var importance = status.ContainsIgnoreCase("Important");
+            var urgent     = status.ContainsIgnoreCase("Urgent");
 
             tasks.Add(new ParsedTask
                       {

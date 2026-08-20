@@ -1,4 +1,4 @@
-using LocalAIAssistant.Core.Tts;
+﻿using LocalAIAssistant.Core.Tts;
 using LocalAIAssistant.Data;
 using SpeechSdk = Microsoft.CognitiveServices.Speech;
 
@@ -23,7 +23,7 @@ public sealed class AzureTtsService : ITtsService
     private static string ActiveRegion
         => Preferences.Default.Get(StringConsts.TtsAzureRegionPrefKey, "eastus");
 
-    public bool IsTtsAvailable => !string.IsNullOrEmpty(ActiveKey);
+    public bool IsTtsAvailable => ActiveKey.HasValue();
 
     public bool IsEnabled
     {
@@ -36,18 +36,18 @@ public sealed class AzureTtsService : ITtsService
         get
         {
             var stored = Preferences.Default.Get(StringConsts.TtsPreferredVoiceNamePrefKey, string.Empty);
-            return string.IsNullOrEmpty(stored) ? null : stored;
+            return stored.IsNullOrEmpty() ? null : stored;
         }
         set => Preferences.Default.Set(StringConsts.TtsPreferredVoiceNamePrefKey, value ?? string.Empty);
     }
 
     public async Task SpeakAsync(string text, CancellationToken ct = default)
     {
-        if (!IsEnabled || string.IsNullOrWhiteSpace(text))
+        if (!IsEnabled || text.HasNoValue())
             return;
 
         var key = ActiveKey;
-        if (string.IsNullOrEmpty(key))
+        if (key.IsNullOrEmpty())
         {
             await _fallback.SpeakAsync(text, ct);
             return;
@@ -61,7 +61,7 @@ public sealed class AzureTtsService : ITtsService
         try
         {
             var config = SpeechSdk.SpeechConfig.FromSubscription(key, ActiveRegion);
-            if (!string.IsNullOrEmpty(PreferredVoiceName))
+            if (PreferredVoiceName.HasValue())
                 config.SpeechSynthesisVoiceName = PreferredVoiceName;
 
             _currentSynthesizer = new SpeechSdk.SpeechSynthesizer(config);
@@ -118,7 +118,7 @@ public sealed class AzureTtsService : ITtsService
     public async Task<IReadOnlyList<VoiceInfo>> GetVoicesAsync()
     {
         var key = ActiveKey;
-        if (string.IsNullOrEmpty(key))
+        if (key.IsNullOrEmpty())
             return await _fallback.GetVoicesAsync();
 
         try

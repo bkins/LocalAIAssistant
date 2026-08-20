@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 
 namespace LocalAIAssistant.Core.BrainDump;
 
@@ -177,7 +177,7 @@ public class GuidedBrainDumpFlow : IGuidedBrainDumpFlow
 
     private static void AppendCategory(StringBuilder sb, string label, string? text)
     {
-        var value = string.IsNullOrWhiteSpace(text) ? "(skipped)" : text.Trim();
+        var value = text.HasNoValue() ? "(skipped)" : text.Trim();
         sb.AppendLine($"{label}: {value}");
     }
 
@@ -189,19 +189,19 @@ public class GuidedBrainDumpFlow : IGuidedBrainDumpFlow
         {
             var line = rawLine.Trim();
 
-            if (line.StartsWith("TASK:", StringComparison.OrdinalIgnoreCase))
+            if (line.StartsWithIgnoreCase("TASK:"))
             {
                 var desc = line[5..].Trim();
                 if (desc.Length > 0)
                     items.Add(new ExtractedItem(ExtractedItemType.Task, desc));
             }
-            else if (line.StartsWith("CONCERN:", StringComparison.OrdinalIgnoreCase))
+            else if (line.StartsWithIgnoreCase("CONCERN:"))
             {
                 var desc = line[8..].Trim();
                 if (desc.Length > 0)
                     items.Add(new ExtractedItem(ExtractedItemType.Concern, desc));
             }
-            else if (line.StartsWith("PATTERN:", StringComparison.OrdinalIgnoreCase))
+            else if (line.StartsWithIgnoreCase("PATTERN:"))
             {
                 var desc = line[8..].Trim();
                 if (desc.Length > 0)

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using CommunityToolkit.Maui.Views;
 using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
@@ -55,7 +55,7 @@ public partial class VaultAuthPopup : Popup<bool>
 
     private async void CheckBiometricsOnLoad()
     {
-        var hasSavedPin = !string.IsNullOrEmpty(await SecureStorage.Default.GetAsync("vault_pin"));
+        var hasSavedPin = (await SecureStorage.Default.GetAsync("vault_pin").HasValue());
         var bioAvailable = await _biometricService.IsAvailableAsync();
 
         if (bioAvailable && hasSavedPin)
@@ -151,7 +151,7 @@ public partial class VaultAuthPopup : Popup<bool>
         }
 
         var savedPin = await SecureStorage.Default.GetAsync("vault_pin");
-        if (string.IsNullOrEmpty(savedPin))
+        if (savedPin.IsNullOrEmpty())
         {
             ShowError("Please unlock with PIN manually first to enable biometrics.");
             return;

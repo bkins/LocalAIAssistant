@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using LocalAIAssistant.Core.Tts;
 using LocalAIAssistant.Data;
@@ -39,7 +39,7 @@ public sealed class ElevenLabsTtsService : ITtsService
                ? key
                : null;
 
-    public bool IsTtsAvailable => !string.IsNullOrEmpty(ActiveKey);
+    public bool IsTtsAvailable => ActiveKey.HasValue();
 
     public bool IsEnabled
     {
@@ -52,18 +52,18 @@ public sealed class ElevenLabsTtsService : ITtsService
         get
         {
             var stored = Preferences.Default.Get(StringConsts.TtsPreferredVoiceNamePrefKey, string.Empty);
-            return string.IsNullOrEmpty(stored) ? null : stored;
+            return stored.IsNullOrEmpty() ? null : stored;
         }
         set => Preferences.Default.Set(StringConsts.TtsPreferredVoiceNamePrefKey, value ?? string.Empty);
     }
 
     public async Task SpeakAsync(string text, CancellationToken ct = default)
     {
-        if (!IsEnabled || string.IsNullOrWhiteSpace(text))
+        if (!IsEnabled || text.HasNoValue())
             return;
 
         var key = ActiveKey;
-        if (string.IsNullOrEmpty(key))
+        if (key.IsNullOrEmpty())
         {
             await _fallback.SpeakAsync(text, ct);
             return;
@@ -113,7 +113,7 @@ public sealed class ElevenLabsTtsService : ITtsService
     public async Task<IReadOnlyList<VoiceInfo>> GetVoicesAsync()
     {
         var key = ActiveKey;
-        if (string.IsNullOrEmpty(key))
+        if (key.IsNullOrEmpty())
             return await _fallback.GetVoicesAsync();
 
         try
@@ -149,7 +149,7 @@ public sealed class ElevenLabsTtsService : ITtsService
 
     private string ResolveVoiceId(string? preferredName)
     {
-        if (string.IsNullOrEmpty(preferredName))
+        if (preferredName.IsNullOrEmpty())
             return DefaultVoiceId;
 
         if (_nameToVoiceId.TryGetValue(preferredName, out var voiceId))

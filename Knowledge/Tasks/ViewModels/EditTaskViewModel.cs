@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LocalAIAssistant.CognitivePlatform.CpClients.Tasks;
 
@@ -108,7 +108,7 @@ public sealed partial class EditTaskViewModel : ObservableObject, IQueryAttribut
         => await Shell.Current.GoToAsync("..");
 
     private static IReadOnlyList<string>? ParseTags(string tags)
-        => string.IsNullOrWhiteSpace(tags)
+        => tags.HasNoValue()
                ? null
                : tags.Split(',')
                      .Select(tag => tag.Trim())

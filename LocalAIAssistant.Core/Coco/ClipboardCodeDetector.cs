@@ -1,4 +1,4 @@
-namespace LocalAIAssistant.Core.Coco;
+﻿namespace LocalAIAssistant.Core.Coco;
 
 /// <summary>
 /// Heuristic that decides whether clipboard text looks like code.
@@ -22,7 +22,7 @@ public static class ClipboardCodeDetector
 
     public static bool IsCode(string? text)
     {
-        if (string.IsNullOrWhiteSpace(text)) return false;
+        if (text.HasNoValue()) return false;
 
         if (text.Contains('{'))  return true;
         if (text.Contains("=>")) return true;

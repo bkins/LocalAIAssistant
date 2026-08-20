@@ -1,5 +1,4 @@
-using LocalAIAssistant.Core.Environment.Models;
-using LocalAIAssistant.Extensions;
+﻿using LocalAIAssistant.Core.Environment.Models;
 
 namespace LocalAIAssistant.Core.Environment;
 

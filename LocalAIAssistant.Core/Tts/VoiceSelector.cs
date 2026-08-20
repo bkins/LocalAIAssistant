@@ -1,4 +1,4 @@
-namespace LocalAIAssistant.Core.Tts;
+﻿namespace LocalAIAssistant.Core.Tts;
 
 public static class VoiceSelector
 {
@@ -14,19 +14,19 @@ public static class VoiceSelector
         if (voices.Count == 0)
             return null;
 
-        if (!string.IsNullOrEmpty(preferredName))
+        if (preferredName.HasValue())
         {
             var match = voices.FirstOrDefault(voice =>
-                voice.Name.Equals(preferredName, StringComparison.OrdinalIgnoreCase));
+                voice.Name.EqualsIgnoreCase(preferredName));
 
             if (match is not null)
                 return match;
         }
 
-        if (!string.IsNullOrEmpty(languageCode))
+        if (languageCode.HasValue())
         {
             var langMatch = voices.FirstOrDefault(voice =>
-                voice.Language.Equals(languageCode, StringComparison.OrdinalIgnoreCase));
+                voice.Language.EqualsIgnoreCase(languageCode));
 
             if (langMatch is not null)
                 return langMatch;

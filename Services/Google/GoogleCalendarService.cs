@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using LocalAIAssistant.Data;
@@ -24,14 +24,14 @@ public sealed class GoogleCalendarService : IGoogleCalendarService
     {
         get
         {
-            if (string.IsNullOrWhiteSpace(ClientId)) return false;
+            if (ClientId.HasNoValue()) return false;
             try
             {
                 // SecureStorage.GetAsync is async; check the synchronous key-exists path via
                 // a try/get pattern — if SecureStorage throws (e.g. key missing) return false.
                 var token = SecureStorage.Default.GetAsync(StringConsts.GoogleCalendarRefreshTokenKey)
                                                  .GetAwaiter().GetResult();
-                return !string.IsNullOrEmpty(token);
+                return token.HasValue();
             }
             catch
             {
@@ -48,7 +48,7 @@ public sealed class GoogleCalendarService : IGoogleCalendarService
     public async Task<bool> ConnectAsync()
     {
         var clientId = ClientId;
-        if (string.IsNullOrWhiteSpace(clientId))
+        if (clientId.HasNoValue())
             return false;
 
 #if WINDOWS
@@ -77,7 +77,7 @@ public sealed class GoogleCalendarService : IGoogleCalendarService
             return _cachedAccessToken;
 
         var refreshToken = await SecureStorage.Default.GetAsync(StringConsts.GoogleCalendarRefreshTokenKey);
-        if (string.IsNullOrEmpty(refreshToken)) return null;
+        if (refreshToken.IsNullOrEmpty()) return null;
 
         return await RefreshAccessTokenAsync(refreshToken);
     }
@@ -128,7 +128,7 @@ public sealed class GoogleCalendarService : IGoogleCalendarService
         if (!root.TryGetProperty("refresh_token", out var rtProp)) return false;
 
         var refreshToken = rtProp.GetString();
-        if (string.IsNullOrEmpty(refreshToken)) return false;
+        if (refreshToken.IsNullOrEmpty()) return false;
 
         await SecureStorage.Default.SetAsync(StringConsts.GoogleCalendarRefreshTokenKey, refreshToken);
 
@@ -150,7 +150,7 @@ public sealed class GoogleCalendarService : IGoogleCalendarService
     private async Task<string?> RefreshAccessTokenAsync(string refreshToken)
     {
         var clientId = ClientId;
-        if (string.IsNullOrWhiteSpace(clientId)) return null;
+        if (clientId.HasNoValue()) return null;
 
         var form = new FormUrlEncodedContent(
         [
@@ -212,7 +212,7 @@ public sealed class GoogleCalendarService : IGoogleCalendarService
 
             code = context.Request.QueryString["code"];
 
-            var htmlResponse = string.IsNullOrEmpty(code)
+            var htmlResponse = code.IsNullOrEmpty()
                 ? "<html><body>Authorization failed. You may close this window.</body></html>"
                 : "<html><body>Google Calendar connected! You may close this window.</body></html>";
 
@@ -231,7 +231,7 @@ public sealed class GoogleCalendarService : IGoogleCalendarService
             listener.Stop();
         }
 
-        if (string.IsNullOrEmpty(code)) return false;
+        if (code.IsNullOrEmpty()) return false;
 
         return await ExchangeCodeForTokensAsync(clientId, code, codeVerifier, redirectUri);
     }
@@ -261,7 +261,7 @@ public sealed class GoogleCalendarService : IGoogleCalendarService
         try
         {
             var result = await WebAuthenticator.Default.AuthenticateAsync(authUri, new Uri(redirectUri));
-            if (!result.Properties.TryGetValue("code", out var code) || string.IsNullOrEmpty(code))
+            if (!result.Properties.TryGetValue("code", out var code) || code.IsNullOrEmpty())
                 return false;
 
             return await ExchangeCodeForTokensAsync(clientId, code, codeVerifier, redirectUri);

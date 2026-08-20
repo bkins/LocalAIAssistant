@@ -1,4 +1,4 @@
-using LocalAIAssistant.PersonaAndContextEngine.Enums;
+﻿using LocalAIAssistant.PersonaAndContextEngine.Enums;
 using LocalAIAssistant.PersonaAndContextEngine.Interfaces;
 using LocalAIAssistant.PersonaAndContextEngine.Models;
 
@@ -17,7 +17,7 @@ public class KeywordIntentAnalyzer : IIntentAnalyzer
     {
         foreach (var (keyword, (intent, personaId)) in _rules)
         {
-            if (userInput.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+            if (userInput.ContainsIgnoreCase(keyword))
             {
                 return Task.FromResult(new IntentAnalysisResult
                                        {

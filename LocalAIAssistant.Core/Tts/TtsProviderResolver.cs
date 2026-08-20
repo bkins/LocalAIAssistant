@@ -1,13 +1,13 @@
-namespace LocalAIAssistant.Core.Tts;
+﻿namespace LocalAIAssistant.Core.Tts;
 
 public static class TtsProviderResolver
 {
     public static string Resolve(string? azureKey, string? elevenLabsKey)
     {
-        if (!string.IsNullOrWhiteSpace(azureKey))
+        if (azureKey.HasValue())
             return TtsProvider.Azure;
 
-        if (!string.IsNullOrWhiteSpace(elevenLabsKey))
+        if (elevenLabsKey.HasValue())
             return TtsProvider.ElevenLabs;
 
         return TtsProvider.Maui;

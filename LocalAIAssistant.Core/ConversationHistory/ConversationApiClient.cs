@@ -1,4 +1,4 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 
 namespace LocalAIAssistant.Core.ConversationHistory;
 
@@ -60,7 +60,7 @@ public class ConversationApiClient : IConversationApiClient
             var uri = $"{ConversationRoute}/sync";
             var queryParams = new List<string>();
 
-            if (!string.IsNullOrWhiteSpace(workspace))
+            if (workspace.HasValue())
                 queryParams.Add($"workspace={Uri.EscapeDataString(workspace)}");
 
             if (since.HasValue)

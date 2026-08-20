@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LocalAIAssistant.CognitivePlatform.CpClients.Tasks;
 using LocalAIAssistant.Knowledge.Tasks.Models;
@@ -49,7 +49,7 @@ public partial class TaskDetailViewModel : ObservableObject, IQueryAttributable
     [RelayCommand]
     public async Task LoadAsync(CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(Id))
+        if (Id.HasNoValue())
             return;
 
         IsLoading = true;
@@ -103,7 +103,7 @@ public partial class TaskDetailViewModel : ObservableObject, IQueryAttributable
     [RelayCommand]
     private async Task EditTaskAsync()
     {
-        if (string.IsNullOrWhiteSpace(_id)) return;
+        if (_id.HasNoValue()) return;
         await Shell.Current.GoToAsync($"{nameof(EditTaskPage)}?id={_id}");
     }
 }

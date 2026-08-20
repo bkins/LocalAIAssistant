@@ -1,4 +1,4 @@
-using LocalAIAssistant.Core.Tts;
+﻿using LocalAIAssistant.Core.Tts;
 using LocalAIAssistant.Data;
 using Microsoft.Maui.Media;
 
@@ -27,7 +27,7 @@ public sealed class MauiTtsService : ITtsService
         get
         {
             var stored = Preferences.Default.Get(VoiceNamePrefKey, string.Empty);
-            return string.IsNullOrEmpty(stored) ? null : stored;
+            return stored.IsNullOrEmpty() ? null : stored;
         }
         set => Preferences.Default.Set(VoiceNamePrefKey, value ?? string.Empty);
     }
@@ -52,7 +52,7 @@ public sealed class MauiTtsService : ITtsService
 
     public async Task SpeakAsync(string text, CancellationToken ct = default)
     {
-        if (!_isTtsAvailable || !IsEnabled || string.IsNullOrWhiteSpace(text))
+        if (!_isTtsAvailable || !IsEnabled || text.HasNoValue())
             return;
 
         await _speakLock.WaitAsync(ct);

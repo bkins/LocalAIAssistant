@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Maui.Views;
@@ -264,7 +264,7 @@ public partial class KnowledgeInboxViewModel : ObservableObject
                 }
             }
 
-            if (response.Message.Contains("saved successfully", StringComparison.OrdinalIgnoreCase))
+            if (response.Message.ContainsIgnoreCase("saved successfully"))
             {
                 _db.OfflineQueue.Remove(queueItem);
                 await _db.SaveChangesAsync();
@@ -334,7 +334,7 @@ public partial class KnowledgeInboxViewModel : ObservableObject
             case KnowledgeKind.Journal:
             {
                 var url = $"{nameof(JournalDetailPage)}?id={item.Id}";
-                if (!string.IsNullOrEmpty(item.Workspace))
+                if (item.Workspace.HasValue())
                     url += $"&workspace={Uri.EscapeDataString(item.Workspace)}";
                 await Shell.Current.GoToAsync(url);
                 break;
@@ -343,7 +343,7 @@ public partial class KnowledgeInboxViewModel : ObservableObject
             case KnowledgeKind.Task:
             {
                 var url = $"{nameof(TaskDetailPage)}?id={item.Id}";
-                if (!string.IsNullOrEmpty(item.Workspace))
+                if (item.Workspace.HasValue())
                     url += $"&workspace={Uri.EscapeDataString(item.Workspace)}";
                 await Shell.Current.GoToAsync(url);
                 break;

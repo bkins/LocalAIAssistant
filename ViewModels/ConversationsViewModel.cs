@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LocalAIAssistant.Core.ConversationHistory;
@@ -66,7 +66,7 @@ public partial class ConversationsViewModel : ObservableObject
     [RelayCommand]
     private async Task DeleteConversation(ConversationSummaryDto conversation)
     {
-        var name = string.IsNullOrWhiteSpace(conversation.Name)
+        var name = conversation.Name.HasNoValue()
                        ? "this conversation"
                        : $"\"{conversation.Name}\"";
 
@@ -102,7 +102,7 @@ public partial class ConversationsViewModel : ObservableObject
             "Cancel",
             initialValue: currentName);
 
-        if (string.IsNullOrWhiteSpace(newName) || newName == currentName) return;
+        if (newName.HasNoValue() || newName == currentName) return;
 
         try
         {

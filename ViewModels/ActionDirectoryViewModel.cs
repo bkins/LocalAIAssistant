@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
@@ -83,7 +83,7 @@ public partial class ActionDirectoryViewModel : ObservableObject
         
         var query = SearchQuery?.ToLowerInvariant().Trim() ?? string.Empty;
 
-        var filtered = string.IsNullOrEmpty(query)
+        var filtered = query.IsNullOrEmpty()
                                ? AllActions
                                : AllActions.Where(action => action.Name.ToLowerInvariant().Contains(query)
                                                          || action.Category.ToLowerInvariant().Contains(query)

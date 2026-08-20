@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using CP.Client.Core.Avails;
@@ -73,10 +73,10 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
         {
             var errorDto = await response.Content.ReadFromJsonAsync<ConverseResponseDto>();
 
-            if (errorDto?.Message.Contains("Rate limit reached", StringComparison.OrdinalIgnoreCase) ?? false)
+            if (errorDto?.Message.ContainsIgnoreCase("Rate limit reached") ?? false)
                 return MarkdownFormatter.Format(errorDto.Message);
 
-            if (string.IsNullOrWhiteSpace(errorDto?.Message).Not())
+            if ((errorDto?.Message).HasNoValue().Not())
                 return $"Server error ({statusCode}): {errorDto!.Message}";
         }
         catch
@@ -91,7 +91,7 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
     {
         public static string Format( string raw )
         {
-            if (string.IsNullOrWhiteSpace(raw))
+            if (raw.HasNoValue())
                 return raw;
 
             var result = raw;
@@ -131,7 +131,7 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
                 {
                     // Handle inline closing fence
                     var content = trimmed[..^3].TrimEnd();
-                    if (!string.IsNullOrEmpty(content))
+                    if (content.HasValue())
                         output.Add(content);
 
                     output.Add("```");
@@ -155,7 +155,7 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
 
             foreach (var line in lines)
             {
-                var isEmpty = string.IsNullOrWhiteSpace(line);
+                var isEmpty = line.HasNoValue();
 
                 if (isEmpty)
                 {
@@ -180,7 +180,7 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
 
     private static bool IsDestructiveInput(string? input)
     {
-        if (string.IsNullOrWhiteSpace(input)) return false;
+        if (input.HasNoValue()) return false;
         var trimmed = input.Trim().ToLowerInvariant();
         foreach (var verb in DestructiveVerbs)
         {
@@ -262,7 +262,7 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
                 yield break;
             }
 
-            if (line.StartsWith("data:", StringComparison.OrdinalIgnoreCase).Not()) continue;
+            if (line.StartsWithIgnoreCase("data:").Not()) continue;
 
             var payload = line["data:".Length..];
 

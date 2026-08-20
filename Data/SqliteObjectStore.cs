@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
@@ -121,7 +121,7 @@ public class SqliteObjectStore : IObjectStore
     public T? Get<T> (string id
                     , string? partitionKey = null)
     {
-        if (string.IsNullOrWhiteSpace(id))
+        if (id.HasNoValue())
             throw new ArgumentException("Value cannot be null or whitespace."
                                       , nameof(id));
 
@@ -211,7 +211,7 @@ public class SqliteObjectStore : IObjectStore
     public bool SoftDelete<T> (string id
                              , string? partitionKey = null)
     {
-        if (string.IsNullOrWhiteSpace(id))
+        if (id.HasNoValue())
             throw new ArgumentException("Value cannot be null or whitespace."
                                       , nameof(id));
 

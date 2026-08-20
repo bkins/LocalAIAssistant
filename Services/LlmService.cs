@@ -1,4 +1,4 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -7,7 +7,6 @@ using System.Text.Json.Serialization;
 using System.Threading.Channels;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
-using LocalAIAssistant.Extensions;
 using LocalAIAssistant.Services.AiMemory;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
 using LocalAIAssistant.Services.Contracts;
@@ -118,7 +117,7 @@ public class LlmService : ILlmService
                 string? line;
                 while ((line = await reader.ReadLineAsync().ConfigureAwait(false)) != null)
                 {
-                    if (string.IsNullOrWhiteSpace(line)) continue;
+                    if (line.HasNoValue()) continue;
 
                     // Remove the "data: " prefix if present
                     if (line.StartsWith("data:"))
@@ -142,7 +141,7 @@ public class LlmService : ILlmService
                                                         , out var contentElement))
                         {
                             var content = contentElement.GetString();
-                            if (!string.IsNullOrEmpty(content))
+                            if (content.HasValue())
                             {
                                 await channel.Writer.WriteAsync(content);
                             }
@@ -304,7 +303,7 @@ public class LlmService : ILlmService
     }
     
     private static string Truncate(string value, int maxLength) =>
-        string.IsNullOrEmpty(value) ? value : value[..Math.Min(value.Length, maxLength)];
+        value.IsNullOrEmpty() ? value : value[..Math.Min(value.Length, maxLength)];
     
     private static string GetGenerateEndpoint(OllamaConfig cfg)
     {
@@ -332,7 +331,7 @@ public class LlmService : ILlmService
 
         // Memory context (prefer request.Context if provided)
         string? memorySummary;
-        if (!string.IsNullOrWhiteSpace(request.Context))
+        if (request.Context.HasValue())
         {
             memorySummary = request.Context;
         }

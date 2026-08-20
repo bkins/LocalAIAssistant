@@ -1,5 +1,4 @@
-using System.Text;
-using LocalAIAssistant.Extensions;
+﻿using System.Text;
 using LocalAIAssistant.PersonaAndContextEngine.Enums;
 using LocalAIAssistant.PersonaAndContextEngine.Interfaces;
 using LocalAIAssistant.PersonaAndContextEngine.Models;

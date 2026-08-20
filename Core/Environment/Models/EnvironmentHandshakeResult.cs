@@ -1,4 +1,4 @@
-namespace LocalAIAssistant.Core.Environment.Models;
+﻿namespace LocalAIAssistant.Core.Environment.Models;
 
 public enum HandshakeSeverity
 {
@@ -16,9 +16,7 @@ public sealed record EnvironmentHandshakeResult( string            ClientEnviron
                                                , string            UserMessage
                                                , string            MoreDetails = "N/A")
 {
-    public bool HasMismatch => !string.Equals(ClientEnvironment
-                                            , ApiEnvironment
-                                            , StringComparison.OrdinalIgnoreCase);
+    public bool HasMismatch => !ClientEnvironment.EqualsIgnoreCase(ApiEnvironment);
 
     
 }

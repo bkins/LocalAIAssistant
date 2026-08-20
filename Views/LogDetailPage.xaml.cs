@@ -1,4 +1,4 @@
-using LocalAIAssistant.Services.Logging;
+﻿using LocalAIAssistant.Services.Logging;
 
 namespace LocalAIAssistant.Views;
 
@@ -34,7 +34,7 @@ public partial class LogDetailPage : ContentPage
         var contentProp = message?.GetType().GetProperty("FullText");
         var text        = contentProp?.GetValue(message)?.ToString();
 
-        if (string.IsNullOrWhiteSpace(text))
+        if (text.HasNoValue())
             return;
 
         await Clipboard.Default.SetTextAsync(text);

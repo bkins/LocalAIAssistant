@@ -1,4 +1,4 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -135,7 +135,7 @@ public sealed class HealthPushService : BackgroundService
             client.BaseAddress = new Uri(_apiBaseUrl + "/");
             client.Timeout     = TimeSpan.FromSeconds(10);
 
-            if (!string.IsNullOrWhiteSpace(_gatewayConfig?.SharedSecret))
+            if ((_gatewayConfig?.SharedSecret).HasValue())
             {
                 client.DefaultRequestHeaders.Add("X-CP-Key", _gatewayConfig.SharedSecret);
             }

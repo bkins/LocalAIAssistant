@@ -1,6 +1,5 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using LocalAIAssistant.Extensions;
 using System.Text;
 using LocalAIAssistant.Services.Logging.Interfaces;
 using Microsoft.Extensions.Logging;

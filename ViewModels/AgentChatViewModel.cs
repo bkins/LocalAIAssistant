@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -35,7 +35,7 @@ public partial class AgentChatViewModel : ObservableObject
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _statusText = string.Empty;
 
-    public bool HasStatusText => !string.IsNullOrWhiteSpace(StatusText);
+    public bool HasStatusText => StatusText.HasValue();
 
     partial void OnStatusTextChanged(string value)
     {
@@ -72,7 +72,7 @@ public partial class AgentChatViewModel : ObservableObject
         foreach (var convo in activeList)
         {
             // Fallback for unnamed threads
-            if (string.IsNullOrWhiteSpace(convo.Name))
+            if (convo.Name.HasNoValue())
             {
                 convo.Name = $"Thread {convo.ConversationId[..8]}";
             }
@@ -96,7 +96,7 @@ public partial class AgentChatViewModel : ObservableObject
 
     private async Task LoadHistoryForConversationAsync(ConversationMetadataDto? newValue)
     {
-        if (newValue == null || string.IsNullOrEmpty(newValue.ConversationId))
+        if (newValue == null || newValue.ConversationId.IsNullOrEmpty())
         {
             Messages = new ObservableCollection<ConversationTurnDto>();
             return;
@@ -129,7 +129,7 @@ public partial class AgentChatViewModel : ObservableObject
     [RelayCommand]
     private async Task SendPromptAsync()
     {
-        if (string.IsNullOrWhiteSpace(PromptText))
+        if (PromptText.HasNoValue())
             return;
 
         var prompt = PromptText;
@@ -153,7 +153,7 @@ public partial class AgentChatViewModel : ObservableObject
 
         try
         {
-            var convoId = string.IsNullOrEmpty(SelectedConversation?.ConversationId) ? null : SelectedConversation.ConversationId;
+            var convoId = (SelectedConversation?.ConversationId).IsNullOrEmpty() ? null : SelectedConversation.ConversationId;
             var modelToUse = SelectedModel == "Default (Auto)" ? null : SelectedModel;
             var job = await _agentJobService.CreateJobAsync(prompt, convoId, modelToUse);
             var jobId = job.Id;
@@ -188,7 +188,7 @@ public partial class AgentChatViewModel : ObservableObject
 
                     // Add assistant response visually
                     var responseText = updatedJob.Response ?? "(No response content returned)";
-                    if (!string.IsNullOrWhiteSpace(updatedJob.Model))
+                    if (updatedJob.Model.HasValue())
                     {
                         responseText += $"\n\n*Model: {updatedJob.Model}*";
                     }
@@ -202,7 +202,7 @@ public partial class AgentChatViewModel : ObservableObject
                     Messages.Add(assistantTurn);
 
                     // If it was a new thread, refresh thread list and select the new thread
-                    if (string.IsNullOrEmpty(convoId) && !string.IsNullOrEmpty(updatedJob.ConversationId))
+                    if (convoId.IsNullOrEmpty() && updatedJob.ConversationId.HasValue())
                     {
                         var createdConvoId = updatedJob.ConversationId;
                         await LoadConversationsAsync();

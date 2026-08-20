@@ -1,5 +1,4 @@
-using LocalAIAssistant.Extensions;
-using LocalAIAssistant.PersonaAndContextEngine.Enums;
+﻿using LocalAIAssistant.PersonaAndContextEngine.Enums;
 using LocalAIAssistant.PersonaAndContextEngine.Interfaces;
 using LocalAIAssistant.PersonaAndContextEngine.Models;
 

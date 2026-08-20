@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LocalAIAssistant.Core.Media;
@@ -231,7 +231,7 @@ public sealed partial class EditJournalEntryViewModel : ObservableObject
 
     private static IReadOnlyList<string>? ParseTags(string tags)
     {
-        return string.IsNullOrWhiteSpace(tags)
+        return tags.HasNoValue()
                        ? null
                        : tags.Split(',')
                              .Select(tag => tag.Trim())

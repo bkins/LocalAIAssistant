@@ -1,8 +1,7 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Text;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
-using LocalAIAssistant.Extensions;
 using LocalAIAssistant.PersonaAndContextEngine.Interfaces;
 using LocalAIAssistant.Services.AiMemory;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
@@ -233,7 +232,7 @@ public class OrchestratorService : IOrchestratorService
     }
 
     private static string Truncate(string value, int maxLength)
-        => string.IsNullOrEmpty(value) ? value : value[..Math.Min(value.Length, maxLength)];
+        => value.IsNullOrEmpty() ? value : value[..Math.Min(value.Length, maxLength)];
     
     private void LogEvent(string turnId, string logEvent)
     {

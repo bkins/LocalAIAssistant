@@ -1,4 +1,4 @@
-namespace LocalAIAssistant.Core.Coco;
+﻿namespace LocalAIAssistant.Core.Coco;
 
 /// <summary>
 /// Heuristic classifier that decides whether a user query should be routed to
@@ -61,35 +61,35 @@ public static class CodeIntentAnalyzer
 
     public static bool IsRefactorRequest(string input)
     {
-        if (string.IsNullOrWhiteSpace(input)) return false;
+        if (input.HasNoValue()) return false;
         var lower = input.ToLowerInvariant();
         return RefactorTerms.Any(term => lower.Contains(term));
     }
 
     public static bool IsCommitMessageRequest(string input)
     {
-        if (string.IsNullOrWhiteSpace(input)) return false;
+        if (input.HasNoValue()) return false;
         var lower = input.ToLowerInvariant();
         return CommitMessageTerms.Any(term => lower.Contains(term));
     }
 
     public static bool IsExplainCodeRequest(string input)
     {
-        if (string.IsNullOrWhiteSpace(input)) return false;
+        if (input.HasNoValue()) return false;
         var lower = input.ToLowerInvariant();
         return ExplainCodeTerms.Any(term => lower.Contains(term));
     }
 
     public static bool IsSymbolsRequest(string input)
     {
-        if (string.IsNullOrWhiteSpace(input)) return false;
+        if (input.HasNoValue()) return false;
         var lower = input.ToLowerInvariant();
         return SymbolsTerms.Any(term => lower.Contains(term));
     }
 
     public static bool IsCodeQuery(string input)
     {
-        if (string.IsNullOrWhiteSpace(input)) return false;
+        if (input.HasNoValue()) return false;
 
         var lower = input.ToLowerInvariant();
 
@@ -102,7 +102,7 @@ public static class CodeIntentAnalyzer
 
     public static bool IsExplicitCocoRequest(string input)
     {
-        if (string.IsNullOrWhiteSpace(input)) return false;
+        if (input.HasNoValue()) return false;
 
         var lower = input.ToLowerInvariant();
         return ExplicitCocoTerms.Any(term => lower.Contains(term));
@@ -110,7 +110,7 @@ public static class CodeIntentAnalyzer
 
     public static bool IsExplicitCpRequest(string input)
     {
-        if (string.IsNullOrWhiteSpace(input)) return false;
+        if (input.HasNoValue()) return false;
 
         var lower = input.ToLowerInvariant();
         return ExplicitCpTerms.Any(term => lower.Contains(term));

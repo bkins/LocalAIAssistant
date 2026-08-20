@@ -1,4 +1,4 @@
-using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
+﻿using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Services.Contracts;
@@ -148,7 +148,7 @@ public class OfflineQueueService: IOfflineQueueService
 
         foreach (var item in allPending)
         {
-            if (!string.IsNullOrWhiteSpace(item.Model))
+            if (item.Model.HasValue())
             {
                 item.Model = string.Empty;
             }

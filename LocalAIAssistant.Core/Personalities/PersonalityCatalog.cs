@@ -1,4 +1,4 @@
-namespace LocalAIAssistant.Core.Personalities;
+﻿namespace LocalAIAssistant.Core.Personalities;
 
 public class PersonalityCatalog
 {
@@ -26,7 +26,7 @@ public class PersonalityCatalog
         => _records.FirstOrDefault(record => record.Id == id);
 
     public PersonalityRecord? SelectByName(string name)
-        => _records.FirstOrDefault(record => string.Equals(record.Name, name, StringComparison.OrdinalIgnoreCase));
+        => _records.FirstOrDefault(record => record.Name.EqualsIgnoreCase(name));
 
     public bool SetCurrent(Guid id)
     {

@@ -1,4 +1,4 @@
-using FlaUI.Core;
+﻿using FlaUI.Core;
 using FlaUI.Core.AutomationElements;
 using FlaUI.UIA3;
 
@@ -99,7 +99,7 @@ public sealed class AppFixture : IDisposable
     private static string ResolveExePath()
     {
         var envPath = Environment.GetEnvironmentVariable("LAA_EXE_PATH");
-        if (!string.IsNullOrEmpty(envPath))
+        if (envPath.HasValue())
         {
             if (File.Exists(envPath)) return envPath;
             throw new FileNotFoundException(

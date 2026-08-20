@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using CommunityToolkit.Maui;
 using CP.Client.Core.Common.ConnectivityToApi;
 using CP.Client.Core.Web;
@@ -15,7 +15,6 @@ using Plugin.LocalNotification.AndroidOption;
 using LocalAIAssistant.Core.Environment;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
-using LocalAIAssistant.Extensions;
 // using LocalAIAssistant.Health;
 using LocalAIAssistant.Knowledge.Inbox;
 using LocalAIAssistant.Knowledge.Journals.ViewModels;

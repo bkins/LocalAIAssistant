@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -226,7 +226,7 @@ public sealed class HealthApiService : BackgroundService
 
     private bool ValidateKey(HttpListenerRequest request)
     {
-        if (string.IsNullOrEmpty(_config.SharedSecret))
+        if (_config.SharedSecret.IsNullOrEmpty())
             return true;
 
         var key = request.Headers["X-CP-Key"];

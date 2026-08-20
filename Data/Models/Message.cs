@@ -1,6 +1,5 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using LocalAIAssistant.Core.Parsing;
-using LocalAIAssistant.Extensions;
 
 namespace LocalAIAssistant.Data.Models;
 
@@ -35,8 +34,8 @@ public partial class Message : ObservableObject
     private string _reasoningContent = string.Empty;
 
     public bool HasReasoning => ReasoningContent.HasValue()
-                             && !ReasoningContent.StartsWith("Fast-Path", StringComparison.OrdinalIgnoreCase)
-                             && !ReasoningContent.StartsWith("Standard Completion", StringComparison.OrdinalIgnoreCase);
+                             && !ReasoningContent.StartsWithIgnoreCase("Fast-Path")
+                             && !ReasoningContent.StartsWithIgnoreCase("Standard Completion");
 
     [ObservableProperty] private bool   _isReasoningExpanded;
     [ObservableProperty] private string _reasoningSummary = "Thought for 0s";
@@ -59,10 +58,10 @@ public partial class Message : ObservableObject
     private double _responseDurationMs;
 
     public bool HasTelemetry =>
-        Sender?.Equals("assistant", StringComparison.OrdinalIgnoreCase) == true
+        Sender?.EqualsIgnoreCase("assistant") == true
      || ResponseDurationMs > 0
-     || !string.IsNullOrEmpty(Provider)
-     || !string.IsNullOrEmpty(Model);
+     || Provider.HasValue()
+     || Model.HasValue();
 
     public string TelemetryText
     {
@@ -76,8 +75,8 @@ public partial class Message : ObservableObject
             }
             else
             {
-                var providerStr = !string.IsNullOrEmpty(Provider) ? Provider : "LLM";
-                var modelStr    = !string.IsNullOrEmpty(Model) ? $" • {Model}" : string.Empty;
+                var providerStr = Provider.HasValue() ? Provider : "LLM";
+                var modelStr    = Model.HasValue() ? $" • {Model}" : string.Empty;
                 parts.Add($"🤖 {providerStr}{modelStr}");
             }
 
@@ -124,7 +123,7 @@ public partial class Message : ObservableObject
 
     public bool IsMultiLine => Content?.Contains('\n') == true;
     public bool IsTaskList => 
-            Sender?.Equals("assistant", StringComparison.OrdinalIgnoreCase) == true
+            Sender?.EqualsIgnoreCase("assistant") == true
          && TaskListParser.TryParseTasks(Content ?? "", out _);
 
     public List<ParsedTask>? ParsedTasks =>

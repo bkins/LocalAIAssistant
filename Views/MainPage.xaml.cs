@@ -1,4 +1,4 @@
-using System.Collections.Specialized;
+﻿using System.Collections.Specialized;
 using CP.Client.Core.Avails;
 using LocalAIAssistant.Services.Logging;
 using LocalAIAssistant.Services.Logging.Interfaces;
@@ -257,7 +257,7 @@ public partial class MainPage : ContentPage
         var contentProp = message?.GetType().GetProperty("Content");
         var text        = contentProp?.GetValue(message)?.ToString();
 
-        if (string.IsNullOrWhiteSpace(text))
+        if (text.HasNoValue())
             return;
 
         await Clipboard.Default.SetTextAsync(text);

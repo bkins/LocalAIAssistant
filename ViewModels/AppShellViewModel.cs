@@ -1,6 +1,5 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
-using LocalAIAssistant.Extensions;
 
 namespace LocalAIAssistant.ViewModels
 {

@@ -1,4 +1,4 @@
-using FlaUI.Core.AutomationElements;
+﻿using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
 using Xunit;
 
@@ -51,7 +51,7 @@ public sealed class SmokeTests : IClassFixture<AppFixture>
         editor.Text = "smoke_test_hello";
         Thread.Sleep(300);
 
-        Assert.False(string.IsNullOrEmpty(editor.Text),
+        Assert.False(editor.Text.IsNullOrEmpty(),
             "Editor text should not be empty after typing");
 
         // Clean up.
@@ -295,7 +295,7 @@ public sealed class SmokeTests : IClassFixture<AppFixture>
         textBox.Text = "phase34_guard";
         Thread.Sleep(300);
 
-        Assert.False(string.IsNullOrEmpty(textBox.Text),
+        Assert.False(textBox.Text.IsNullOrEmpty(),
             "ChatEditor must accept text input after Phase 3+4 changes");
 
         textBox.Text = string.Empty;

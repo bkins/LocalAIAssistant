@@ -1,5 +1,4 @@
-using LocalAIAssistant.Data.Models;
-using LocalAIAssistant.Extensions;
+﻿using LocalAIAssistant.Data.Models;
 using System.Text.Json;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
 
@@ -49,7 +48,7 @@ public class JsonlAiMemoryStore : ILongTermMemoryStore
     
     public async Task<IEnumerable<Message>> SearchMessagesAsync(string query, int limit = 20)
     {
-        if (string.IsNullOrWhiteSpace(query)) return Enumerable.Empty<Message>();
+        if (query.HasNoValue()) return Enumerable.Empty<Message>();
         
         var needle = query.ToLowerInvariant();
         

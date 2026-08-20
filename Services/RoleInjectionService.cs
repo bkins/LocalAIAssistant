@@ -1,5 +1,4 @@
-using LocalAIAssistant.Extensions;
-using LocalAIAssistant.Services.AiMemory;
+﻿using LocalAIAssistant.Services.AiMemory;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
 using LocalAIAssistant.Services.Interfaces;
 
@@ -22,7 +21,7 @@ public class RoleInjectionService : IRoleInjectionService
                                                  , bool   includeShortTermMemory
                                                  , bool   includeLongTermMemory)
     {
-        if (string.IsNullOrWhiteSpace(baseRoleDescription))
+        if (baseRoleDescription.HasNoValue())
             throw new ArgumentException("Base role description cannot be null or whitespace."
                                       , nameof(baseRoleDescription));
 
@@ -64,7 +63,7 @@ public class RoleInjectionService : IRoleInjectionService
         string personaName,
         string contextSummary)
     {
-        if (string.IsNullOrWhiteSpace(baseSystemPrompt))
+        if (baseSystemPrompt.HasNoValue())
             throw new ArgumentException("Base system prompt cannot be null or whitespace.", nameof(baseSystemPrompt));
 
         var systemPrompt = $"{baseSystemPrompt}\n\nYou are now roleplaying as '{personaName}'.\nStay in character at all times.";

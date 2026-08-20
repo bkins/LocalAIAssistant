@@ -1,4 +1,4 @@
-namespace LocalAIAssistant.Core.Conversation;
+﻿namespace LocalAIAssistant.Core.Conversation;
 
 /// <summary>
 /// Parses the trailing model-tier-downgrade notice that the CP API may append to a response
@@ -10,7 +10,7 @@ public static class TierNoticeExtractor
 {
     public static (string CleanMessage, string? Notice) Extract(string message)
     {
-        if (string.IsNullOrWhiteSpace(message))
+        if (message.HasNoValue())
             return (message, null);
 
         var trimmed     = message.TrimEnd();

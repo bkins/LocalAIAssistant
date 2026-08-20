@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace LocalAIAssistant.Core.Coco.Models;
 
@@ -18,6 +18,6 @@ public class CocoAskEvent
     [JsonPropertyName("status")]    public string?                 Status    { get; init; }
     [JsonPropertyName("sources")]   public IReadOnlyList<string>?  Sources   { get; init; }
 
-    public bool IsHeartbeat => string.Equals(Status, "Heartbeat", StringComparison.OrdinalIgnoreCase);
-    public bool IsComplete  => string.Equals(Stage,  "complete",  StringComparison.OrdinalIgnoreCase);
+    public bool IsHeartbeat => Status.EqualsIgnoreCase("Heartbeat");
+    public bool IsComplete  => Stage.EqualsIgnoreCase("complete");
 }

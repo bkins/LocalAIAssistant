@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -10,7 +10,6 @@ using LocalAIAssistant.Core.ConversationHistory;
 using LocalAIAssistant.Core.Tts;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
-using LocalAIAssistant.Extensions;
 using LocalAIAssistant.Core.BrainDump;
 using LocalAIAssistant.Core.Media;
 using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
@@ -74,7 +73,7 @@ public partial class ChatViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasClipboardNotice))]
     private string _clipboardNoticeText = string.Empty;
 
-    public bool HasClipboardNotice => !string.IsNullOrEmpty(_clipboardNoticeText);
+    public bool HasClipboardNotice => _clipboardNoticeText.HasValue();
 
     public bool IsCocoToggleVisible =>
         DeviceInfo.Current.Platform == DevicePlatform.WinUI
@@ -150,7 +149,7 @@ public partial class ChatViewModel : ObservableObject
 
         // ENH-20: persist ConversationId across app restarts so server history can be retrieved.
         var savedConversationId = Preferences.Get(StringConsts.ActiveConversationIdKey, string.Empty);
-        if (string.IsNullOrEmpty(savedConversationId))
+        if (savedConversationId.IsNullOrEmpty())
         {
             savedConversationId = Guid.NewGuid().ToString();
             Preferences.Set(StringConsts.ActiveConversationIdKey, savedConversationId);
@@ -165,7 +164,7 @@ public partial class ChatViewModel : ObservableObject
 
     partial void OnPromptTextChanged(string value)
     {
-        if (string.IsNullOrWhiteSpace(value) || value.Equals("Listening... Speak now!", StringComparison.OrdinalIgnoreCase))
+        if (value.HasNoValue() || value.EqualsIgnoreCase("Listening... Speak now!"))
         {
             Preferences.Remove(StringConsts.ChatDraftPromptPrefKey);
         }
@@ -364,7 +363,7 @@ public partial class ChatViewModel : ObservableObject
         var text = PromptText?.Trim() ?? string.Empty;
         if (text.HasNoValue()) return;
 
-        if (text.Equals("test:set_pending_memory", StringComparison.OrdinalIgnoreCase))
+        if (text.EqualsIgnoreCase("test:set_pending_memory"))
         {
             try { System.IO.File.AppendAllText(System.IO.Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, "debug_run_logs.txt"), "DEBUG: test:set_pending_memory hook hit!\n"); } catch {}
             MainThread.BeginInvokeOnMainThread(() =>
@@ -546,7 +545,7 @@ public partial class ChatViewModel : ObservableObject
                     response = await cp.ConverseAsync(followUpText, ConversationId, modelToUse).ConfigureAwait(false);
                 }
 
-                if (response.RequiresAuth && !string.IsNullOrEmpty(response.AuthUrl))
+                if (response.RequiresAuth && response.AuthUrl.HasValue())
                 {
                     _ = MainThread.InvokeOnMainThreadAsync(async () =>
                     {
@@ -570,7 +569,7 @@ public partial class ChatViewModel : ObservableObject
                     });
                 }
 
-                if (response.Message.Contains("Groq API returned 429", StringComparison.CurrentCultureIgnoreCase))
+                if (response.Message.ContainsIgnoreCase("Groq API returned 429"))
                 {
                     _log.LogWarning($"SendAsync: API returned 429 — {response.Message}", Category.ChatViewModel);
                     MainThread.BeginInvokeOnMainThread(() =>
@@ -697,12 +696,12 @@ public partial class ChatViewModel : ObservableObject
                 {
                     _thinkingCts?.Cancel();
                     assistantMsg.ResponseDurationMs = streamDurationMs;
-                    if (string.IsNullOrEmpty(assistantMsg.Provider))
+                    if (assistantMsg.Provider.IsNullOrEmpty())
                         assistantMsg.Provider = "Groq";
-                    if (string.IsNullOrEmpty(assistantMsg.Model))
+                    if (assistantMsg.Model.IsNullOrEmpty())
                         assistantMsg.Model = modelToUse;
 
-                    if (string.IsNullOrWhiteSpace(assistantMsg.ReasoningContent))
+                    if (assistantMsg.ReasoningContent.HasNoValue())
                     {
                         assistantMsg.ReasoningContent = "Standard Completion (Direct response generation; no Chain-of-Thought reasoning emitted)";
                     }
@@ -864,7 +863,7 @@ public partial class ChatViewModel : ObservableObject
 
     private async Task HandleCalendarConnectPromptAsync(Message assistantMsg)
     {
-        var hasClientId = !string.IsNullOrWhiteSpace(_googleCalendar.ClientId);
+        var hasClientId = _googleCalendar.ClientId.HasValue();
 
         var content = hasClientId
             ? "To use calendar features, connect your Google Calendar. Tap the button below to connect."
@@ -913,7 +912,7 @@ public partial class ChatViewModel : ObservableObject
         try
         {
             var transcribed = await _speechToText.RecognizeSpeechAsync();
-            if (!string.IsNullOrEmpty(transcribed))
+            if (transcribed.HasValue())
             {
                 PromptText = transcribed;
                 await SendAsync();
@@ -1193,7 +1192,7 @@ public partial class ChatViewModel : ObservableObject
     
     private static string[] GenerateThinkingFrames(string text)
     {
-        if (string.IsNullOrWhiteSpace(text))
+        if (text.HasNoValue())
             text = "...";
 
         var frames = new List<string>();
@@ -1444,7 +1443,7 @@ public partial class ChatViewModel : ObservableObject
 
     private static bool IsDestructiveInput(string? input)
     {
-        if (string.IsNullOrWhiteSpace(input)) return false;
+        if (input.HasNoValue()) return false;
         var trimmed = input.Trim().ToLowerInvariant();
         foreach (var verb in DestructiveVerbs)
         {
@@ -1464,7 +1463,7 @@ public partial class ChatViewModel : ObservableObject
 
     public async Task SyncOnResumeAsync(CancellationToken cancellationToken = default)
     {
-        if (_conversationClient is null || string.IsNullOrWhiteSpace(ConversationId))
+        if (_conversationClient is null || ConversationId.HasNoValue())
             return;
 
         try

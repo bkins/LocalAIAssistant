@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using CP.Client.Core.Avails;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
@@ -96,7 +96,7 @@ public static class SimpleCompressor
     private static string OneLine(string messageContent
                                 , int    limit)
     {
-        if (string.IsNullOrWhiteSpace(messageContent)) return "";
+        if (messageContent.HasNoValue()) return "";
         var clean = Regex.Replace(messageContent.Replace("\r", " ")
                                                 .Replace("\n", " ")
                                 , RegexMatchingPatterns.WhitespacePattern

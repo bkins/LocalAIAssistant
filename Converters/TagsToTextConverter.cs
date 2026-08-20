@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 
 namespace LocalAIAssistant.Converters;
 
@@ -13,7 +13,7 @@ public sealed class TagsToTextConverter : IValueConverter
             return string.Empty;
 
         var list = tags.Select(tag => tag?.Trim())
-                       .Where(tag => !string.IsNullOrWhiteSpace(tag))
+                       .Where(tag => tag.HasValue())
                        .ToList();
 
         if (list.Count == 0)

@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LocalAIAssistant.Data;
@@ -28,7 +28,7 @@ public partial class ConversationViewModel : ObservableObject
     [RelayCommand]
     private async Task SendAsync()
     {
-        if (string.IsNullOrWhiteSpace(UserInput) 
+        if (UserInput.HasNoValue() 
          || SelectedPersonality == null) return;
 
         IsBusy = true;

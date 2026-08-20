@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using LocalAIAssistant.Services.Interfaces;
 
 namespace LocalAIAssistant.Platforms.Windows;
@@ -118,7 +118,7 @@ public sealed class WindowsHotkeyService : IGlobalHotkeyService, IDisposable
         uint mods = 0;
         uint vk   = 0;
 
-        if (string.IsNullOrWhiteSpace(hotkey))
+        if (hotkey.HasNoValue())
             return (ModControl | ModShift, 'C');
 
         var parts = hotkey.Split('+', StringSplitOptions.RemoveEmptyEntries

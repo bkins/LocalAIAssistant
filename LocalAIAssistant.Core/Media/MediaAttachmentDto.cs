@@ -1,4 +1,4 @@
-namespace LocalAIAssistant.Core.Media;
+﻿namespace LocalAIAssistant.Core.Media;
 
 public sealed class MediaAttachmentDto
 {
@@ -11,5 +11,5 @@ public sealed class MediaAttachmentDto
     public Guid           OwnerId     { get; init; }
     public string         StoragePath { get; init; } = string.Empty;
 
-    public bool IsImage => ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase);
+    public bool IsImage => ContentType.StartsWithIgnoreCase("image/");
 }

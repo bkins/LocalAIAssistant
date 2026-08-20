@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Hosting;
@@ -76,7 +76,7 @@ public sealed class FileGatewayService : BackgroundService
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(_config.SharedSecret))
+        if (_config.SharedSecret.HasNoValue())
         {
             _logger.LogWarning( "FileGatewayService: SharedSecret is not configured; "
                               + "set FileGateway:SharedSecret in appsettings.json and restart the app" );
@@ -275,7 +275,7 @@ public sealed class FileGatewayService : BackgroundService
         try
         {
             var directory = Path.GetDirectoryName(resolvedPath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            if (directory.HasValue() && !Directory.Exists(directory))
                 Directory.CreateDirectory(directory);
 
             await using var fileStream = File.Create(resolvedPath);
@@ -340,7 +340,7 @@ public sealed class FileGatewayService : BackgroundService
     private static string? ResolvePathParam(HttpListenerRequest request)
     {
         var raw = request.QueryString["path"];
-        if (string.IsNullOrWhiteSpace(raw))
+        if (raw.HasNoValue())
             return null;
 
         if (raw.Contains(".."))

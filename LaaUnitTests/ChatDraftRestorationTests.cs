@@ -1,4 +1,4 @@
-using LocalAIAssistant.Data;
+﻿using LocalAIAssistant.Data;
 using Xunit;
 
 namespace LaaUnitTests;
@@ -22,8 +22,8 @@ public class ChatDraftRestorationTests
     [InlineData("Hello, can you help me with tasks?", false)]
     public void DraftValidation_IdentifiesTransientOrEmptyDrafts(string input, bool expectedShouldClear)
     {
-        var shouldClear = string.IsNullOrWhiteSpace(input)
-                       || input.Equals("Listening... Speak now!", StringComparison.OrdinalIgnoreCase);
+        var shouldClear = input.HasNoValue()
+                       || input.EqualsIgnoreCase("Listening... Speak now!");
 
         Assert.Equal(expectedShouldClear, shouldClear);
     }

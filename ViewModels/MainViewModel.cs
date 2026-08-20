@@ -1,10 +1,9 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
-using LocalAIAssistant.Extensions;
 using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
 using LocalAIAssistant.Services.Interfaces;
@@ -65,7 +64,7 @@ public partial class MainViewModel : ObservableObject
             IsBusy = true;
 
             var prompt = PromptText?.Trim();
-            if (string.IsNullOrEmpty(prompt)) return;
+            if (prompt.IsNullOrEmpty()) return;
 
             // Create and store user message immediately.
             // BUG-13: Message.Timestamp is persisted and filtered as UTC (see
