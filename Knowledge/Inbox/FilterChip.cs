@@ -11,8 +11,8 @@ public sealed partial class FilterChip : ObservableObject
 
     public FilterChip(string label, string value, bool isSelected = false)
     {
-        Label       = label;
-        Value       = value;
-        _isSelected = isSelected;
+        Label      = label;
+        Value      = value;
+        IsSelected = isSelected;
     }
 }

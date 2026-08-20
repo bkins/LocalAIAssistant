@@ -39,7 +39,7 @@ public partial class TaskDetailViewModel : ObservableObject, IQueryAttributable
         if (query.TryGetValue("id", out var idObj)
          && idObj?.ToString() is { Length: > 0 } id)
         {
-            _id = id;
+            Id = id;
         }
 
         if (query.TryGetValue("workspace", out var wsObj) && wsObj?.ToString() is { Length: > 0 } ws)
@@ -49,7 +49,7 @@ public partial class TaskDetailViewModel : ObservableObject, IQueryAttributable
     [RelayCommand]
     public async Task LoadAsync(CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(_id))
+        if (string.IsNullOrWhiteSpace(Id))
             return;
 
         IsLoading = true;

@@ -157,7 +157,7 @@ public partial class ChatViewModel : ObservableObject
         }
         ConversationId = savedConversationId;
 
-        _promptText = Preferences.Get(StringConsts.ChatDraftPromptPrefKey, string.Empty);
+        PromptText = Preferences.Get(StringConsts.ChatDraftPromptPrefKey, string.Empty);
 
         _apiState.ConnectivityChanged += (_, _) => MainThread.BeginInvokeOnMainThread(() => IsOffline = _apiState.IsOffline);
 
