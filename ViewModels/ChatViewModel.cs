@@ -1128,6 +1128,7 @@ public partial class ChatViewModel : ObservableObject
     }
 
     // ── Clipboard & hotkey sidecar handlers ──────────────────────────────────
+    private CancellationTokenSource? _clipboardNoticeCts;
 
     private async void OnCodeDetectedInClipboard(object? sender, string code)
     {
@@ -1136,14 +1137,24 @@ public partial class ChatViewModel : ObservableObject
 
         if (!cocoEnabled || !clipboardMonitorEnabled) return;
 
+        _clipboardNoticeCts?.Cancel();
+        _clipboardNoticeCts = new CancellationTokenSource();
+        var cancellationToken = _clipboardNoticeCts.Token;
+
         await MainThread.InvokeOnMainThreadAsync(async () =>
         {
             PromptText          = $"Explain this code:\n\n{code}";
             IsCocoMode          = true;
             ClipboardNoticeText = "Code detected in clipboard — ready to ask Coco";
 
-            await Task.Delay(3000);
-            ClipboardNoticeText = string.Empty;
+            try
+            {
+                await Task.Delay(3000, cancellationToken);
+                ClipboardNoticeText = string.Empty;
+            }
+            catch (OperationCanceledException)
+            {
+            }
         });
     }
 

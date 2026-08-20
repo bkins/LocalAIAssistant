@@ -139,7 +139,7 @@ public class SqliteObjectStore : IObjectStore
             WHERE Id = $id
               AND Type = $type
               AND DeletedUtc IS NULL
-              AND ($partitionKey IS NULL OR PartitionKey = $partitionKey);
+              AND PartitionKey IS $partitionKey;
             """;
 
         command.Parameters.AddWithValue("$id"
@@ -177,7 +177,7 @@ public class SqliteObjectStore : IObjectStore
             FROM Objects
             WHERE Type = $type
               AND DeletedUtc IS NULL
-              AND ($partitionKey IS NULL OR PartitionKey = $partitionKey)
+              AND PartitionKey IS $partitionKey
               AND ($fromUtc IS NULL OR CreatedUtc >= $fromUtc)
               AND ($toUtc   IS NULL OR CreatedUtc <= $toUtc)
             ORDER BY CreatedUtc;
@@ -231,7 +231,7 @@ public class SqliteObjectStore : IObjectStore
             SET DeletedUtc = $deletedUtc
             WHERE Id = $id
               AND Type = $type
-              AND ($partitionKey IS NULL OR PartitionKey = $partitionKey);
+              AND PartitionKey IS $partitionKey;
             """;
 
         command.Parameters.AddWithValue("$id",           id);

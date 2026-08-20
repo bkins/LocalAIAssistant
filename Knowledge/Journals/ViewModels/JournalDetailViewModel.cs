@@ -26,9 +26,8 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
     [ObservableProperty] private string                _errorMessage;
     [ObservableProperty] private string?               _workspace;
 
-    private Exception _caughtException;
-
-    [ObservableProperty] private bool _isEdited;
+    [ObservableProperty] private Exception?            _caughtException;
+    [ObservableProperty] private bool                  _isEdited;
 
     public ObservableCollection<AttachmentViewModel> Attachments    { get; } = new();
     public bool                                      HasAttachments => Attachments.Count > 0;
@@ -38,7 +37,7 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
     {
         _clientFactory   = clientFactory;
         _mediaClient     = mediaClient;
-        _caughtException = new Exception();
+        CaughtException  = new Exception();
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -46,7 +45,7 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
         if (query.TryGetValue("id", out var idObj) &&
             Guid.TryParse(idObj?.ToString(), out var id))
         {
-            _journalId = id;
+            JournalId = id;
         }
 
         if (query.TryGetValue("workspace", out var wsObj) && wsObj?.ToString() is { Length: > 0 } ws)
@@ -56,14 +55,14 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
     [RelayCommand]
     public async Task LoadAsync()
     {
-        if (_journalId == Guid.Empty)
+        if (JournalId == Guid.Empty)
             return;
 
         IsLoading = true;
         try
         {
             var client = _clientFactory.Create();
-            var entry  = await client.GetByIdAsync(_journalId);
+            var entry  = await client.GetByIdAsync(JournalId);
 
             if (entry is not null)
             {
@@ -82,7 +81,7 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
         }
         catch (Exception exception)
         {
-            _caughtException = exception;
+            CaughtException = exception;
         }
         finally
         {
@@ -92,7 +91,7 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
 
     private async Task LoadAttachmentsAsync()
     {
-        var list = await _mediaClient.ListAsync(_journalId);
+        var list = await _mediaClient.ListAsync(JournalId);
         Attachments.Clear();
 
         if (list is null) return;

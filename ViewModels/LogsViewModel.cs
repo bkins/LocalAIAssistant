@@ -129,7 +129,8 @@ public partial class LogsViewModel : ObservableObject
             
             // Force Serilog to flush (this will close the logger, so we need to be careful)
             // Instead, let's just wait a moment for the logs to be written
-            await Task.Delay(100);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+            await Task.Delay(100, cts.Token);
             
             // Also log to the built-in logger for debugging
             System.Diagnostics.Debug.WriteLine("Test logging completed");

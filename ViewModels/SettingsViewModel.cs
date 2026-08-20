@@ -105,17 +105,17 @@ public partial class SettingsViewModel : ObservableObject
 
         Environment = BuildEnvironment.Name;
 
-        _selectedEnvironment = _apiEnvironment.Name;
+        SelectedEnvironment = _apiEnvironment.Name;
         _configService       = configService;
         _personalityService  = personalityService;
 
         // Load the current config
         var cfg = _configService.GetConfig();
 
-        _model       = cfg.Model;
-        _numPredict  = cfg.NumPredict;
-        _temperature = cfg.Temperature;
-        _endpoint    = cfg.Host;
+        Model       = cfg.Model;
+        NumPredict  = cfg.NumPredict;
+        Temperature = cfg.Temperature;
+        Endpoint    = cfg.Host;
 
         _appShellMasterViewModel = appShellMasterViewModel;
 
@@ -126,27 +126,27 @@ public partial class SettingsViewModel : ObservableObject
         if (_healthConnect is not null)
             _ = RefreshHealthStatus();
 
-        _selectedTtsProvider  = Preferences.Default.Get(StringConsts.TtsProviderPrefKey,      TtsProvider.Maui);
-        _ttsAzureKey          = Preferences.Default.Get(StringConsts.TtsAzureKeyPrefKey,      string.Empty);
-        _ttsAzureRegion       = Preferences.Default.Get(StringConsts.TtsAzureRegionPrefKey,   "eastus");
-        _ttsElevenLabsKey     = Preferences.Default.Get(StringConsts.TtsElevenLabsKeyPrefKey, string.Empty);
+        SelectedTtsProvider  = Preferences.Default.Get(StringConsts.TtsProviderPrefKey,      TtsProvider.Maui);
+        TtsAzureKey          = Preferences.Default.Get(StringConsts.TtsAzureKeyPrefKey,      string.Empty);
+        TtsAzureRegion       = Preferences.Default.Get(StringConsts.TtsAzureRegionPrefKey,   "eastus");
+        TtsElevenLabsKey     = Preferences.Default.Get(StringConsts.TtsElevenLabsKeyPrefKey, string.Empty);
 
         _googleCalendar              = googleCalendar;
-        _googleCalendarClientId      = Preferences.Default.Get(StringConsts.GoogleCalendarClientIdPrefKey, string.Empty);
-        _googleCalendarStatusText    = googleCalendar.HasToken ? "Connected" : "Not connected";
+        GoogleCalendarClientId      = Preferences.Default.Get(StringConsts.GoogleCalendarClientIdPrefKey, string.Empty);
+        GoogleCalendarStatusText    = googleCalendar.HasToken ? "Connected" : "Not connected";
 
         _cocoFactory                 = services.GetService<ICocoApiClientFactory>();
-        _cocoBaseUrl                 = Preferences.Default.Get(StringConsts.CocoBaseUrlPrefKey,                  StringConsts.CocoDefaultBaseUrl);
-        _cocoEnabled                 = Preferences.Default.Get(StringConsts.CocoEnabledPrefKey,                  false);
-        _cocoProjectPath             = Preferences.Default.Get(StringConsts.CocoProjectPathPrefKey,              string.Empty);
-        _cocoClipboardMonitorEnabled = Preferences.Default.Get(StringConsts.CocoClipboardMonitorEnabledPrefKey,  true);
-        _cocoHotkey                  = Preferences.Default.Get(StringConsts.CocoHotkeyPrefKey,                   StringConsts.CocoDefaultHotkey);
+        CocoBaseUrl                 = Preferences.Default.Get(StringConsts.CocoBaseUrlPrefKey,                  StringConsts.CocoDefaultBaseUrl);
+        CocoEnabled                 = Preferences.Default.Get(StringConsts.CocoEnabledPrefKey,                  false);
+        CocoProjectPath             = Preferences.Default.Get(StringConsts.CocoProjectPathPrefKey,              string.Empty);
+        CocoClipboardMonitorEnabled = Preferences.Default.Get(StringConsts.CocoClipboardMonitorEnabledPrefKey,  true);
+        CocoHotkey                  = Preferences.Default.Get(StringConsts.CocoHotkeyPrefKey,                   StringConsts.CocoDefaultHotkey);
         var isProd                    = string.Equals(BuildEnvironment.Name, "PROD", StringComparison.OrdinalIgnoreCase);
         var defaultDiagnosticsEnabled = !isProd;
 
-        _enableStartupProbes         = Preferences.Default.Get(StringConsts.EnableStartupProbesPrefKey,          true);
-        _enableStartupDiagnostics    = Preferences.Default.Get(StringConsts.EnableStartupDiagnosticsPrefKey,     defaultDiagnosticsEnabled);
-        _streamingEnabled            = Preferences.Default.Get(StringConsts.StreamingEnabledPrefKey,              true);
+        EnableStartupProbes         = Preferences.Default.Get(StringConsts.EnableStartupProbesPrefKey,          true);
+        EnableStartupDiagnostics    = Preferences.Default.Get(StringConsts.EnableStartupDiagnosticsPrefKey,     defaultDiagnosticsEnabled);
+        StreamingEnabled            = Preferences.Default.Get(StringConsts.StreamingEnabledPrefKey,              true);
     }
 
     public Task RefreshHealthStatusAsync() => RefreshHealthStatus();
