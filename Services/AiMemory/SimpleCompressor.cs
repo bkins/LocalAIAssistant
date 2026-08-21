@@ -1,8 +1,7 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 using CP.Client.Core.Avails;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
-using StringExtensions = LocalAIAssistant.Extensions.StringExtensions;
 
 namespace LocalAIAssistant.Services.AiMemory;
 
@@ -83,7 +82,7 @@ public static class SimpleCompressor
                                , int     maxLineLength
                                , double? score)
     {
-        var who            = StringExtensions.HasNoValue(message.Sender) ? Senders.Unknown : message.Sender;
+        var who            = message.Sender.HasNoValue() ? Senders.Unknown : message.Sender;
         var content        = OneLine(message.Content, maxLineLength);
         var timestamp      = includeTimestamp ? $" [{message.Timestamp:yyyy-MM-dd HH:mm}]" : "";
         var scoreText      = $" (Score: {score:0.##})";

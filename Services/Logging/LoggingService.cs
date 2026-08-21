@@ -1,6 +1,7 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text;
+using LocalAIAssistant.Extensions;
 using LocalAIAssistant.Services.Logging.Interfaces;
 using Microsoft.Extensions.Logging;
 using ILogger = Serilog.ILogger;

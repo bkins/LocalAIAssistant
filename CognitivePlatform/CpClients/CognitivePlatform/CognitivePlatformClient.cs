@@ -20,12 +20,12 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
 
     public CognitivePlatformClient( HttpClient            httpClient
                                   , IConnectivityReporter connectivity
-                                  , ILoggingService        loggingService )
+                                  , ILoggingService       loggingService )
     {
-        _httpClient       = httpClient;
-        Connectivity      = connectivity;
+        _httpClient          = httpClient;
+        Connectivity         = connectivity;
         ConnectivityReporter = connectivity;
-        _loggingService   = loggingService;
+        _loggingService      = loggingService;
     }
 
     public override async Task<ConverseResponseDto> ConverseAsync( string userMessage
@@ -38,20 +38,29 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
         {
             if (Connectivity.Online().Not()) throw new TaskCanceledException("API Offline");
 
-            var request = BuildRequest(userMessage, conversationId, model);
+            var request = BuildRequest(userMessage
+                                     , conversationId
+                                     , model);
 
-            response = await _httpClient.PostAsJsonAsync("api/conversation/converse", request);
+            response = await _httpClient.PostAsJsonAsync("api/conversation/converse"
+                                                       , request);
 
             if (response.IsSuccessStatusCode)
             {
                 Connectivity.ReportOnline();
 
                 return await response.Content.ReadFromJsonAsync<ConverseResponseDto>()
-                    ?? new ConverseResponseDto { Message = "(empty response)" };
+                    ?? new ConverseResponseDto
+                       {
+                               Message = "(empty response)"
+                       };
             }
 
             // Server responded with an error status — not a connectivity failure
-            return new ConverseResponseDto { Message = await BuildServerErrorMessageAsync(response) };
+            return new ConverseResponseDto
+                   {
+                           Message = await BuildServerErrorMessageAsync(response)
+                   };
         }
         catch (HttpRequestException ex)
         {
@@ -178,7 +187,7 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
 
     private static readonly string[] DestructiveVerbs = ["delete", "remove", "clear", "destroy", "reset", "erase", "purge"];
 
-    private static bool IsDestructiveInput(string? input)
+    private static bool IsDestructiveInput( string? input )
     {
         if (input.HasNoValue()) return false;
         var trimmed = input.Trim().ToLowerInvariant();
@@ -186,12 +195,13 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
         {
             if (trimmed.StartsWith(verb)) return true;
         }
+
         return false;
     }
 
     private static ConverseRequestDto BuildRequest( string userMessage
-                                                   , string conversationId
-                                                   , string model )
+                                                  , string conversationId
+                                                  , string model )
     {
         var isFastPath    = FastPathIntentDetector.IsFastPathIntent(userMessage);
         var isDestructive = IsDestructiveInput(userMessage);
@@ -207,17 +217,20 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
     }
 
     public override async IAsyncEnumerable<string> ConverseStreamAsync( string                                     userMessage
-                                                                       , string                                     conversationId
-                                                                       , string                                     model
-                                                                       , [EnumeratorCancellation] CancellationToken ct = default )
+                                                                      , string                                     conversationId
+                                                                      , string                                     model
+                                                                      , [EnumeratorCancellation] CancellationToken ct = default )
     {
-        var requestDto = BuildRequest(userMessage, conversationId, model);
+        var requestDto = BuildRequest(userMessage
+                                    , conversationId
+                                    , model);
         var route = "api/conversation/converse";
         route += requestDto.Streaming
                          ? "/stream"
                          : string.Empty;
-        
-        using var request = new HttpRequestMessage(HttpMethod.Post, route)
+
+        using var request = new HttpRequestMessage(HttpMethod.Post
+                                                 , route)
                             {
                                     Content = JsonContent.Create(requestDto)
                             };
@@ -233,7 +246,7 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
         await using var stream = await response.Content.ReadAsStreamAsync(ct);
         using var       reader = new StreamReader(stream);
 
-        while (reader.EndOfStream.Not() 
+        while (reader.EndOfStream.Not()
             && ct.IsCancellationRequested.Not())
         {
             var line = await reader.ReadLineAsync(ct) ?? string.Empty;
@@ -242,12 +255,16 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
 
             if (line.TrimStart().StartsWith("{"))
             {
-                var fullJson = line + await reader.ReadToEndAsync(ct);
+                var     fullJson       = line + await reader.ReadToEndAsync(ct);
                 string? messageToYield = null;
                 try
                 {
-                    var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                    var converseResponse = System.Text.Json.JsonSerializer.Deserialize<ConverseResponseDto>(fullJson, options);
+                    var options = new System.Text.Json.JsonSerializerOptions
+                                  {
+                                          PropertyNameCaseInsensitive = true
+                                  };
+                    var converseResponse = System.Text.Json.JsonSerializer.Deserialize<ConverseResponseDto>(fullJson
+                                                                                                          , options);
                     messageToYield = converseResponse?.Message;
                 }
                 catch
@@ -259,6 +276,7 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
                 {
                     yield return messageToYield;
                 }
+
                 yield break;
             }
 
@@ -272,14 +290,14 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
         }
     }
 
-    public override async Task<SystemEnvironmentInfo> SystemEnvironmentAsync(CancellationToken ct = default)
+    public override async Task<SystemEnvironmentInfo> SystemEnvironmentAsync( CancellationToken ct = default )
     {
         return await _httpClient.GetFromJsonAsync<SystemEnvironmentInfo>("system/environment"
                                                                        , cancellationToken: ct)
             ?? new SystemEnvironmentInfo();
     }
 
-    public override async Task<HttpResponseMessage> Ping( string callersCaller
+    public override async Task<HttpResponseMessage> Ping( string                    callersCaller
                                                         , [CallerFilePath]   string caller = ""
                                                         , [CallerMemberName] string member = "" )
     {
@@ -307,90 +325,111 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
         }
     }
 
-    public override async Task<GroqUsageDto> GetUsageAsync(CancellationToken ct = default)
+    public override async Task<GroqUsageDto> GetUsageAsync( CancellationToken ct = default )
     {
         try
         {
             return await _httpClient.GetFromJsonAsync<GroqUsageDto>("api/system/usage"
-                                                                   , cancellationToken: ct)
+                                                                  , cancellationToken: ct)
                 ?? new GroqUsageDto();
         }
         catch (Exception ex)
         {
             _loggingService.LogWarning($"GetUsageAsync failed: {ex.Message}"
-                                      , Category.CognitivePlatformClient);
+                                     , Category.CognitivePlatformClient);
             return new GroqUsageDto();
         }
     }
 
-    public override async Task<List<ActionMetadataDto>> GetActionsAsync(CancellationToken ct = default)
+    public override async Task<List<ActionMetadataDto>> GetActionsAsync( CancellationToken ct = default )
     {
         try
         {
             return await _httpClient.GetFromJsonAsync<List<ActionMetadataDto>>("api/system/actions"
-                                                                              , cancellationToken: ct)
+                                                                             , cancellationToken: ct)
                 ?? new List<ActionMetadataDto>();
         }
         catch (Exception ex)
         {
             _loggingService.LogWarning($"GetActionsAsync failed: {ex.Message}"
-                                      , Category.CognitivePlatformClient);
+                                     , Category.CognitivePlatformClient);
             return new List<ActionMetadataDto>();
         }
     }
 
-    public override async Task<VaultStatusDto> GetVaultStatusAsync(CancellationToken ct = default)
+    public override async Task<VaultStatusDto> GetVaultStatusAsync( CancellationToken ct = default )
     {
         try
         {
-            return await _httpClient.GetFromJsonAsync<VaultStatusDto>("api/secrets/status", ct).ConfigureAwait(false)
+            return await _httpClient.GetFromJsonAsync<VaultStatusDto>("api/secrets/status"
+                                                                    , ct).ConfigureAwait(false)
                 ?? new VaultStatusDto();
         }
         catch (Exception ex)
         {
-            _loggingService.LogWarning($"GetVaultStatusAsync failed: {ex.Message}", Category.CognitivePlatformClient);
+            _loggingService.LogWarning($"GetVaultStatusAsync failed: {ex.Message}"
+                                     , Category.CognitivePlatformClient);
             return new VaultStatusDto();
         }
     }
 
-    public override async Task<bool> UnlockVaultAsync(string pin, CancellationToken ct = default)
+    public override async Task<bool> UnlockVaultAsync( string            pin
+                                                     , CancellationToken ct = default )
     {
         try
         {
-            var response = await _httpClient.PostAsJsonAsync("api/secrets/unlock", new { Pin = pin }, ct).ConfigureAwait(false);
+            var response = await _httpClient.PostAsJsonAsync("api/secrets/unlock"
+                                                           , new
+                                                             {
+                                                                     Pin = pin
+                                                             }
+                                                           , ct).ConfigureAwait(false);
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)
         {
-            _loggingService.LogWarning($"UnlockVaultAsync failed: {ex.Message}", Category.CognitivePlatformClient);
+            _loggingService.LogWarning($"UnlockVaultAsync failed: {ex.Message}"
+                                     , Category.CognitivePlatformClient);
             return false;
         }
     }
 
-    public override async Task<bool> SetupVaultAsync(string pin, CancellationToken ct = default)
+    public override async Task<bool> SetupVaultAsync( string            pin
+                                                    , CancellationToken ct = default )
     {
         try
         {
-            var response = await _httpClient.PostAsJsonAsync("api/secrets/setup", new { Pin = pin }, ct).ConfigureAwait(false);
+            var response = await _httpClient.PostAsJsonAsync("api/secrets/setup"
+                                                           , new
+                                                             {
+                                                                     Pin = pin
+                                                             }
+                                                           , ct).ConfigureAwait(false);
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)
         {
-            _loggingService.LogWarning($"SetupVaultAsync failed: {ex.Message}", Category.CognitivePlatformClient);
+            _loggingService.LogWarning($"SetupVaultAsync failed: {ex.Message}"
+                                     , Category.CognitivePlatformClient);
             return false;
         }
     }
 
-    public override async Task<bool> LockVaultAsync(CancellationToken ct = default)
+    public override async Task<bool> LockVaultAsync( CancellationToken ct = default )
     {
         try
         {
-            var response = await _httpClient.PostAsJsonAsync("api/secrets/lock", new { }, ct).ConfigureAwait(false);
+            var response = await _httpClient.PostAsJsonAsync("api/secrets/lock"
+                                                           , new
+                                                             {
+                                                             }
+                                                           , ct).ConfigureAwait(false);
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)
         {
-            _loggingService.LogWarning($"LockVaultAsync failed: {ex.Message}", Category.CognitivePlatformClient);
+            _loggingService.LogWarning($"LockVaultAsync failed: {ex.Message}"
+                                     , Category.CognitivePlatformClient);
             return false;
         }
     }

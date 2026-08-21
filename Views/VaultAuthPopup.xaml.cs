@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using CommunityToolkit.Maui.Views;
 using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
@@ -55,7 +55,7 @@ public partial class VaultAuthPopup : Popup<bool>
 
     private async void CheckBiometricsOnLoad()
     {
-        var hasSavedPin = (await SecureStorage.Default.GetAsync("vault_pin").HasValue());
+        var hasSavedPin = (await SecureStorage.Default.GetAsync("vault_pin")).HasValue();
         var bioAvailable = await _biometricService.IsAvailableAsync();
 
         if (bioAvailable && hasSavedPin)
