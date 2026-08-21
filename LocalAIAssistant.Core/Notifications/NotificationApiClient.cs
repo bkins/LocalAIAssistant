@@ -1,9 +1,16 @@
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace LocalAIAssistant.Core.Notifications;
 
 public class NotificationApiClient : INotificationApiClient
 {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+                                                                {
+                                                                    Converters = { new JsonStringEnumConverter() }
+                                                                };
+
     private readonly HttpClient _httpClient;
 
     public NotificationApiClient(HttpClient httpClient)
@@ -20,7 +27,8 @@ public class NotificationApiClient : INotificationApiClient
         response.EnsureSuccessStatusCode();
 
         return await response.Content
-                             .ReadFromJsonAsync<NotificationSchedule>(cancellationToken: ct)
+                             .ReadFromJsonAsync<NotificationSchedule>(JsonOptions, cancellationToken: ct)
                ?? new NotificationSchedule();
     }
 }
+

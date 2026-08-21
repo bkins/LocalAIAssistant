@@ -51,6 +51,33 @@ public class NotificationApiClientTests
     }
 
     [Fact]
+    public async Task GetNotificationScheduleAsync_ParsesStringCategory_WhenApiReturnsStringEnum()
+    {
+        var fireAt = DateTimeOffset.UtcNow.AddHours(8);
+        var json   = JsonSerializer.Serialize(new
+        {
+            notifications = new[]
+            {
+                new
+                {
+                    externalId = "task-due-123"
+                  , title      = "Task Reminder"
+                  , body       = "Submit report"
+                  , fireAt
+                  , category   = "TaskDue"
+                }
+            }
+        });
+
+        var sut = BuildClient(HttpStatusCode.OK, json);
+
+        var result = await sut.GetNotificationScheduleAsync(DateTimeOffset.Now);
+
+        Assert.Single(result.Notifications);
+        Assert.Equal(NotificationCategory.TaskDue, result.Notifications[0].Category);
+    }
+
+    [Fact]
     public async Task GetNotificationScheduleAsync_ReturnsEmptySchedule_WhenResponseBodyIsNull()
     {
         var sut = BuildClient(HttpStatusCode.OK, "null");

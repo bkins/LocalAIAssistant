@@ -31,12 +31,15 @@
             <HorizontalStackLayout Spacing="10" 
                                    HorizontalOptions="Center">
                 <Button Text="Refresh"
+                        AutomationId="RefreshButton"
                         Command="{Binding RefreshLogsCommand}"
                         BackgroundColor="LightBlue"/>
                 <Button Text="Clear Logs"
+                        AutomationId="ClearLogsButton"
                         Command="{Binding ClearLogsCommand}"
                         BackgroundColor="Orange"/>
                 <Button Text="Test Logging"
+                        AutomationId="TestLoggingButton"
                         Command="{Binding TestLoggingCommand}"
                         BackgroundColor="LightGreen"/>
             </HorizontalStackLayout>
