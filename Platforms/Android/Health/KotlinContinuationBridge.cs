@@ -130,9 +130,9 @@ internal static class KotlinContinuationBridge
                         {
                             field.Accessible = true;
                             var value = field.Get(result);
-                            if (value is Java.Lang.Throwable throwable)
+                            if (value is not null)
                             {
-                                return new Exception($"Health Connect operation failed: {throwable.Message}", new Exception(throwable.ToString()));
+                                return new Exception($"Health Connect operation failed: {value}");
                             }
                         }
                         catch
