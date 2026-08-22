@@ -240,6 +240,7 @@ function Tap-Tab {
         if ($null -eq $moreNode) { $moreNode = Find-Node $dump -Text "More" }
         if ($null -ne $moreNode) {
             Tap-Node $moreNode -DelayMs 800 | Out-Null
+            Start-Sleep -Milliseconds 400
             $dump = Get-UiDump
             if ($null -ne $dump) {
                 $node = Find-Node $dump -ContentDesc $Title
