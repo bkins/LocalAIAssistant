@@ -1,4 +1,4 @@
-﻿using FlaUI.Core.AutomationElements;
+using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Definitions;
 using Xunit;
 
@@ -537,18 +537,24 @@ public sealed class SmokeTests : IClassFixture<AppFixture>
         Assert.False(_f.MainWindow.IsOffscreen, "Main window must be visible after Settings page load");
     }
 
-    // ─── 26. Logs tab loads without crash (closest to a Notifications tab) ────
+    // ─── 27. Record tab loads and shows Record button and Empty state ─────────
 
     [Fact]
-    public void Logs_Tab_Loads_Without_Crash()
+    public void Record_Tab_Loads_And_Shows_Record_Controls()
     {
-        var navigated = _f.NavigateTo("Logs");
-        Assert.True(navigated, "Could not find the 'Logs' tab in the navigation bar");
+        var navigated = _f.NavigateTo("Record");
+        Assert.True(navigated, "Could not find 'Record' tab in Shell navigation bar");
 
-        Thread.Sleep(600);
+        Thread.Sleep(500);
 
-        Assert.False(_f.App.HasExited,          "App should still be running after opening the Logs tab");
-        Assert.False(_f.MainWindow.IsOffscreen, "Main window should be visible after opening the Logs tab");
+        var recordBtn = _f.FindById("RecordToggleButton", timeoutSeconds: 8)
+                     ?? _f.FindByName("Record", timeoutSeconds: 5);
+        var emptyState = _f.FindByName("No conversation recordings", timeoutSeconds: 5);
+
+        Assert.True(
+            recordBtn is not null || emptyState is not null
+          , "Record tab: expected Record button or 'No conversation recordings' label");
+        Assert.False(_f.App.HasExited, "App should still be running after navigating to Record tab");
     }
 
     // ─── Helper ───────────────────────────────────────────────────────────────

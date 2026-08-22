@@ -654,7 +654,7 @@ Run-Test "Navigate back to Chat tab from Inbox" {
 
 # -- 11. App survives rapid tab cycling ---------------------------------------
 Run-Test "App survives rapid tab cycling without crashing" {
-    $tabs = @("Chats", "Inbox", "Memory", "Logs", "Settings", "Chat")
+    $tabs = @("Chats", "Inbox", "Memory", "Logs", "Record", "Settings", "Chat")
     foreach ($tab in $tabs) {
         $ok = Tap-Tab $tab -DelayMs 600
         if (-not $ok) {
