@@ -25,8 +25,11 @@
         </PackageReference>
         <PackageReference Include="coverlet.collector"             Version="6.0.2">
             <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\CP.Shared.Primitives\CP.Shared.Primitives\CP.Shared.Primitives.csproj" />
     </ItemGroup>
 
 </Project>
