@@ -772,7 +772,7 @@ Run-Test "Inbox filter chips are visible after navigating to Inbox" {
     $sectionHeader = Find-Node $dump -Text "Journal"
     $anyRecycler   = Find-AllNodes $dump "//node[@class='androidx.recyclerview.widget.RecyclerView']"
     if ($null -ne $sectionHeader -or $anyRecycler.Count -gt 0) {
-        Write-Host "  Note: chip nodes absent from UIAutomator dump (MAUI/Android BindableLayout rendering) — page content confirmed" -ForegroundColor DarkGray
+        Write-Host "  Note: chip nodes absent from UIAutomator dump (MAUI/Android BindableLayout rendering) - page content confirmed" -ForegroundColor DarkGray
         return $true
     }
 
@@ -1077,11 +1077,8 @@ if (-not $KeepAppOpen) {
 
 # --- Summary -----------------------------------------------------------------
 
-Write-Host ""
-Write-Host "-----------------------------------------" -ForegroundColor DarkGray
-Write-Host "Results: $($script:Passed) passed, $($script:Failed) failed" -ForegroundColor $(
-    if ($script:Failed -eq 0) { "Green" } else { "Yellow" }
-)
+$resultColor = if ($script:Failed -eq 0) { "Green" } else { "Yellow" }
+Write-Host "Results: $($script:Passed) passed, $($script:Failed) failed" -ForegroundColor $resultColor
 Write-Host "-----------------------------------------" -ForegroundColor DarkGray
 Write-Host ""
 
