@@ -1,4 +1,4 @@
-﻿using FlaUI.Core;
+using FlaUI.Core;
 using FlaUI.Core.AutomationElements;
 using FlaUI.UIA3;
 
@@ -82,13 +82,36 @@ public sealed class AppFixture : IDisposable
         var tab = FindByName(tabTitle, timeoutSeconds: 4);
         if (tab is null) return false;
 
-        // Try SelectionItemPattern (tab items), then InvokePattern (buttons/links).
+        // Try SelectionItemPattern (tab items), then InvokePattern (buttons/links), then Click.
         var selPat    = tab.Patterns.SelectionItem.PatternOrDefault;
         var invokePat = tab.Patterns.Invoke.PatternOrDefault;
-        if      (selPat    is not null) selPat.Select();
-        else if (invokePat is not null) invokePat.Invoke();
-        // If neither pattern is supported the element is still focusable; the
-        // caller will verify navigation completed via FindById / FindByName.
+
+        if (selPat is not null)
+        {
+            try
+            {
+                selPat.Select();
+            }
+            catch
+            {
+                try { tab.Click(); } catch { }
+            }
+        }
+        else if (invokePat is not null)
+        {
+            try
+            {
+                invokePat.Invoke();
+            }
+            catch
+            {
+                try { tab.Click(); } catch { }
+            }
+        }
+        else
+        {
+            try { tab.Click(); } catch { }
+        }
 
         Thread.Sleep(delayMs);
         return true;
