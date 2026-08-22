@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -22,6 +22,7 @@
     <PackageReference Include="Serilog" Version="4.3.0" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="Plugin.Maui.Audio" Version="4.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -63,6 +64,12 @@
     <Compile Include="../Services/Logging/LogEntry.cs" Link="Linked/LogEntry.cs" />
     <Compile Include="../Core/Environment/EnvironmentHandshakePolicy.cs" Link="Linked/EnvironmentHandshakePolicy.cs" />
     <Compile Include="../Core/Environment/Models/EnvironmentHandshakeResult.cs" Link="Linked/EnvironmentHandshakeResult.cs" />
+    <Compile Include="../Data/IObjectStore.cs" Link="Linked/IObjectStore.cs" />
+    <Compile Include="../Services/Recordings/ConversationRecording.cs" Link="Linked/ConversationRecording.cs" />
+    <Compile Include="../Services/Recordings/IConversationRecordingStore.cs" Link="Linked/IConversationRecordingStore.cs" />
+    <Compile Include="../Services/Recordings/ConversationRecordingStore.cs" Link="Linked/ConversationRecordingStore.cs" />
+    <Compile Include="../Services/Recordings/IConversationRecordingService.cs" Link="Linked/IConversationRecordingService.cs" />
+    <Compile Include="../Services/Recordings/ConversationRecordingService.cs" Link="Linked/ConversationRecordingService.cs" />
   </ItemGroup>
 
 </Project>

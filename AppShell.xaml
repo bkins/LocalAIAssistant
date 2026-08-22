@@ -164,6 +164,9 @@
         <Tab Title="Logs" AutomationId="LogsTabItem">
             <ShellContent ContentTemplate="{DataTemplate views:LogsPage}" />
         </Tab>
+        <Tab Title="Record" AutomationId="RecordTabItem">
+            <ShellContent Route="Record" ContentTemplate="{DataTemplate views:RecordingsPage}"/>
+        </Tab>
         <Tab Title="Settings" AutomationId="SettingsTabItem">
             <ShellContent Title="Settings"
                            ContentTemplate="{DataTemplate views:SettingsPage}" />

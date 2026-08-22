@@ -28,6 +28,7 @@ using LocalAIAssistant.Services.Logging;
 using LocalAIAssistant.Services.Logging.Interfaces;
 using LocalAIAssistant.ViewModels;
 using LocalAIAssistant.Views;
+using LocalAIAssistant.Services.Recordings;
 using Microsoft.Extensions.Options;
 using Serilog;
 using IPersonaRepository = LocalAIAssistant.PersonaAndContextEngine.Interfaces.IPersonaRepository;
@@ -173,7 +174,10 @@ public static class ServiceCollectionExtensions
         ```        
          */
 
-        services.AddSingleton<AgentJobService>();
+        services.AddSingleton<IConversationRecordingStore, ConversationRecordingStore>();
+        services.AddSingleton<IConversationRecordingService, ConversationRecordingService>();
+
+        services.AddTransient<AgentJobService>();
 
         return services;
     }
@@ -203,6 +207,7 @@ public static class ServiceCollectionExtensions
 
         services.AddTransient<ConversationsViewModel>();
         services.AddTransient<AgentChatViewModel>();
+        services.AddTransient<RecordingsViewModel>();
 
         return services;
     }
@@ -227,6 +232,7 @@ public static class ServiceCollectionExtensions
 
         services.AddTransient<ConversationsPage>();
         services.AddTransient<AgentChatPage>();
+        services.AddTransient<RecordingsPage>();
 
         return services;
     }

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:LocalAIAssistant.ViewModels"
+             x:Class="LocalAIAssistant.Views.RecordingsPage"
+             x:DataType="viewModels:RecordingsViewModel"
+             Title="Conversation Recorder"
+             BackgroundColor="{StaticResource SplashBackgroundColor}">
+
+    <Grid RowDefinitions="Auto,Auto,*">
+
+        <!-- Recorder Header & Timer Controls -->
+        <Border Grid.Row="0"
+                Margin="12,12,12,6"
+                Padding="16"
+                BackgroundColor="{StaticResource SurfaceColor}">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="12"/>
+            </Border.StrokeShape>
+
+            <VerticalStackLayout Spacing="12" HorizontalOptions="Center">
+                
+                <Label Text="Offline Conversation Recorder"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       TextColor="{StaticResource PrimaryTextColor}"/>
+
+                <Label Text="{Binding ElapsedTimeDisplay}"
+                       FontSize="36"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       TextColor="{StaticResource PrimaryTextColor}"/>
+
+                <Button AutomationId="RecordToggleButton"
+                        Text="{Binding IsRecording, Converter={StaticResource InverseBoolConverter}, StringFormat='Record'}"
+                        Command="{Binding ToggleRecordingCommand}"
+                        BackgroundColor="{StaticResource SuccessColor}"
+                        TextColor="White"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        Padding="24,10"
+                        CornerRadius="8"
+                        HorizontalOptions="Center"/>
+
+                <Label Text="{Binding StatusMessage}"
+                       FontSize="13"
+                       HorizontalOptions="Center"
+                       TextColor="{StaticResource SecondaryTextColor}"/>
+
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- Section Title -->
+        <Grid Grid.Row="1"
+              Padding="16,8"
+              ColumnDefinitions="*,Auto">
+            <Label Text="Saved Recordings"
+                   FontSize="16"
+                   FontAttributes="Bold"
+                   TextColor="{StaticResource PrimaryTextColor}"
+                   VerticalOptions="Center"/>
+
+            <Button Grid.Column="1"
+                    Text="Refresh"
+                    Command="{Binding RefreshCommand}"
+                    Padding="10,4"
+                    FontSize="12"/>
+        </Grid>
+
+        <!-- Recordings List -->
+        <CollectionView Grid.Row="2"
+                        AutomationId="RecordingsList"
+                        ItemsSource="{Binding Recordings}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="viewModels:RecordingItemViewModel">
+                    <SwipeView>
+                        <SwipeView.RightItems>
+                            <SwipeItems>
+                                <SwipeItem Text="Delete"
+                                           BackgroundColor="Red"
+                                           Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:RecordingsViewModel}}, Path=DeleteRecordingCommand}"
+                                           CommandParameter="{Binding}"/>
+                            </SwipeItems>
+                        </SwipeView.RightItems>
+
+                        <Border Padding="14,12"
+                                Margin="12,4"
+                                BackgroundColor="{StaticResource SurfaceColor}">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="8"/>
+                            </Border.StrokeShape>
+
+                            <Grid ColumnDefinitions="*,Auto,Auto">
+                                <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                    <Label Text="{Binding StartedAtDisplay}"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource PrimaryTextColor}"/>
+                                    <Label Text="{Binding DurationDisplay, StringFormat='Duration: {0}'}"
+                                           FontSize="12"
+                                           TextColor="{StaticResource SecondaryTextColor}"/>
+                                </VerticalStackLayout>
+
+                                <Label Grid.Column="1"
+                                       Text="{Binding Status}"
+                                       FontSize="12"
+                                       TextColor="{StaticResource SecondaryTextColor}"
+                                       VerticalOptions="Center"
+                                       Margin="8,0"/>
+
+                                <Button Grid.Column="2"
+                                        Text="{Binding IsPlaying, Converter={StaticResource InverseBoolConverter}, StringFormat='Play'}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:RecordingsViewModel}}, Path=PlayRecordingCommand}"
+                                        CommandParameter="{Binding}"
+                                        Padding="12,4"
+                                        FontSize="12"/>
+                            </Grid>
+                        </Border>
+                    </SwipeView>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+
+            <CollectionView.EmptyView>
+                <VerticalStackLayout HorizontalOptions="Center"
+                                     VerticalOptions="Center"
+                                     Spacing="8"
+                                     Padding="32">
+                    <Label Text="No conversation recordings"
+                           FontSize="15"
+                           HorizontalOptions="Center"
+                           TextColor="{StaticResource SecondaryTextColor}"/>
+                    <Label Text="Tap 'Record' to capture an offline conversation."
+                           FontSize="12"
+                           HorizontalOptions="Center"
+                           TextColor="{StaticResource SecondaryTextColor}"/>
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+        </CollectionView>
+
+    </Grid>
+
+</ContentPage>
