@@ -17,13 +17,13 @@ public class QueueReplayCoordinatorTests
     private readonly Mock<ILoggingService>      _loggerMock       = new();
 
     [Fact]
-    public void Constructor_WhenOnline_TriggersProcessQueue()
+    public async Task Constructor_WhenOnline_TriggersProcessQueue()
     {
         _connectivityMock.Setup(conn => conn.IsOffline).Returns(false);
 
         var coordinator = new QueueReplayCoordinator(_queueMock.Object, _connectivityMock.Object, _loggerMock.Object);
 
-        Thread.Sleep(100);
+        await Task.Delay(250);
 
         _queueMock.Verify(q => q.ProcessQueueAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
