@@ -75,4 +75,43 @@ public class ConversationRecorderApiClient : IConversationRecorderApiClient
             return null;
         }
     }
+
+    public async Task<TranscriptDto?> MapParticipantsAsync( Guid conversationId
+                                                           , Dictionary<string, string> speakerMap
+                                                           , CancellationToken cancellationToken = default )
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync($"api/recorder/conversations/{conversationId}/participants", speakerMap, _jsonOptions, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<TranscriptDto>(_jsonOptions, cancellationToken);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<List<ConversationParticipantDto>> GetParticipantsAsync( Guid conversationId, CancellationToken cancellationToken = default )
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"api/recorder/conversations/{conversationId}/participants", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return new List<ConversationParticipantDto>();
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<List<ConversationParticipantDto>>(_jsonOptions, cancellationToken);
+            return result ?? new List<ConversationParticipantDto>();
+        }
+        catch
+        {
+            return new List<ConversationParticipantDto>();
+        }
+    }
 }

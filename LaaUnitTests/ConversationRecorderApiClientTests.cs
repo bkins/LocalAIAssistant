@@ -64,6 +64,39 @@ public class ConversationRecorderApiClientTests
         Assert.Equal("Speaker 2", result.Segments[1].SpeakerLabel);
     }
 
+    [Fact]
+    public async Task MapParticipantsAsync_ReturnsUpdatedTranscript_WhenApiReturnsSuccess()
+    {
+        var conversationId = Guid.NewGuid();
+        var expectedTranscript = new TranscriptDto
+        {
+            Id             = Guid.NewGuid()
+          , ConversationId = conversationId
+          , Status         = "Completed"
+          , Segments       = new List<TranscriptSegmentDto>
+            {
+                new() { Start = TimeSpan.Zero, End = TimeSpan.FromSeconds(5), Text = "Turn 1", SpeakerId = "Speaker 1", SpeakerLabel = "Ben" }
+              , new() { Start = TimeSpan.FromSeconds(5), End = TimeSpan.FromSeconds(10), Text = "Turn 2", SpeakerId = "Speaker 2", SpeakerLabel = "Sarah" }
+            }
+        };
+
+        var handler = new MockHttpMessageHandler(HttpStatusCode.OK, JsonSerializer.Serialize(expectedTranscript));
+        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5273/") };
+        var apiClient = new ConversationRecorderApiClient(client);
+
+        var speakerMap = new Dictionary<string, string>
+        {
+            ["Speaker 1"] = "Ben"
+          , ["Speaker 2"] = "Sarah"
+        };
+        var result = await apiClient.MapParticipantsAsync(conversationId, speakerMap);
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Segments.Count);
+        Assert.Equal("Ben", result.Segments[0].SpeakerLabel);
+        Assert.Equal("Sarah", result.Segments[1].SpeakerLabel);
+    }
+
     private class MockHttpMessageHandler : HttpMessageHandler
     {
         private readonly HttpStatusCode _statusCode;
