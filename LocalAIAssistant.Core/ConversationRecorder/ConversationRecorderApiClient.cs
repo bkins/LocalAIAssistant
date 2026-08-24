@@ -114,4 +114,69 @@ public class ConversationRecorderApiClient : IConversationRecorderApiClient
             return new List<ConversationParticipantDto>();
         }
     }
+
+    public async Task<ConversationDetailsDto?> GetConversationDetailsAsync( Guid conversationId, CancellationToken cancellationToken = default )
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"api/recorder/conversations/{conversationId}/details", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<ConversationDetailsDto>(_jsonOptions, cancellationToken);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<List<ConversationRecordDto>> SearchConversationsAsync( string? query = null
+                                                                           , string? participant = null
+                                                                           , DateTimeOffset? fromDate = null
+                                                                           , DateTimeOffset? toDate = null
+                                                                           , CancellationToken cancellationToken = default )
+    {
+        try
+        {
+            var queryParams = new List<string>();
+            if (query != null)
+            {
+                queryParams.Add($"query={Uri.EscapeDataString(query)}");
+            }
+            if (participant != null)
+            {
+                queryParams.Add($"participant={Uri.EscapeDataString(participant)}");
+            }
+            if (fromDate.HasValue)
+            {
+                queryParams.Add($"fromDate={Uri.EscapeDataString(fromDate.Value.ToString("o"))}");
+            }
+            if (toDate.HasValue)
+            {
+                queryParams.Add($"toDate={Uri.EscapeDataString(toDate.Value.ToString("o"))}");
+            }
+
+            var uri = "api/recorder/conversations/search";
+            if (queryParams.Count > 0)
+            {
+                uri += "?" + string.Join("&", queryParams);
+            }
+
+            var response = await _httpClient.GetAsync(uri, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return new List<ConversationRecordDto>();
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<List<ConversationRecordDto>>(_jsonOptions, cancellationToken);
+            return result ?? new List<ConversationRecordDto>();
+        }
+        catch
+        {
+            return new List<ConversationRecordDto>();
+        }
+    }
 }

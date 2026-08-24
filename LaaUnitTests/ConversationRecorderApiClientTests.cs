@@ -97,6 +97,48 @@ public class ConversationRecorderApiClientTests
         Assert.Equal("Sarah", result.Segments[1].SpeakerLabel);
     }
 
+    [Fact]
+    public async Task GetConversationDetailsAsync_ReturnsDetails_WhenApiReturnsSuccess()
+    {
+        var conversationId = Guid.NewGuid();
+        var expectedDetails = new ConversationDetailsDto
+        {
+            Record       = new ConversationRecordDto { Id = conversationId, Title = "Library Test" }
+          , Transcript   = new TranscriptDto { ConversationId = conversationId }
+          , Participants = new List<ConversationParticipantDto> { new() { ConversationId = conversationId, SpeakerId = "Speaker 1", DisplayName = "Ben" } }
+        };
+
+        var handler = new MockHttpMessageHandler(HttpStatusCode.OK, JsonSerializer.Serialize(expectedDetails));
+        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5273/") };
+        var apiClient = new ConversationRecorderApiClient(client);
+
+        var result = await apiClient.GetConversationDetailsAsync(conversationId);
+
+        Assert.NotNull(result);
+        Assert.Equal(conversationId, result.Record.Id);
+        Assert.Single(result.Participants);
+    }
+
+    [Fact]
+    public async Task SearchConversationsAsync_ReturnsFilteredRecords_WhenApiReturnsSuccess()
+    {
+        var conversationId = Guid.NewGuid();
+        var expectedRecords = new List<ConversationRecordDto>
+        {
+            new() { Id = conversationId, Title = "Found Title" }
+        };
+
+        var handler = new MockHttpMessageHandler(HttpStatusCode.OK, JsonSerializer.Serialize(expectedRecords));
+        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5273/") };
+        var apiClient = new ConversationRecorderApiClient(client);
+
+        var results = await apiClient.SearchConversationsAsync(query: "Found", participant: "Ben");
+
+        Assert.NotNull(results);
+        Assert.Single(results);
+        Assert.Equal("Found Title", results[0].Title);
+    }
+
     private class MockHttpMessageHandler : HttpMessageHandler
     {
         private readonly HttpStatusCode _statusCode;
