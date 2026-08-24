@@ -396,10 +396,61 @@ function Run-Test {
 
 # --- Device / package setup --------------------------------------------------
 
+function Ensure-QaApiRunning {
+    $healthUrl = "http://localhost:5273/api/system/health"
+    try {
+        $resp = Invoke-RestMethod -Uri $healthUrl -TimeoutSec 2 -ErrorAction Stop
+        if ($resp.status -eq "Healthy") {
+            Write-Host "QA API is already running and healthy." -ForegroundColor Green
+            return $null
+        }
+    } catch {
+        Write-Host "QA API is not running. Starting CognitivePlatform API in QA mode..." -ForegroundColor Yellow
+        $apiProj = "C:\Users\benho\source\repos\CognitivePlatform\CognitivePlatform\CognitivePlatform.Api.csproj"
+        if (Test-Path $apiProj) {
+            $psi = New-Object System.Diagnostics.ProcessStartInfo
+            $psi.FileName = "dotnet"
+            $psi.Arguments = "run --project `"$apiProj`""
+            $psi.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"] = "QA"
+            $psi.UseShellExecute = $false
+            $psi.CreateNoWindow = $true
+            $proc = [System.Diagnostics.Process]::Start($psi)
+
+            for ($i = 0; $i -lt 15; $i++) {
+                Start-Sleep -Seconds 1
+                try {
+                    $check = Invoke-RestMethod -Uri $healthUrl -TimeoutSec 2 -ErrorAction Stop
+                    if ($check.status -eq "Healthy") {
+                        Write-Host "QA API started successfully." -ForegroundColor Green
+                        return $proc
+                    }
+                } catch {}
+            }
+            return $proc
+        }
+    }
+    return $null
+}
+
 function Resolve-Device {
     $devices = (& adb devices 2>&1) | Select-Object -Skip 1 |
                Where-Object { $_ -match "^\S+\s+device$" } |
                ForEach-Object { ($_ -split "\s+")[0] }
+
+    if (-not $devices) {
+        Write-Host "No connected Android device found. Attempting to start Pixel_9a emulator..." -ForegroundColor Yellow
+        $emulatorExe = "C:\Users\benho\AppData\Local\Android\Sdk\emulator\emulator.exe"
+        if (Test-Path $emulatorExe) {
+            Start-Process -FilePath $emulatorExe -ArgumentList "-avd Pixel_9a -gpu host" -WindowStyle Hidden
+            for ($i = 0; $i -lt 30; $i++) {
+                Start-Sleep -Seconds 2
+                $devices = (& adb devices 2>&1) | Select-Object -Skip 1 |
+                           Where-Object { $_ -match "^\S+\s+device$" } |
+                           ForEach-Object { ($_ -split "\s+")[0] }
+                if ($devices) { break }
+            }
+        }
+    }
 
     if (-not $devices) {
         throw "No Android device or emulator connected. Run 'adb devices' to check."
@@ -426,6 +477,8 @@ function Resolve-PackageName {
 Write-Host ""
 Write-Host "=== LAA Android Smoke Tests ===" -ForegroundColor Cyan
 Write-Host ""
+
+$script:SpawnedApiProcess = Ensure-QaApiRunning
 
 if (-not $Device) { $script:Device = Resolve-Device } else { $script:Device = $Device }
 Write-Host "Device:  $($script:Device)"
@@ -1073,6 +1126,11 @@ if ($ForceFailure) {
 
 if (-not $KeepAppOpen) {
     Invoke-Adb "shell", "am", "force-stop", $PackageName | Out-Null
+}
+
+if ($null -ne $script:SpawnedApiProcess -and -not $script:SpawnedApiProcess.HasExited) {
+    Write-Host "Stopping spawned QA API process..." -ForegroundColor DarkGray
+    try { $script:SpawnedApiProcess.Kill($true) } catch {}
 }
 
 # --- Summary -----------------------------------------------------------------

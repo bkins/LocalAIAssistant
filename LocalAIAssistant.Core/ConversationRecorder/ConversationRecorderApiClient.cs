@@ -37,6 +37,27 @@ public class ConversationRecorderApiClient : IConversationRecorderApiClient
         }
     }
 
+    public async Task<TranscriptDto?> DiarizeRecordingAsync( Guid conversationId
+                                                           , Stream audioStream
+                                                           , CancellationToken cancellationToken = default )
+    {
+        try
+        {
+            using var content = new StreamContent(audioStream);
+            var response = await _httpClient.PostAsync($"api/recorder/conversations/{conversationId}/diarize", content, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<TranscriptDto>(_jsonOptions, cancellationToken);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     public async Task<TranscriptDto?> GetTranscriptAsync( Guid conversationId, CancellationToken cancellationToken = default )
     {
         try
