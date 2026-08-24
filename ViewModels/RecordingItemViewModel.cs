@@ -25,8 +25,8 @@ public partial class TranscriptSegmentViewModel : ObservableObject
             SpeakerLabel = rawLabel;
         }
 
-        var startStr = TimeSpan.FromSeconds(dto.Start).ToString(@"mm\:ss");
-        var endStr = TimeSpan.FromSeconds(dto.End).ToString(@"mm\:ss");
+        var startStr = dto.Start.ToString(@"mm\:ss");
+        var endStr = dto.End.ToString(@"mm\:ss");
         TimeRangeDisplay = $"{startStr} - {endStr}";
         Text = dto.Text;
     }
