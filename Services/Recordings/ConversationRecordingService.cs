@@ -20,7 +20,11 @@ public class ConversationRecordingService : IConversationRecordingService
 
     public bool IsRecording { get; private set; }
 
+    public bool IsPaused { get; private set; }
+
     public bool IsPlaying { get; private set; }
+
+    public bool IsPlaybackPaused { get; private set; }
 
     public TimeSpan ElapsedRecordingTime { get; private set; }
 
@@ -72,6 +76,7 @@ public class ConversationRecordingService : IConversationRecordingService
             await _audioRecorder.StartAsync();
 
             IsRecording = true;
+            IsPaused = false;
             _recordingStartTime = DateTimeOffset.UtcNow;
             ElapsedRecordingTime = TimeSpan.Zero;
 
@@ -84,9 +89,34 @@ public class ConversationRecordingService : IConversationRecordingService
         catch (Exception)
         {
             IsRecording = false;
+            IsPaused = false;
             RecordingStateChanged?.Invoke(this, EventArgs.Empty);
             return false;
         }
+    }
+
+    public Task<bool> PauseRecordingAsync( CancellationToken cancellationToken = default )
+    {
+        if (!IsRecording || IsPaused)
+        {
+            return Task.FromResult(false);
+        }
+
+        IsPaused = true;
+        RecordingStateChanged?.Invoke(this, EventArgs.Empty);
+        return Task.FromResult(true);
+    }
+
+    public Task<bool> ResumeRecordingAsync( CancellationToken cancellationToken = default )
+    {
+        if (!IsRecording || !IsPaused)
+        {
+            return Task.FromResult(false);
+        }
+
+        IsPaused = false;
+        RecordingStateChanged?.Invoke(this, EventArgs.Empty);
+        return Task.FromResult(true);
     }
 
     public async Task<ConversationRecording?> StopRecordingAsync( CancellationToken cancellationToken = default )
@@ -106,6 +136,7 @@ public class ConversationRecordingService : IConversationRecordingService
             var duration = endedAt - _recordingStartTime;
 
             IsRecording = false;
+            IsPaused = false;
             ElapsedRecordingTime = duration;
 
             var conversationId = Guid.NewGuid().ToString();
@@ -139,6 +170,7 @@ public class ConversationRecordingService : IConversationRecordingService
         catch (Exception)
         {
             IsRecording = false;
+            IsPaused = false;
             RecordingStateChanged?.Invoke(this, EventArgs.Empty);
             return null;
         }
@@ -208,10 +240,12 @@ public class ConversationRecordingService : IConversationRecordingService
 
             CurrentlyPlayingId = id;
             IsPlaying = true;
+            IsPlaybackPaused = false;
 
             _audioPlayer.PlaybackEnded += (_, _) =>
             {
                 IsPlaying = false;
+                IsPlaybackPaused = false;
                 CurrentlyPlayingId = null;
                 RecordingStateChanged?.Invoke(this, EventArgs.Empty);
             };
@@ -223,15 +257,40 @@ public class ConversationRecordingService : IConversationRecordingService
         catch (Exception)
         {
             IsPlaying = false;
+            IsPlaybackPaused = false;
             CurrentlyPlayingId = null;
             RecordingStateChanged?.Invoke(this, EventArgs.Empty);
             return false;
         }
     }
 
+    public Task PausePlaybackAsync()
+    {
+        if (_audioPlayer != null && IsPlaying && !IsPlaybackPaused)
+        {
+            _audioPlayer.Pause();
+            IsPlaybackPaused = true;
+            RecordingStateChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task ResumePlaybackAsync()
+    {
+        if (_audioPlayer != null && IsPlaying && IsPlaybackPaused)
+        {
+            _audioPlayer.Play();
+            IsPlaybackPaused = false;
+            RecordingStateChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        return Task.CompletedTask;
+    }
+
     public Task StopPlaybackAsync()
     {
-        if (_audioPlayer != null && IsPlaying)
+        if (_audioPlayer != null && (IsPlaying || IsPlaybackPaused))
         {
             _audioPlayer.Stop();
             _audioPlayer.Dispose();
@@ -239,6 +298,7 @@ public class ConversationRecordingService : IConversationRecordingService
         }
 
         IsPlaying = false;
+        IsPlaybackPaused = false;
         CurrentlyPlayingId = null;
         RecordingStateChanged?.Invoke(this, EventArgs.Empty);
 
@@ -247,7 +307,7 @@ public class ConversationRecordingService : IConversationRecordingService
 
     private void OnTimerTick(object? state)
     {
-        if (IsRecording)
+        if (IsRecording && !IsPaused)
         {
             ElapsedRecordingTime = DateTimeOffset.UtcNow - _recordingStartTime;
             RecordingTimerTicked?.Invoke(this, ElapsedRecordingTime);

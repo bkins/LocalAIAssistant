@@ -9,7 +9,11 @@ public interface IConversationRecordingService
 {
     bool IsRecording { get; }
 
+    bool IsPaused { get; }
+
     bool IsPlaying { get; }
+
+    bool IsPlaybackPaused { get; }
 
     TimeSpan ElapsedRecordingTime { get; }
 
@@ -21,6 +25,10 @@ public interface IConversationRecordingService
 
     Task<bool> StartRecordingAsync( CancellationToken cancellationToken = default );
 
+    Task<bool> PauseRecordingAsync( CancellationToken cancellationToken = default );
+
+    Task<bool> ResumeRecordingAsync( CancellationToken cancellationToken = default );
+
     Task<ConversationRecording?> StopRecordingAsync( CancellationToken cancellationToken = default );
 
     Task<IReadOnlyList<ConversationRecording>> GetRecordingsAsync( CancellationToken cancellationToken = default );
@@ -30,6 +38,10 @@ public interface IConversationRecordingService
 
     Task<bool> PlayRecordingAsync( string            id
                                  , CancellationToken cancellationToken = default );
+
+    Task PausePlaybackAsync();
+
+    Task ResumePlaybackAsync();
 
     Task StopPlaybackAsync();
 }

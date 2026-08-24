@@ -7,6 +7,7 @@ using LocalAIAssistant.Platforms.Windows;
 using LocalAIAssistant.Core.BrainDump;
 using LocalAIAssistant.Core.Media;
 using LocalAIAssistant.Core.ConversationHistory;
+using LocalAIAssistant.Core.ConversationRecorder;
 using LocalAIAssistant.Core.Personality;
 using LocalAIAssistant.Core.Tts;
 using LocalAIAssistant.Views;
@@ -179,6 +180,12 @@ public static class ServiceCollectionExtensions
                 System.IO.Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, "platform.db"))));
         services.AddSingleton<IConversationRecordingStore, ConversationRecordingStore>();
         services.AddSingleton<IConversationRecordingService, ConversationRecordingService>();
+        services.AddSingleton<IConversationRecorderApiClient>(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            var client  = factory.CreateClient(HttpClientNames.CpApi);
+            return new ConversationRecorderApiClient(client);
+        });
 
         services.AddTransient<AgentJobService>();
 

@@ -32,16 +32,29 @@
                        HorizontalOptions="Center"
                        TextColor="{StaticResource PrimaryTextColor}"/>
 
-                <Button AutomationId="RecordToggleButton"
-                        Text="{Binding IsRecording, Converter={StaticResource InverseBoolConverter}, StringFormat='Record'}"
-                        Command="{Binding ToggleRecordingCommand}"
-                        BackgroundColor="{StaticResource SuccessColor}"
-                        TextColor="White"
-                        FontSize="16"
-                        FontAttributes="Bold"
-                        Padding="24,10"
-                        CornerRadius="8"
-                        HorizontalOptions="Center"/>
+                <!-- Recording Controls (Record -> Pause -> Resume & Stop) -->
+                <HorizontalStackLayout Spacing="12" HorizontalOptions="Center">
+                    <Button AutomationId="RecordToggleButton"
+                            Text="{Binding RecordingButtonText}"
+                            Command="{Binding ToggleRecordingCommand}"
+                            BackgroundColor="{StaticResource SuccessColor}"
+                            TextColor="White"
+                            FontSize="15"
+                            FontAttributes="Bold"
+                            Padding="20,10"
+                            CornerRadius="8"/>
+
+                    <Button AutomationId="RecordStopButton"
+                            Text="Stop"
+                            Command="{Binding StopRecordingCommand}"
+                            IsVisible="{Binding IsRecording}"
+                            BackgroundColor="Red"
+                            TextColor="White"
+                            FontSize="15"
+                            FontAttributes="Bold"
+                            Padding="20,10"
+                            CornerRadius="8"/>
+                </HorizontalStackLayout>
 
                 <Label Text="{Binding StatusMessage}"
                        FontSize="13"
@@ -91,31 +104,130 @@
                                 <RoundRectangle CornerRadius="8"/>
                             </Border.StrokeShape>
 
-                            <Grid ColumnDefinitions="*,Auto,Auto">
-                                <VerticalStackLayout Grid.Column="0" Spacing="2">
-                                    <Label Text="{Binding StartedAtDisplay}"
-                                           FontSize="14"
+                            <VerticalStackLayout Spacing="8">
+                                <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                                    <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                                        <Label Text="{Binding StartedAtDisplay}"
+                                               FontSize="14"
+                                               FontAttributes="Bold"
+                                               TextColor="{StaticResource PrimaryTextColor}"/>
+                                        <Label Text="{Binding DurationDisplay, StringFormat='Duration: {0}'}"
+                                               FontSize="12"
+                                               TextColor="{StaticResource SecondaryTextColor}"/>
+                                        <Label Text="{Binding Status, StringFormat='Status: {0}'}"
+                                               FontSize="11"
+                                               TextColor="{StaticResource SecondaryTextColor}"/>
+                                    </VerticalStackLayout>
+
+                                    <!-- Audio Player Controls (Play / Pause / Resume & Stop) -->
+                                    <HorizontalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center" Margin="4,0">
+                                        <Button Text="{Binding IsPlaying, Converter={StaticResource InverseBoolConverter}, StringFormat='Play'}"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:RecordingsViewModel}}, Path=PlayRecordingCommand}"
+                                                CommandParameter="{Binding}"
+                                                Padding="10,4"
+                                                FontSize="12"/>
+
+                                        <Button Text="Stop"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:RecordingsViewModel}}, Path=StopPlaybackCommand}"
+                                                CommandParameter="{Binding}"
+                                                IsVisible="{Binding IsPlaying}"
+                                                BackgroundColor="DarkRed"
+                                                TextColor="White"
+                                                Padding="8,4"
+                                                FontSize="12"/>
+                                    </HorizontalStackLayout>
+
+                                    <!-- Transcribe & Diarize Action -->
+                                    <HorizontalStackLayout Grid.Column="2" Spacing="4" VerticalOptions="Center" Margin="4,0">
+                                        <ActivityIndicator IsRunning="{Binding IsTranscribing}"
+                                                           IsVisible="{Binding IsTranscribing}"
+                                                           WidthRequest="20" HeightRequest="20"/>
+
+                                        <Button Text="Transcribe &amp; Diarize"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:RecordingsViewModel}}, Path=TranscribeAndDiarizeCommand}"
+                                                CommandParameter="{Binding}"
+                                                IsVisible="{Binding IsTranscribing, Converter={StaticResource InverseBoolConverter}}"
+                                                BackgroundColor="{StaticResource PrimaryTextColor}"
+                                                TextColor="White"
+                                                Padding="8,4"
+                                                FontSize="11"/>
+                                    </HorizontalStackLayout>
+
+                                    <!-- Transcript Toggle -->
+                                    <Button Grid.Column="3"
+                                            Text="Transcript"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:RecordingsViewModel}}, Path=ToggleTranscriptCommand}"
+                                            CommandParameter="{Binding}"
+                                            Padding="8,4"
+                                            FontSize="11"
+                                            VerticalOptions="Center"/>
+                                </Grid>
+
+                                <!-- Expanded Transcript & Speaker Mapping Section -->
+                                <VerticalStackLayout IsVisible="{Binding IsTranscriptExpanded}"
+                                                     Spacing="10"
+                                                     Margin="0,8,0,0"
+                                                     Padding="10"
+                                                     BackgroundColor="{StaticResource SplashBackgroundColor}">
+
+                                    <Label Text="Speaker Mapping"
+                                           FontSize="13"
                                            FontAttributes="Bold"
                                            TextColor="{StaticResource PrimaryTextColor}"/>
-                                    <Label Text="{Binding DurationDisplay, StringFormat='Duration: {0}'}"
-                                           FontSize="12"
-                                           TextColor="{StaticResource SecondaryTextColor}"/>
+
+                                    <Grid ColumnDefinitions="*,*,Auto" ColumnSpacing="8">
+                                        <Entry Grid.Column="0"
+                                               Text="{Binding SpeakerName1}"
+                                               Placeholder="Speaker 1 Name"
+                                               FontSize="12"/>
+                                        <Entry Grid.Column="1"
+                                               Text="{Binding SpeakerName2}"
+                                               Placeholder="Speaker 2 Name"
+                                               FontSize="12"/>
+                                        <Button Grid.Column="2"
+                                                Text="Save Speakers"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:RecordingsViewModel}}, Path=SaveSpeakerMapCommand}"
+                                                CommandParameter="{Binding}"
+                                                Padding="10,4"
+                                                FontSize="11"/>
+                                    </Grid>
+
+                                    <Label Text="Transcript Segments"
+                                           FontSize="13"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource PrimaryTextColor}"
+                                           Margin="0,4,0,0"/>
+
+                                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Segments}"
+                                                         Spacing="6">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate x:DataType="viewModels:TranscriptSegmentViewModel">
+                                                <Border Padding="8" BackgroundColor="{StaticResource SurfaceColor}">
+                                                    <Border.StrokeShape>
+                                                        <RoundRectangle CornerRadius="6"/>
+                                                    </Border.StrokeShape>
+                                                    <VerticalStackLayout Spacing="2">
+                                                        <HorizontalStackLayout Spacing="8">
+                                                            <Label Text="{Binding SpeakerLabel}"
+                                                                   FontAttributes="Bold"
+                                                                   FontSize="12"
+                                                                   TextColor="{StaticResource PrimaryTextColor}"/>
+                                                            <Label Text="{Binding TimeRangeDisplay}"
+                                                                   FontSize="11"
+                                                                   TextColor="{StaticResource SecondaryTextColor}"/>
+                                                        </HorizontalStackLayout>
+                                                        <Label Text="{Binding Text}"
+                                                               FontSize="12"
+                                                               TextColor="{StaticResource PrimaryTextColor}"/>
+                                                    </VerticalStackLayout>
+                                                </Border>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+
                                 </VerticalStackLayout>
 
-                                <Label Grid.Column="1"
-                                       Text="{Binding Status}"
-                                       FontSize="12"
-                                       TextColor="{StaticResource SecondaryTextColor}"
-                                       VerticalOptions="Center"
-                                       Margin="8,0"/>
-
-                                <Button Grid.Column="2"
-                                        Text="{Binding IsPlaying, Converter={StaticResource InverseBoolConverter}, StringFormat='Play'}"
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:RecordingsViewModel}}, Path=PlayRecordingCommand}"
-                                        CommandParameter="{Binding}"
-                                        Padding="12,4"
-                                        FontSize="12"/>
-                            </Grid>
+                            </VerticalStackLayout>
                         </Border>
                     </SwipeView>
                 </DataTemplate>

@@ -31,6 +31,7 @@ public class ConversationRecordingServiceTests
 
         Assert.True(started);
         Assert.True(_service.IsRecording);
+        Assert.False(_service.IsPaused);
         _audioRecorderMock.Verify(r => r.StartAsync(), Times.Once);
     }
 
@@ -43,6 +44,24 @@ public class ConversationRecordingServiceTests
         var secondStart = await _service.StartRecordingAsync();
 
         Assert.False(secondStart);
+    }
+
+    [Fact]
+    public async Task PauseAndResumeRecordingAsync_TogglesIsPausedState()
+    {
+        _audioRecorderMock.Setup(r => r.StartAsync()).Returns(Task.CompletedTask);
+
+        await _service.StartRecordingAsync();
+
+        var paused = await _service.PauseRecordingAsync();
+
+        Assert.True(paused);
+        Assert.True(_service.IsPaused);
+
+        var resumed = await _service.ResumeRecordingAsync();
+
+        Assert.True(resumed);
+        Assert.False(_service.IsPaused);
     }
 
     [Fact]
