@@ -215,28 +215,32 @@ public partial class RecordingsViewModel : ObservableObject
             item.IsTranscribing = true;
             StatusMessage = "Transcribing audio...";
 
+            TranscriptDto? transcribed = null;
             using (var stream1 = File.OpenRead(item.RecordingPath))
             {
-                await _recorderApiClient.TranscribeRecordingAsync(conversationGuid, stream1);
+                transcribed = await _recorderApiClient.TranscribeRecordingAsync(conversationGuid, stream1);
             }
 
             StatusMessage = "Diarizing speakers...";
+            TranscriptDto? diarized = null;
             using (var stream2 = File.OpenRead(item.RecordingPath))
             {
-                await _recorderApiClient.DiarizeRecordingAsync(conversationGuid, stream2);
+                diarized = await _recorderApiClient.DiarizeRecordingAsync(conversationGuid, stream2);
             }
 
             StatusMessage = "Loading transcript details...";
             var details = await _recorderApiClient.GetConversationDetailsAsync(conversationGuid);
-            if (details != null)
+
+            var transcriptToLoad = details?.Transcript ?? diarized ?? transcribed;
+            if (transcriptToLoad != null)
             {
-                item.LoadTranscript(details.Transcript, details.Participants);
+                item.LoadTranscript(transcriptToLoad, details?.Participants);
                 item.IsTranscriptExpanded = true;
                 StatusMessage = "Transcription & Diarization complete.";
             }
             else
             {
-                StatusMessage = "Transcript generated but details could not be rehydrated.";
+                StatusMessage = "Failed to process transcription.";
             }
         }
         catch (Exception ex)

@@ -137,20 +137,20 @@
                                                 FontSize="12"/>
                                     </HorizontalStackLayout>
 
-                                    <!-- Transcribe & Diarize Action -->
+                                    <!-- Transcribe Action -->
                                     <HorizontalStackLayout Grid.Column="2" Spacing="4" VerticalOptions="Center" Margin="4,0">
                                         <ActivityIndicator IsRunning="{Binding IsTranscribing}"
                                                            IsVisible="{Binding IsTranscribing}"
                                                            WidthRequest="20" HeightRequest="20"/>
 
-                                        <Button Text="Transcribe &amp; Diarize"
+                                        <Button Text="Transcribe"
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:RecordingsViewModel}}, Path=TranscribeAndDiarizeCommand}"
                                                 CommandParameter="{Binding}"
                                                 IsVisible="{Binding IsTranscribing, Converter={StaticResource InverseBoolConverter}}"
-                                                BackgroundColor="{StaticResource PrimaryTextColor}"
+                                                BackgroundColor="#512BD4"
                                                 TextColor="White"
-                                                Padding="8,4"
-                                                FontSize="11"/>
+                                                Padding="10,4"
+                                                FontSize="12"/>
                                     </HorizontalStackLayout>
 
                                     <!-- Transcript Toggle -->
@@ -197,6 +197,11 @@
                                            FontAttributes="Bold"
                                            TextColor="{StaticResource PrimaryTextColor}"
                                            Margin="0,4,0,0"/>
+
+                                    <Label Text="No transcript available yet. Tap 'Transcribe' to process this recording."
+                                           IsVisible="{Binding HasTranscript, Converter={StaticResource InverseBoolConverter}}"
+                                           FontSize="12"
+                                           TextColor="{StaticResource SecondaryTextColor}"/>
 
                                     <VerticalStackLayout BindableLayout.ItemsSource="{Binding Segments}"
                                                          Spacing="6">
