@@ -174,6 +174,9 @@ public static class ServiceCollectionExtensions
         ```        
          */
 
+        services.AddSingleton<CognitivePlatform.Api.Data.IObjectStore>(_ => 
+            new Data.SqliteObjectStore(Data.SqliteConnectionStrings.ForDataSource(
+                System.IO.Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, "platform.db"))));
         services.AddSingleton<IConversationRecordingStore, ConversationRecordingStore>();
         services.AddSingleton<IConversationRecordingService, ConversationRecordingService>();
 

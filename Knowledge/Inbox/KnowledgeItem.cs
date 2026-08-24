@@ -32,6 +32,7 @@ public enum KnowledgeKind
 {
     Journal
   , Task
+  , Meal
   , Pending // queued offline — kind not yet assigned by API
 }
 

@@ -1,4 +1,6 @@
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using LocalAIAssistant.Knowledge.Inbox;
 using LocalAIAssistant.CognitivePlatform.DTOs;
 
@@ -6,6 +8,12 @@ namespace LocalAIAssistant.CognitivePlatform.CpClients.Knowledge;
 
 public sealed class KnowledgeApiClient : IKnowledgeApiClient
 {
+    private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
+
     private readonly HttpClient _httpClient;
 
     public KnowledgeApiClient(HttpClient httpClient)
@@ -15,8 +23,10 @@ public sealed class KnowledgeApiClient : IKnowledgeApiClient
 
     public async Task<IReadOnlyList<KnowledgeItem>> GetKnowledgeAsync(CancellationToken ct = default)
     {
-        var result = await _httpClient.GetFromJsonAsync<List<KnowledgeItem>>("api/knowledge", ct);
+        var response = await _httpClient.GetAsync("api/knowledge", ct);
+        response.EnsureSuccessStatusCode();
 
+        var result = await response.Content.ReadFromJsonAsync<List<KnowledgeItem>>(JsonOptions, ct);
         return result ?? (IReadOnlyList<KnowledgeItem>)Array.Empty<KnowledgeItem>();
     }
 
