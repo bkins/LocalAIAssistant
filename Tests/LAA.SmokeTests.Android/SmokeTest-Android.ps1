@@ -1116,6 +1116,44 @@ Run-Test "Soft keyboard layout adjustment and viewport restoration" {
     $true
 }
 
+# -- 22. Conversation Recorder page loads and displays recording controls -----
+Run-Test "Conversation Recorder page loads and displays recording controls" {
+    # Navigate to Record tab (via direct tab tap or More overflow if needed)
+    $ok = Tap-Tab "Record" -DelayMs 1200
+    if (-not $ok) {
+        $ok = Tap-Tab "More" -DelayMs 600
+        if ($ok) {
+            $recNode = Wait-ForElement -TimeoutSeconds 8 -IntervalMs 500 -Predicate {
+                param($d)
+                $n = Find-Node $d -Text "Record"
+                if ($null -ne $n) { return $n }
+                Find-Node $d -ContentDesc "Record"
+            }
+            if ($null -ne $recNode) {
+                Tap-Node $recNode -DelayMs 1200 | Out-Null
+                $ok = $true
+            }
+        }
+    }
+    if (-not $ok) { return "Could not find or navigate to 'Record' tab" }
+
+    $dump = Get-UiDump
+    if ($null -eq $dump) { return "UI dump returned null on Record page" }
+
+    $header    = Find-Node $dump -Text "Offline Conversation Recorder"
+    $recordBtn = Find-Node $dump -Text "Record"
+    if ($null -eq $recordBtn) { $recordBtn = Find-Node $dump -ContentDesc "RecordToggleButton" }
+    $savedRecs = Find-Node $dump -Text "Saved Recordings"
+
+    if ($null -eq $header -and $null -eq $recordBtn -and $null -eq $savedRecs) {
+        return "Conversation Recorder UI controls not found after navigating to Record tab"
+    }
+
+    # Return to Chat tab
+    Tap-Tab "Chat" -DelayMs 800 | Out-Null
+    $true
+}
+
 if ($ForceFailure) {
     Run-Test "Forced failure to test screenshots" {
         throw "Forced failure to verify screenshot functionality."

@@ -92,7 +92,7 @@ adb shell pm list packages | Select-String "localai"
 
 ---
 
-## Smoke Test Catalog (21 tests)
+## Smoke Test Catalog (22 tests)
 
 | # | Test | What it guards |
 |---|------|----------------|
@@ -117,6 +117,7 @@ adb shell pm list packages | Select-String "localai"
 | 19 | Conversation list item swipe reveals Rename and Delete actions | `SwipeView` gesture interaction & context action exposure |
 | 20 | Settings page scrolling and Save configuration action | `ScrollView` traversal & Settings persistence pipeline |
 | 21 | Soft keyboard layout adjustment and viewport restoration | Keyboard summon (`AdjustResize`), unclipped input & dismissal |
+| 22 | Conversation Recorder page loads and displays recording controls | Record tab routing, `RecordToggleButton` & `RecordingsList` rendering |
 
 ---
 
@@ -128,6 +129,7 @@ adb shell pm list packages | Select-String "localai"
 | **Conversations / History** | 5, 6, 7, 12, 19 | Conversations list load, New Chat button, Back navigation, horizontal `SwipeView` Rename/Delete |
 | **Inbox & Knowledge** | 8, 9, 10, 15 | Category filter chips (All/Journals/Tasks), CollectionView rendering, Tab return |
 | **Memory Management** | 18 | Short/Long term headers, Clear Short/Long Term & Refresh action buttons |
+| **Conversation Recorder** | 22 | Record tab routing, Offline Conversation Recorder header, `RecordToggleButton` presence |
 | **Settings & Configuration** | 14, 20 | Android layout (Coco hidden), vertical scrolling across sections, Save persistence |
 | **Navigation & Stability** | 11, 12, 13 | Rapid Shell tab cycling, Back gestures, Platform conditional UI elements (Coco isolation) |
 | **Input & Soft Keyboard** | 21 | Soft keyboard summon, editor viewport retention (`AdjustResize`), clean dismissal |
