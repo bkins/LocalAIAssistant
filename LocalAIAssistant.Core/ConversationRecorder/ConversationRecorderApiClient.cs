@@ -144,7 +144,7 @@ public class ConversationRecorderApiClient : IConversationRecorderApiClient
             var queryParams = new List<string>();
             if (query != null)
             {
-                queryParams.Add($"query={Uri.EscapeDataString(query)}");
+                queryParams.Add($"q={Uri.EscapeDataString(query)}");
             }
             if (participant != null)
             {
@@ -152,11 +152,11 @@ public class ConversationRecorderApiClient : IConversationRecorderApiClient
             }
             if (fromDate.HasValue)
             {
-                queryParams.Add($"fromDate={Uri.EscapeDataString(fromDate.Value.ToString("o"))}");
+                queryParams.Add($"from={Uri.EscapeDataString(fromDate.Value.ToString("o"))}");
             }
             if (toDate.HasValue)
             {
-                queryParams.Add($"toDate={Uri.EscapeDataString(toDate.Value.ToString("o"))}");
+                queryParams.Add($"to={Uri.EscapeDataString(toDate.Value.ToString("o"))}");
             }
 
             var uri = "api/recorder/conversations/search";

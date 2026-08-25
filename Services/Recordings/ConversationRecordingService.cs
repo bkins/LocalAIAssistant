@@ -331,12 +331,55 @@ public class ConversationRecordingService : IConversationRecordingService
 
     public async Task<IReadOnlyList<ConversationRecording>> GetRecordingsAsync( CancellationToken cancellationToken = default )
     {
-        var list = await _recordingStore.GetAllAsync(cancellationToken);
-        foreach (var item in list)
+        var localList = (await _recordingStore.GetAllAsync(cancellationToken)).ToList();
+
+        if (_apiClient != null)
+        {
+            try
+            {
+                var remoteRecords = await _apiClient.SearchConversationsAsync(cancellationToken: cancellationToken);
+                if (remoteRecords != null && remoteRecords.Count > 0)
+                {
+                    var localDict = localList.ToDictionary(item => item.Id, StringComparer.OrdinalIgnoreCase);
+
+                    foreach (var remote in remoteRecords)
+                    {
+                        var idStr = remote.Id.ToString();
+                        if (!localDict.TryGetValue(idStr, out var localItem))
+                        {
+                            localItem = new ConversationRecording
+                            {
+                                Id = idStr,
+                                Title = remote.Title,
+                                StartedAt = remote.RecordedAtUtc,
+                                EndedAt = remote.RecordedAtUtc + remote.Duration,
+                                Duration = remote.Duration,
+                                RecordingPath = string.IsNullOrWhiteSpace(remote.AudioFilePath) ? $"recording_{idStr}.wav" : remote.AudioFilePath,
+                                Status = remote.Status
+                            };
+                            await _recordingStore.SaveAsync(localItem, cancellationToken);
+                        }
+                        else if (!string.IsNullOrWhiteSpace(remote.Title) && localItem.Title != remote.Title)
+                        {
+                            localItem.Title = remote.Title;
+                            await _recordingStore.SaveAsync(localItem, cancellationToken);
+                        }
+                    }
+
+                    localList = (await _recordingStore.GetAllAsync(cancellationToken)).ToList();
+                }
+            }
+            catch
+            {
+                // Network fetch exception swallowed
+            }
+        }
+
+        foreach (var item in localList)
         {
             item.RecordingPath = ResolveRecordingPath(item.RecordingPath);
         }
-        return list;
+        return localList;
     }
 
     private string ResolveRecordingPath(string storedPath)
