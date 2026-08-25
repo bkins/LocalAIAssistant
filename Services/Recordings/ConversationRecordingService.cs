@@ -51,19 +51,35 @@ public class ConversationRecordingService : IConversationRecordingService
         }
         else
         {
-            try
-            {
-                _recordingsDirectory = Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, "Recordings");
-            }
-            catch (Exception)
-            {
-                _recordingsDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Recordings");
-            }
+            _recordingsDirectory = Path.Combine(GetPersistentDataDirectory(), "Recordings");
         }
 
         if (!Directory.Exists(_recordingsDirectory))
         {
             Directory.CreateDirectory(_recordingsDirectory);
+        }
+    }
+
+    public static string GetPersistentDataDirectory()
+    {
+        try
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                var dir = Path.Combine(localAppData, "CognitivePlatform");
+                if (!Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
+                return dir;
+            }
+
+            return Microsoft.Maui.Storage.FileSystem.AppDataDirectory;
+        }
+        catch (Exception)
+        {
+            return AppDomain.CurrentDomain.BaseDirectory;
         }
     }
 
@@ -237,9 +253,36 @@ public class ConversationRecordingService : IConversationRecordingService
         }
     }
 
-    public Task<IReadOnlyList<ConversationRecording>> GetRecordingsAsync( CancellationToken cancellationToken = default )
+    public async Task<IReadOnlyList<ConversationRecording>> GetRecordingsAsync( CancellationToken cancellationToken = default )
     {
-        return _recordingStore.GetAllAsync(cancellationToken);
+        var list = await _recordingStore.GetAllAsync(cancellationToken);
+        foreach (var item in list)
+        {
+            item.RecordingPath = ResolveRecordingPath(item.RecordingPath);
+        }
+        return list;
+    }
+
+    private string ResolveRecordingPath(string storedPath)
+    {
+        if (string.IsNullOrWhiteSpace(storedPath))
+        {
+            return string.Empty;
+        }
+
+        if (File.Exists(storedPath))
+        {
+            return storedPath;
+        }
+
+        var fileName = Path.GetFileName(storedPath);
+        var candidatePath = Path.Combine(_recordingsDirectory, fileName);
+        if (File.Exists(candidatePath))
+        {
+            return candidatePath;
+        }
+
+        return storedPath;
     }
 
     public async Task<bool> DeleteRecordingAsync( string            id

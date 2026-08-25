@@ -177,7 +177,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<global::CognitivePlatform.Api.Data.IObjectStore>(_ => 
             new global::CognitivePlatform.Api.Data.SqliteObjectStore(global::LocalAIAssistant.Core.Data.SqliteConnectionStrings.ForDataSource(
-                System.IO.Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, "platform.db"))));
+                System.IO.Path.Combine(GetPersistentDataDirectory(), "platform.db"))));
         services.AddSingleton<IConversationRecordingStore, ConversationRecordingStore>();
         services.AddSingleton<IConversationRecordingService, ConversationRecordingService>();
         services.AddSingleton<IConversationRecorderApiClient>(sp =>
@@ -245,5 +245,28 @@ public static class ServiceCollectionExtensions
         services.AddTransient<RecordingsPage>();
 
         return services;
+    }
+
+    public static string GetPersistentDataDirectory()
+    {
+        try
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                var dir = System.IO.Path.Combine(localAppData, "CognitivePlatform");
+                if (!System.IO.Directory.Exists(dir))
+                {
+                    System.IO.Directory.CreateDirectory(dir);
+                }
+                return dir;
+            }
+
+            return Microsoft.Maui.Storage.FileSystem.AppDataDirectory;
+        }
+        catch (Exception)
+        {
+            return AppDomain.CurrentDomain.BaseDirectory;
+        }
     }
 }
