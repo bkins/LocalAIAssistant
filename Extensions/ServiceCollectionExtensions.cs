@@ -247,26 +247,48 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static string GetPersistentDataDirectory()
+    public static string GetPersistentDataDirectory(string? environmentName = null)
     {
+        var env = string.IsNullOrWhiteSpace(environmentName) ? BuildEnvironment.Name : environmentName;
+        if (string.IsNullOrWhiteSpace(env))
+        {
+            env = "Dev";
+        }
+
         try
         {
+            string baseDir;
             if (OperatingSystem.IsWindows())
             {
-                var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                var dir = System.IO.Path.Combine(localAppData, "CognitivePlatform");
-                if (!System.IO.Directory.Exists(dir))
+                if (System.IO.Directory.Exists(@"C:\CP\Data"))
                 {
-                    System.IO.Directory.CreateDirectory(dir);
+                    baseDir = System.IO.Path.Combine(@"C:\CP\Data", env, "LocalAIAssistant");
                 }
-                return dir;
+                else
+                {
+                    var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                    baseDir = System.IO.Path.Combine(localAppData, "CognitivePlatform", env);
+                }
+            }
+            else
+            {
+                baseDir = System.IO.Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, env);
             }
 
-            return Microsoft.Maui.Storage.FileSystem.AppDataDirectory;
+            if (!System.IO.Directory.Exists(baseDir))
+            {
+                System.IO.Directory.CreateDirectory(baseDir);
+            }
+            return baseDir;
         }
         catch (Exception)
         {
-            return AppDomain.CurrentDomain.BaseDirectory;
+            var fallback = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, env);
+            if (!System.IO.Directory.Exists(fallback))
+            {
+                System.IO.Directory.CreateDirectory(fallback);
+            }
+            return fallback;
         }
     }
 }

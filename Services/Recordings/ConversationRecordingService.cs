@@ -40,6 +40,7 @@ public class ConversationRecordingService : IConversationRecordingService
 
     public ConversationRecordingService( IAudioManager               audioManager
                                         , IConversationRecordingStore recordingStore
+                                        , string?                     environmentName = null
                                         , string?                     recordingsDirectory = null )
     {
         _audioManager = audioManager ?? throw new ArgumentNullException(nameof(audioManager));
@@ -51,7 +52,7 @@ public class ConversationRecordingService : IConversationRecordingService
         }
         else
         {
-            _recordingsDirectory = Path.Combine(GetPersistentDataDirectory(), "Recordings");
+            _recordingsDirectory = Path.Combine(GetPersistentDataDirectory(environmentName), "Recordings");
         }
 
         if (!Directory.Exists(_recordingsDirectory))
@@ -60,26 +61,43 @@ public class ConversationRecordingService : IConversationRecordingService
         }
     }
 
-    public static string GetPersistentDataDirectory()
+    public static string GetPersistentDataDirectory(string? environmentName = null)
     {
+        var env = string.IsNullOrWhiteSpace(environmentName) ? "Dev" : environmentName;
         try
         {
+            string baseDir;
             if (OperatingSystem.IsWindows())
             {
-                var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                var dir = Path.Combine(localAppData, "CognitivePlatform");
-                if (!Directory.Exists(dir))
+                if (Directory.Exists(@"C:\CP\Data"))
                 {
-                    Directory.CreateDirectory(dir);
+                    baseDir = Path.Combine(@"C:\CP\Data", env, "LocalAIAssistant");
                 }
-                return dir;
+                else
+                {
+                    var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                    baseDir = Path.Combine(localAppData, "CognitivePlatform", env);
+                }
+            }
+            else
+            {
+                baseDir = Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, env);
             }
 
-            return Microsoft.Maui.Storage.FileSystem.AppDataDirectory;
+            if (!Directory.Exists(baseDir))
+            {
+                Directory.CreateDirectory(baseDir);
+            }
+            return baseDir;
         }
         catch (Exception)
         {
-            return AppDomain.CurrentDomain.BaseDirectory;
+            var fallback = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, env);
+            if (!Directory.Exists(fallback))
+            {
+                Directory.CreateDirectory(fallback);
+            }
+            return fallback;
         }
     }
 
@@ -280,6 +298,21 @@ public class ConversationRecordingService : IConversationRecordingService
         if (File.Exists(candidatePath))
         {
             return candidatePath;
+        }
+
+        try
+        {
+            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var legacyPath = Path.Combine(localAppData, "CognitivePlatform", "Recordings", fileName);
+            if (File.Exists(legacyPath))
+            {
+                File.Copy(legacyPath, candidatePath, overwrite: true);
+                return candidatePath;
+            }
+        }
+        catch
+        {
+            // Ignore migration fallback exception
         }
 
         return storedPath;
