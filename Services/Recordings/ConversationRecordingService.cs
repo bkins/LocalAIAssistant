@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using LocalAIAssistant.Core.ConversationRecorder;
 using Plugin.Maui.Audio;
 
 namespace LocalAIAssistant.Services.Recordings;
@@ -12,7 +13,7 @@ public class ConversationRecordingService : IConversationRecordingService
 {
     private readonly IAudioManager _audioManager;
     private readonly IConversationRecordingStore _recordingStore;
-    private readonly LocalAIAssistant.Core.ConversationRecorder.IConversationRecorderApiClient? _apiClient;
+    private readonly IConversationRecorderApiClient? _apiClient;
     private readonly string _recordingsDirectory;
 
     private IAudioRecorder? _audioRecorder;
@@ -39,9 +40,9 @@ public class ConversationRecordingService : IConversationRecordingService
 
     public event EventHandler? RecordingStateChanged;
 
-    public ConversationRecordingService( IAudioManager               audioManager
-                                        , IConversationRecordingStore recordingStore
-                                        , LocalAIAssistant.Core.ConversationRecorder.IConversationRecorderApiClient? apiClient = null
+    public ConversationRecordingService( IAudioManager                  audioManager
+                                        , IConversationRecordingStore    recordingStore
+                                        , IConversationRecorderApiClient? apiClient = null
                                         , string?                     environmentName = null
                                         , string?                     recordingsDirectory = null )
     {
