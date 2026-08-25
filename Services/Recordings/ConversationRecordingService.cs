@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Plugin.Maui.Audio;
@@ -16,7 +17,10 @@ public class ConversationRecordingService : IConversationRecordingService
     private IAudioRecorder? _audioRecorder;
     private IAudioPlayer? _audioPlayer;
     private Timer? _timer;
-    private DateTimeOffset _recordingStartTime;
+    private DateTimeOffset _segmentStartTime;
+    private TimeSpan _accumulatedTime = TimeSpan.Zero;
+    private readonly List<string> _segmentFilePaths = new();
+    private string? _currentSegmentPath;
 
     public bool IsRecording { get; private set; }
 
@@ -72,16 +76,20 @@ public class ConversationRecordingService : IConversationRecordingService
 
         try
         {
+            _segmentFilePaths.Clear();
+            _accumulatedTime = TimeSpan.Zero;
+            _segmentStartTime = DateTimeOffset.UtcNow;
+            _currentSegmentPath = Path.Combine(_recordingsDirectory, $"seg_{Guid.NewGuid()}.wav");
+
             _audioRecorder = _audioManager.CreateRecorder();
             await _audioRecorder.StartAsync();
 
             IsRecording = true;
             IsPaused = false;
-            _recordingStartTime = DateTimeOffset.UtcNow;
             ElapsedRecordingTime = TimeSpan.Zero;
 
             _timer?.Dispose();
-            _timer = new Timer(OnTimerTick, null, 1000, 1000);
+            _timer = new Timer(OnTimerTick, null, 500, 500);
 
             RecordingStateChanged?.Invoke(this, EventArgs.Empty);
             return true;
@@ -95,33 +103,73 @@ public class ConversationRecordingService : IConversationRecordingService
         }
     }
 
-    public Task<bool> PauseRecordingAsync( CancellationToken cancellationToken = default )
+    public async Task<bool> PauseRecordingAsync( CancellationToken cancellationToken = default )
     {
-        if (!IsRecording || IsPaused)
+        if (!IsRecording || IsPaused || _audioRecorder == null)
         {
-            return Task.FromResult(false);
+            return false;
         }
 
-        IsPaused = true;
-        RecordingStateChanged?.Invoke(this, EventArgs.Empty);
-        return Task.FromResult(true);
+        try
+        {
+            var segmentDuration = DateTimeOffset.UtcNow - _segmentStartTime;
+            _accumulatedTime += segmentDuration;
+
+            var audioSource = await _audioRecorder.StopAsync();
+            _audioRecorder = null;
+
+            if (audioSource != null && _currentSegmentPath != null)
+            {
+                using var stream = audioSource.GetAudioStream();
+                if (stream != null)
+                {
+                    using var fileStream = File.Create(_currentSegmentPath);
+                    await stream.CopyToAsync(fileStream, cancellationToken);
+                    _segmentFilePaths.Add(_currentSegmentPath);
+                }
+            }
+
+            IsPaused = true;
+            ElapsedRecordingTime = _accumulatedTime;
+            RecordingStateChanged?.Invoke(this, EventArgs.Empty);
+            return true;
+        }
+        catch (Exception)
+        {
+            IsPaused = true;
+            RecordingStateChanged?.Invoke(this, EventArgs.Empty);
+            return false;
+        }
     }
 
-    public Task<bool> ResumeRecordingAsync( CancellationToken cancellationToken = default )
+    public async Task<bool> ResumeRecordingAsync( CancellationToken cancellationToken = default )
     {
         if (!IsRecording || !IsPaused)
         {
-            return Task.FromResult(false);
+            return false;
         }
 
-        IsPaused = false;
-        RecordingStateChanged?.Invoke(this, EventArgs.Empty);
-        return Task.FromResult(true);
+        try
+        {
+            _segmentStartTime = DateTimeOffset.UtcNow;
+            _currentSegmentPath = Path.Combine(_recordingsDirectory, $"seg_{Guid.NewGuid()}.wav");
+
+            _audioRecorder = _audioManager.CreateRecorder();
+            await _audioRecorder.StartAsync();
+
+            IsPaused = false;
+            RecordingStateChanged?.Invoke(this, EventArgs.Empty);
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 
     public async Task<ConversationRecording?> StopRecordingAsync( CancellationToken cancellationToken = default )
     {
-        if (!IsRecording || _audioRecorder == null)
+        if (!IsRecording)
         {
             return null;
         }
@@ -131,34 +179,46 @@ public class ConversationRecordingService : IConversationRecordingService
             _timer?.Dispose();
             _timer = null;
 
-            var audioSource = await _audioRecorder.StopAsync();
+            if (!IsPaused && _audioRecorder != null)
+            {
+                var segmentDuration = DateTimeOffset.UtcNow - _segmentStartTime;
+                _accumulatedTime += segmentDuration;
+
+                var audioSource = await _audioRecorder.StopAsync();
+                _audioRecorder = null;
+
+                if (audioSource != null && _currentSegmentPath != null)
+                {
+                    using var stream = audioSource.GetAudioStream();
+                    if (stream != null)
+                    {
+                        using var fileStream = File.Create(_currentSegmentPath);
+                        await stream.CopyToAsync(fileStream, cancellationToken);
+                        _segmentFilePaths.Add(_currentSegmentPath);
+                    }
+                }
+            }
+
             var endedAt = DateTimeOffset.UtcNow;
-            var duration = endedAt - _recordingStartTime;
+            var totalDuration = _accumulatedTime;
 
             IsRecording = false;
             IsPaused = false;
-            ElapsedRecordingTime = duration;
+            ElapsedRecordingTime = totalDuration;
 
             var conversationId = Guid.NewGuid().ToString();
-            var filePath = Path.Combine(_recordingsDirectory, $"recording_{conversationId}.wav");
+            var finalPath = Path.Combine(_recordingsDirectory, $"recording_{conversationId}.wav");
 
-            if (audioSource != null)
-            {
-                using var stream = audioSource.GetAudioStream();
-                if (stream != null)
-                {
-                    using var fileStream = File.Create(filePath);
-                    await stream.CopyToAsync(fileStream, cancellationToken);
-                }
-            }
+            await MergeWavFilesAsync(_segmentFilePaths, finalPath, cancellationToken);
+            CleanUpSegmentFiles(_segmentFilePaths);
 
             var recording = new ConversationRecording
             {
                 Id = conversationId,
-                StartedAt = _recordingStartTime,
+                StartedAt = endedAt - totalDuration,
                 EndedAt = endedAt,
-                Duration = duration,
-                RecordingPath = filePath,
+                Duration = totalDuration,
+                RecordingPath = finalPath,
                 Status = "Recorded"
             };
 
@@ -171,6 +231,7 @@ public class ConversationRecordingService : IConversationRecordingService
         {
             IsRecording = false;
             IsPaused = false;
+            CleanUpSegmentFiles(_segmentFilePaths);
             RecordingStateChanged?.Invoke(this, EventArgs.Empty);
             return null;
         }
@@ -309,8 +370,89 @@ public class ConversationRecordingService : IConversationRecordingService
     {
         if (IsRecording && !IsPaused)
         {
-            ElapsedRecordingTime = DateTimeOffset.UtcNow - _recordingStartTime;
+            ElapsedRecordingTime = _accumulatedTime + (DateTimeOffset.UtcNow - _segmentStartTime);
             RecordingTimerTicked?.Invoke(this, ElapsedRecordingTime);
+        }
+        else if (IsRecording && IsPaused)
+        {
+            ElapsedRecordingTime = _accumulatedTime;
+            RecordingTimerTicked?.Invoke(this, ElapsedRecordingTime);
+        }
+    }
+
+    private static async Task MergeWavFilesAsync(List<string> inputFiles, string outputFile, CancellationToken cancellationToken)
+    {
+        var validFiles = inputFiles.Where(f => !string.IsNullOrWhiteSpace(f) && File.Exists(f)).ToList();
+        if (validFiles.Count == 0)
+        {
+            return;
+        }
+
+        if (validFiles.Count == 1)
+        {
+            File.Copy(validFiles[0], outputFile, overwrite: true);
+            return;
+        }
+
+        using var outputStream = File.Create(outputFile);
+        byte[]? header = null;
+        int totalPcmBytes = 0;
+
+        foreach (var filePath in validFiles)
+        {
+            using var inputStream = File.OpenRead(filePath);
+            if (inputStream.Length < 44)
+            {
+                continue;
+            }
+
+            if (header == null)
+            {
+                header = new byte[44];
+                await inputStream.ReadExactlyAsync(header, 0, 44, cancellationToken);
+                await outputStream.WriteAsync(header, 0, 44, cancellationToken);
+            }
+            else
+            {
+                inputStream.Seek(44, SeekOrigin.Begin);
+            }
+
+            var pcmBuffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = await inputStream.ReadAsync(pcmBuffer, 0, pcmBuffer.Length, cancellationToken)) > 0)
+            {
+                await outputStream.WriteAsync(pcmBuffer, 0, bytesRead, cancellationToken);
+                totalPcmBytes += bytesRead;
+            }
+        }
+
+        if (header != null && outputStream.Length >= 44)
+        {
+            outputStream.Seek(4, SeekOrigin.Begin);
+            var riffSizeBits = BitConverter.GetBytes((int)(outputStream.Length - 8));
+            await outputStream.WriteAsync(riffSizeBits, 0, 4, cancellationToken);
+
+            outputStream.Seek(40, SeekOrigin.Begin);
+            var dataSizeBits = BitConverter.GetBytes(totalPcmBytes);
+            await outputStream.WriteAsync(dataSizeBits, 0, 4, cancellationToken);
+        }
+    }
+
+    private static void CleanUpSegmentFiles(List<string> segmentFiles)
+    {
+        foreach (var file in segmentFiles)
+        {
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(file) && File.Exists(file))
+                {
+                    File.Delete(file);
+                }
+            }
+            catch (Exception)
+            {
+                // Swallowed
+            }
         }
     }
 }

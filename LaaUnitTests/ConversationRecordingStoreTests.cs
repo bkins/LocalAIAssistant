@@ -88,4 +88,40 @@ public class ConversationRecordingStoreTests
         Assert.NotNull(item.DeletedUtc);
         _objectStoreMock.Verify(store => store.Save(item, "conversation_recordings", "rec-del"), Times.Once);
     }
+
+    [Fact]
+    public async Task SaveAsync_PersistsTitleProperty_WhenTitleIsSet()
+    {
+        var recording = new ConversationRecording { Id = "rec-title", Title = "Strategy Session" };
+        _objectStoreMock.Setup(store => store.Save(recording, "conversation_recordings", "rec-title"))
+                        .Returns("rec-title");
+
+        var result = await _store.SaveAsync(recording);
+
+        Assert.Equal("rec-title", result);
+        Assert.Equal("Strategy Session", recording.Title);
+    }
+
+    [Fact]
+    public void FormatFileSize_FormatsBytesKBMB_Correctly()
+    {
+        Assert.Equal("0 B", FormatFileSize(0));
+        Assert.Equal("500.0 B", FormatFileSize(500));
+        Assert.Equal("1.0 KB", FormatFileSize(1024));
+        Assert.Equal("1.5 MB", FormatFileSize((long)(1.5 * 1024 * 1024)));
+    }
+
+    private static string FormatFileSize(long bytes)
+    {
+        if (bytes <= 0) return "0 B";
+        string[] suffixes = { "B", "KB", "MB", "GB" };
+        int i = 0;
+        double dblBytes = bytes;
+        while (dblBytes >= 1024 && i < suffixes.Length - 1)
+        {
+            dblBytes /= 1024;
+            i++;
+        }
+        return $"{dblBytes:0.0} {suffixes[i]}";
+    }
 }

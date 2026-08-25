@@ -66,13 +66,17 @@
 
         <!-- Section Title -->
         <Grid Grid.Row="1"
-              Padding="16,8"
+              Margin="16,12,16,4"
               ColumnDefinitions="*,Auto">
-            <Label Text="Saved Recordings"
-                   FontSize="16"
-                   FontAttributes="Bold"
-                   TextColor="{StaticResource PrimaryTextColor}"
-                   VerticalOptions="Center"/>
+            <VerticalStackLayout Grid.Column="0" VerticalOptions="Center" Spacing="2">
+                <Label Text="Saved Recordings"
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource PrimaryTextColor}"/>
+                <Label Text="{Binding TotalStorageSizeDisplay}"
+                       FontSize="12"
+                       TextColor="{StaticResource SecondaryTextColor}"/>
+            </VerticalStackLayout>
 
             <Button Grid.Column="1"
                     Text="Refresh"
@@ -107,13 +111,50 @@
                             <VerticalStackLayout Spacing="8">
                                 <Grid ColumnDefinitions="*,Auto,Auto,Auto">
                                     <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                                        <!-- View Title -->
+                                        <HorizontalStackLayout Spacing="6" IsVisible="{Binding IsEditingTitle, Converter={StaticResource InverseBoolConverter}}">
+                                            <Label Text="{Binding Title}"
+                                                   FontSize="14"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{StaticResource PrimaryTextColor}"
+                                                   VerticalOptions="Center"/>
+                                            <Button Text="✏️"
+                                                    Command="{Binding ToggleEditTitleCommand}"
+                                                    Padding="4,0"
+                                                    FontSize="11"
+                                                    BackgroundColor="Transparent"
+                                                    TextColor="{StaticResource PrimaryTextColor}"/>
+                                        </HorizontalStackLayout>
+
+                                        <!-- Edit Title Entry -->
+                                        <HorizontalStackLayout Spacing="6" IsVisible="{Binding IsEditingTitle}">
+                                            <Entry Text="{Binding Title}"
+                                                   FontSize="13"
+                                                   WidthRequest="160"
+                                                   VerticalOptions="Center"/>
+                                            <Button Text="Save"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:RecordingsViewModel}}, Path=SaveTitleCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Padding="8,2"
+                                                    FontSize="11"
+                                                    BackgroundColor="#512BD4"
+                                                    TextColor="White"/>
+                                        </HorizontalStackLayout>
+
                                         <Label Text="{Binding StartedAtDisplay}"
-                                               FontSize="14"
-                                               FontAttributes="Bold"
-                                               TextColor="{StaticResource PrimaryTextColor}"/>
-                                        <Label Text="{Binding DurationDisplay, StringFormat='Duration: {0}'}"
-                                               FontSize="12"
+                                               FontSize="11"
                                                TextColor="{StaticResource SecondaryTextColor}"/>
+
+                                        <HorizontalStackLayout Spacing="8">
+                                            <Label Text="{Binding DurationDisplay, StringFormat='Duration: {0}'}"
+                                                   FontSize="12"
+                                                   TextColor="{StaticResource SecondaryTextColor}"/>
+                                            <Label Text="{Binding FileSizeDisplay, StringFormat='Size: {0}'}"
+                                                   FontSize="12"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{StaticResource SecondaryTextColor}"/>
+                                        </HorizontalStackLayout>
+
                                         <Label Text="{Binding Status, StringFormat='Status: {0}'}"
                                                FontSize="11"
                                                TextColor="{StaticResource SecondaryTextColor}"/>

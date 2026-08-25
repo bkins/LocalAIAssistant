@@ -15,7 +15,8 @@ namespace LocalAIAssistant.ViewModels;
 
 public partial class RecordingsViewModel : ObservableObject
 {
-    private readonly IConversationRecordingService _recordingService;
+    private readonly IConversationRecordingService   _recordingService;
+    private readonly IConversationRecordingStore     _recordingStore;
     private readonly IConversationRecorderApiClient? _recorderApiClient;
 
     [ObservableProperty] private bool _isRecording;
@@ -23,6 +24,7 @@ public partial class RecordingsViewModel : ObservableObject
     [ObservableProperty] private bool _isPlaying;
     [ObservableProperty] private bool _isPlaybackPaused;
     [ObservableProperty] private string _elapsedTimeDisplay = "00:00";
+    [ObservableProperty] private string _totalStorageSizeDisplay = "Total Storage: 0 B";
     [ObservableProperty] private string? _currentlyPlayingId;
     [ObservableProperty] private string _statusMessage = string.Empty;
 
@@ -31,9 +33,11 @@ public partial class RecordingsViewModel : ObservableObject
     public ObservableCollection<RecordingItemViewModel> Recordings { get; } = new();
 
     public RecordingsViewModel( IConversationRecordingService recordingService
+                               , IConversationRecordingStore   recordingStore
                                , IConversationRecorderApiClient? recorderApiClient = null )
     {
         _recordingService  = recordingService ?? throw new ArgumentNullException(nameof(recordingService));
+        _recordingStore    = recordingStore ?? throw new ArgumentNullException(nameof(recordingStore));
         _recorderApiClient = recorderApiClient;
 
         _recordingService.RecordingTimerTicked += OnTimerTicked;
@@ -47,6 +51,7 @@ public partial class RecordingsViewModel : ObservableObject
 
         MainThread.BeginInvokeOnMainThread(() =>
         {
+            long totalBytes = 0;
             Recordings.Clear();
             foreach (var recording in recordings)
             {
@@ -55,8 +60,10 @@ public partial class RecordingsViewModel : ObservableObject
                     IsPlaying = (recording.Id == CurrentlyPlayingId && IsPlaying),
                     IsPlaybackPaused = (recording.Id == CurrentlyPlayingId && IsPlaybackPaused)
                 };
+                totalBytes += item.FileSizeBytes;
                 Recordings.Add(item);
             }
+            TotalStorageSizeDisplay = $"Total Storage: {RecordingItemViewModel.FormatFileSize(totalBytes)}";
         });
     }
 
@@ -310,6 +317,25 @@ public partial class RecordingsViewModel : ObservableObject
         {
             StatusMessage = $"Failed to update speakers: {ex.Message}";
         }
+    }
+
+    [RelayCommand]
+    public async Task SaveTitleAsync(RecordingItemViewModel? item)
+    {
+        if (item == null)
+        {
+            return;
+        }
+
+        item.IsEditingTitle = false;
+        item.Model.Title = item.Title;
+
+        if (_recordingStore != null)
+        {
+            await _recordingStore.SaveAsync(item.Model);
+        }
+
+        StatusMessage = "Title updated.";
     }
 
     private void OnTimerTicked(object? sender, TimeSpan elapsed)

@@ -6,6 +6,8 @@ public class ConversationRecording
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();
 
+    public string? Title { get; set; }
+
     public DateTimeOffset StartedAt { get; set; } = DateTimeOffset.UtcNow;
 
     public DateTimeOffset? EndedAt { get; set; }
