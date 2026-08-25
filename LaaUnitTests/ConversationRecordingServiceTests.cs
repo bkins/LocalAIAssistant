@@ -25,20 +25,20 @@ public class ConversationRecordingServiceTests
     [Fact]
     public async Task StartRecordingAsync_StartsRecorder_AndSetsIsRecordingTrue()
     {
-        _audioRecorderMock.Setup(r => r.StartAsync()).Returns(Task.CompletedTask);
+        _audioRecorderMock.Setup(r => r.StartAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
 
         var started = await _service.StartRecordingAsync();
 
         Assert.True(started);
         Assert.True(_service.IsRecording);
         Assert.False(_service.IsPaused);
-        _audioRecorderMock.Verify(r => r.StartAsync(), Times.Once);
+        _audioRecorderMock.Verify(r => r.StartAsync(It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
     public async Task StartRecordingAsync_ReturnsFalse_WhenAlreadyRecording()
     {
-        _audioRecorderMock.Setup(r => r.StartAsync()).Returns(Task.CompletedTask);
+        _audioRecorderMock.Setup(r => r.StartAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
         await _service.StartRecordingAsync();
 
         var secondStart = await _service.StartRecordingAsync();
@@ -49,7 +49,7 @@ public class ConversationRecordingServiceTests
     [Fact]
     public async Task PauseAndResumeRecordingAsync_TogglesIsPausedState()
     {
-        _audioRecorderMock.Setup(r => r.StartAsync()).Returns(Task.CompletedTask);
+        _audioRecorderMock.Setup(r => r.StartAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
 
         await _service.StartRecordingAsync();
 

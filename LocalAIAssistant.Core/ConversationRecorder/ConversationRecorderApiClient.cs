@@ -179,4 +179,41 @@ public class ConversationRecorderApiClient : IConversationRecorderApiClient
             return new List<ConversationRecordDto>();
         }
     }
+
+    public async Task<bool> UploadAudioAsync( Guid conversationId
+                                           , Stream audioStream
+                                           , string mimeType = "audio/wav"
+                                           , CancellationToken cancellationToken = default )
+    {
+        try
+        {
+            using var content = new StreamContent(audioStream);
+            content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(string.IsNullOrWhiteSpace(mimeType) ? "audio/wav" : mimeType);
+
+            var response = await _httpClient.PostAsync($"api/recorder/conversations/{conversationId}/audio", content, cancellationToken);
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task<Stream?> GetAudioStreamAsync( Guid conversationId, CancellationToken cancellationToken = default )
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"api/recorder/conversations/{conversationId}/audio", HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadAsStreamAsync(cancellationToken);
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }
