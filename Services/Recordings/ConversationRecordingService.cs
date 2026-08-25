@@ -162,14 +162,31 @@ public class ConversationRecordingService : IConversationRecordingService
             var audioSource = await _audioRecorder.StopAsync();
             _audioRecorder = null;
 
-            if (audioSource != null && _currentSegmentPath != null)
+            if (_currentSegmentPath != null)
             {
-                using var stream = audioSource.GetAudioStream();
-                if (stream != null)
+                if (audioSource != null)
                 {
-                    using var fileStream = File.Create(_currentSegmentPath);
-                    await stream.CopyToAsync(fileStream, cancellationToken);
-                    _segmentFilePaths.Add(_currentSegmentPath);
+                    try
+                    {
+                        using var stream = audioSource.GetAudioStream();
+                        if (stream != null)
+                        {
+                            using var fileStream = File.Create(_currentSegmentPath);
+                            await stream.CopyToAsync(fileStream, cancellationToken);
+                        }
+                    }
+                    catch
+                    {
+                        // Native recorder may write directly to file on disk
+                    }
+                }
+
+                if (File.Exists(_currentSegmentPath) && new FileInfo(_currentSegmentPath).Length > 0)
+                {
+                    if (!_segmentFilePaths.Contains(_currentSegmentPath))
+                    {
+                        _segmentFilePaths.Add(_currentSegmentPath);
+                    }
                 }
             }
 
@@ -229,14 +246,31 @@ public class ConversationRecordingService : IConversationRecordingService
                 var audioSource = await _audioRecorder.StopAsync();
                 _audioRecorder = null;
 
-                if (audioSource != null && _currentSegmentPath != null)
+                if (_currentSegmentPath != null)
                 {
-                    using var stream = audioSource.GetAudioStream();
-                    if (stream != null)
+                    if (audioSource != null)
                     {
-                        using var fileStream = File.Create(_currentSegmentPath);
-                        await stream.CopyToAsync(fileStream, cancellationToken);
-                        _segmentFilePaths.Add(_currentSegmentPath);
+                        try
+                        {
+                            using var stream = audioSource.GetAudioStream();
+                            if (stream != null)
+                            {
+                                using var fileStream = File.Create(_currentSegmentPath);
+                                await stream.CopyToAsync(fileStream, cancellationToken);
+                            }
+                        }
+                        catch
+                        {
+                            // Native recorder may write directly to file on disk
+                        }
+                    }
+
+                    if (File.Exists(_currentSegmentPath) && new FileInfo(_currentSegmentPath).Length > 0)
+                    {
+                        if (!_segmentFilePaths.Contains(_currentSegmentPath))
+                        {
+                            _segmentFilePaths.Add(_currentSegmentPath);
+                        }
                     }
                 }
             }
