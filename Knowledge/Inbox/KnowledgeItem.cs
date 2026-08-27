@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace LocalAIAssistant.Knowledge.Inbox;
 
 public sealed class KnowledgeItem
@@ -28,6 +30,7 @@ public sealed class KnowledgeItem
     public bool IsQueued { get; init; }  // true = came from offline queue, not yet API-processed
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum KnowledgeKind
 {
     Journal
@@ -36,6 +39,7 @@ public enum KnowledgeKind
   , Pending // queued offline — kind not yet assigned by API
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum KnowledgeStatus
 {
     Active
