@@ -216,4 +216,41 @@ public class ConversationRecorderApiClient : IConversationRecorderApiClient
             return null;
         }
     }
+
+    public async Task<ConversationAnalysisDto?> AnalyzeConversationAsync( Guid conversationId, CancellationToken cancellationToken = default )
+    {
+        try
+        {
+            var response = await _httpClient.PostAsync($"api/recorder/conversations/{conversationId}/analyze", null, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<ConversationAnalysisDto>(_jsonOptions, cancellationToken);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<ConversationAnalysisDto?> GetAnalysisAsync( Guid conversationId, CancellationToken cancellationToken = default )
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"api/recorder/conversations/{conversationId}/analysis", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<ConversationAnalysisDto>(_jsonOptions, cancellationToken);
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }
+

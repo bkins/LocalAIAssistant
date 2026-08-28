@@ -139,6 +139,63 @@ public class ConversationRecorderApiClientTests
         Assert.Equal("Found Title", results[0].Title);
     }
 
+    [Fact]
+    public async Task AnalyzeConversationAsync_ReturnsAnalysis_WhenApiReturnsSuccess()
+    {
+        var conversationId = Guid.NewGuid();
+        var expectedAnalysis = new ConversationAnalysisDto
+        {
+            Id             = Guid.NewGuid()
+          , ConversationId = conversationId
+          , Summary        = "Meeting agreed to proceed with design."
+          , Status         = "Completed"
+          , Topics         = new List<AnalysisDerivedItemDto>
+            {
+                new() { Type = "Topic", Content = "API Architecture" }
+            }
+          , ActionItems    = new List<AnalysisDerivedItemDto>
+            {
+                new() { Type = "ActionItem", Content = "Implement endpoints" }
+            }
+        };
+
+        var handler = new MockHttpMessageHandler(HttpStatusCode.OK, JsonSerializer.Serialize(expectedAnalysis));
+        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5273/") };
+        var apiClient = new ConversationRecorderApiClient(client);
+
+        var result = await apiClient.AnalyzeConversationAsync(conversationId);
+
+        Assert.NotNull(result);
+        Assert.Equal(conversationId, result.ConversationId);
+        Assert.Equal("Completed", result.Status);
+        Assert.Equal("Meeting agreed to proceed with design.", result.Summary);
+        Assert.Single(result.Topics);
+        Assert.Single(result.ActionItems);
+    }
+
+    [Fact]
+    public async Task GetAnalysisAsync_ReturnsAnalysis_WhenApiReturnsSuccess()
+    {
+        var conversationId = Guid.NewGuid();
+        var expectedAnalysis = new ConversationAnalysisDto
+        {
+            Id             = Guid.NewGuid()
+          , ConversationId = conversationId
+          , Summary        = "Cached analysis summary."
+          , Status         = "Completed"
+        };
+
+        var handler = new MockHttpMessageHandler(HttpStatusCode.OK, JsonSerializer.Serialize(expectedAnalysis));
+        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5273/") };
+        var apiClient = new ConversationRecorderApiClient(client);
+
+        var result = await apiClient.GetAnalysisAsync(conversationId);
+
+        Assert.NotNull(result);
+        Assert.Equal(conversationId, result.ConversationId);
+        Assert.Equal("Cached analysis summary.", result.Summary);
+    }
+
     private class MockHttpMessageHandler : HttpMessageHandler
     {
         private readonly HttpStatusCode _statusCode;
