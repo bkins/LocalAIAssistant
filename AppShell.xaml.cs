@@ -1,4 +1,4 @@
-﻿using LocalAIAssistant.Data;
+using LocalAIAssistant.Data;
 using LocalAIAssistant.Knowledge.Inbox;
 using LocalAIAssistant.Knowledge.Journals.Views;
 using LocalAIAssistant.Knowledge.Tasks.Views;
@@ -17,11 +17,6 @@ public partial class AppShell : Shell
 
 	public AppShell(AppShellMasterViewModel masterViewModel)
 	{
-		try
-		{
-			System.IO.File.AppendAllText(System.IO.Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, "debug_run_logs.txt"), "AppShell Constructor executed!\n");
-		}
-		catch {}
 		BindingContext = masterViewModel;
 		_viewModel     = masterViewModel;
 
@@ -31,18 +26,8 @@ public partial class AppShell : Shell
 
 		_viewModel.PropertyChanged += (s, e) =>
 		{
-			try
-			{
-				System.IO.File.AppendAllText(System.IO.Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, "debug_run_logs.txt"), $"AppShell PropertyChanged: {e.PropertyName}\n");
-			}
-			catch {}
 			if (e.PropertyName == nameof(AppShellMasterViewModel.PendingMemoryConfirmationCount) || e.PropertyName == nameof(AppShellMasterViewModel.PendingQueueCount))
 			{
-				try
-				{
-					System.IO.File.AppendAllText(System.IO.Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, "debug_run_logs.txt"), $"AppShell count: {_viewModel.PendingMemoryConfirmationCount}\n");
-				}
-				catch {}
 				MainThread.BeginInvokeOnMainThread(() =>
 				{
 					try
@@ -62,15 +47,9 @@ public partial class AppShell : Shell
 						}
 						TitleViewGrid.InvalidateMeasure();
 						BadgesLayout.InvalidateMeasure();
-						System.IO.File.AppendAllText(System.IO.Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, "debug_run_logs.txt"), $"AppShell UI: MemoryBadgeFrame.IsVisible={MemoryBadgeFrame.IsVisible}, Width={MemoryBadgeFrame.Width}, Height={MemoryBadgeFrame.Height}\n");
 					}
-					catch (Exception ex)
+					catch
 					{
-						try
-						{
-							System.IO.File.AppendAllText(System.IO.Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, "debug_run_logs.txt"), $"AppShell ERROR: {ex.Message}\n{ex.StackTrace}\n");
-						}
-						catch {}
 					}
 				});
 			}

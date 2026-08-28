@@ -6,10 +6,11 @@ using Message = LocalAIAssistant.Data.Models.Message;
 
 namespace LocalAIAssistant.ViewModels;
 
-public partial class MemoryManagementViewModel : ObservableObject
+public partial class MemoryManagementViewModel : ObservableObject, IDisposable
 {
     private readonly IConversationMemory     _conversationMemory;
     private readonly AppShellMasterViewModel _appShellMasterViewModel;
+    private readonly System.ComponentModel.PropertyChangedEventHandler _appShellPropertyChangedHandler;
 
     [ObservableProperty]
     private ObservableCollection<Message> _shortTermMessages = new();
@@ -80,7 +81,7 @@ public partial class MemoryManagementViewModel : ObservableObject
         _conversationMemory      = conversationMemory;
         _appShellMasterViewModel = appShellMasterViewModel;
 
-        _appShellMasterViewModel.PropertyChanged += (s, e) =>
+        _appShellPropertyChangedHandler = (s, e) =>
         {
             if (e.PropertyName == nameof(AppShellMasterViewModel.PendingMemoryConfirmationCount))
             {
@@ -88,6 +89,13 @@ public partial class MemoryManagementViewModel : ObservableObject
                 OnPropertyChanged(nameof(HasPendingMemoryConfirmation));
             }
         };
+
+        _appShellMasterViewModel.PropertyChanged += _appShellPropertyChangedHandler;
+    }
+
+    public void Dispose()
+    {
+        _appShellMasterViewModel.PropertyChanged -= _appShellPropertyChangedHandler;
     }
     
     [RelayCommand]
@@ -95,7 +103,6 @@ public partial class MemoryManagementViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(PendingMemoryConfirmationCount));
         OnPropertyChanged(nameof(HasPendingMemoryConfirmation));
-        try { System.IO.File.AppendAllText(System.IO.Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, "debug_run_logs.txt"), $"MemoryVM: LoadAsync count={PendingMemoryConfirmationCount}, HasPending={HasPendingMemoryConfirmation}\n"); } catch {}
 
         ShortTermMessages.Clear();
         LongTermMessages.Clear();

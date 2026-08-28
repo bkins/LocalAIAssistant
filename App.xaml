@@ -1,4 +1,4 @@
-﻿<?xml version = "1.0" encoding = "UTF-8" ?>
+<?xml version = "1.0" encoding = "UTF-8" ?>
 <Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:converters="clr-namespace:LocalAIAssistant.Converters"
@@ -7,8 +7,9 @@
         <ResourceDictionary>
             
             <converters:SenderToColorConverter x:Key="SenderToColorConverter" />
-            <converters:SenderToColorConverter x:Key="NullToBoolConverter"/>
+            <converters:NullToBoolConverter    x:Key="NullToBoolConverter"/>
             <converters:BoolToColorConverter   x:Key="BoolToColorConverter" />
+            <converters:BoolToIntConverter     x:Key="BoolToIntConverter" />
             <converters:ApiStatusTextConverter x:Key="ApiStatusTextConverter" />
             <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
             <converters:TagsToTextConverter x:Key="TagsToTextConverter"/>

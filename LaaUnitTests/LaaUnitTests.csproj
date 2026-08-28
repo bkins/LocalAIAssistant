@@ -71,6 +71,8 @@
     <Compile Include="../Services/Recordings/ConversationRecordingStore.cs" Link="Linked/ConversationRecordingStore.cs" />
     <Compile Include="../Services/Recordings/IConversationRecordingService.cs" Link="Linked/IConversationRecordingService.cs" />
     <Compile Include="../Services/Recordings/ConversationRecordingService.cs" Link="Linked/ConversationRecordingService.cs" />
+    <Compile Include="../Converters/BoolToIntConverter.cs" Link="Linked/BoolToIntConverter.cs" />
+    <Compile Include="../Converters/NullToBoolConverter.cs" Link="Linked/NullToBoolConverter.cs" />
   </ItemGroup>
 
 </Project>

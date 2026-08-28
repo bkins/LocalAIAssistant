@@ -117,19 +117,23 @@ public partial class RecordingItemViewModel : ObservableObject
             foreach (var p in participants)
             {
                 speakerMap[p.SpeakerId] = p.DisplayName;
-                if (p.SpeakerId.Equals("Speaker 1", StringComparison.OrdinalIgnoreCase))
+                if (p.SpeakerId.Equals("speaker_1", StringComparison.OrdinalIgnoreCase)
+                    || p.SpeakerId.Equals("Speaker 1", StringComparison.OrdinalIgnoreCase))
                 {
                     SpeakerName1 = p.DisplayName;
                 }
-                else if (p.SpeakerId.Equals("Speaker 2", StringComparison.OrdinalIgnoreCase))
+                else if (p.SpeakerId.Equals("speaker_2", StringComparison.OrdinalIgnoreCase)
+                         || p.SpeakerId.Equals("Speaker 2", StringComparison.OrdinalIgnoreCase))
                 {
                     SpeakerName2 = p.DisplayName;
                 }
-                else if (p.SpeakerId.Equals("Speaker 3", StringComparison.OrdinalIgnoreCase))
+                else if (p.SpeakerId.Equals("speaker_3", StringComparison.OrdinalIgnoreCase)
+                         || p.SpeakerId.Equals("Speaker 3", StringComparison.OrdinalIgnoreCase))
                 {
                     SpeakerName3 = p.DisplayName;
                 }
-                else if (p.SpeakerId.Equals("Speaker 4", StringComparison.OrdinalIgnoreCase))
+                else if (p.SpeakerId.Equals("speaker_4", StringComparison.OrdinalIgnoreCase)
+                         || p.SpeakerId.Equals("Speaker 4", StringComparison.OrdinalIgnoreCase))
                 {
                     SpeakerName4 = p.DisplayName;
                 }

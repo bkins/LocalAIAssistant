@@ -290,24 +290,31 @@ public partial class MainPage : ContentPage
 
         BackgroundGlyph.Opacity = restingOpacity;
 
-        while (ct.IsCancellationRequested.Not())
+        try
         {
-            // "lub"
-            await BackgroundGlyph.FadeTo(firstBeatPeak,  beatRiseMs, Easing.CubicIn);
-            if (ct.IsCancellationRequested) break;
-            await BackgroundGlyph.FadeTo(restingOpacity, beatFallMs, Easing.CubicOut);
-            if (ct.IsCancellationRequested) break;
+            while (ct.IsCancellationRequested.Not())
+            {
+                // "lub"
+                await BackgroundGlyph.FadeTo(firstBeatPeak,  beatRiseMs, Easing.CubicIn);
+                if (ct.IsCancellationRequested) break;
+                await BackgroundGlyph.FadeTo(restingOpacity, beatFallMs, Easing.CubicOut);
+                if (ct.IsCancellationRequested) break;
 
-            await Task.Delay((int)betweenBeatsMs, ct);
-            if (ct.IsCancellationRequested) break;
+                await Task.Delay((int)betweenBeatsMs, ct);
+                if (ct.IsCancellationRequested) break;
 
-            // "dub"
-            await BackgroundGlyph.FadeTo(secondBeatPeak, beatRiseMs, Easing.CubicIn);
-            if (ct.IsCancellationRequested) break;
-            await BackgroundGlyph.FadeTo(restingOpacity, beatFallMs, Easing.CubicOut);
-            if (ct.IsCancellationRequested) break;
+                // "dub"
+                await BackgroundGlyph.FadeTo(secondBeatPeak, beatRiseMs, Easing.CubicIn);
+                if (ct.IsCancellationRequested) break;
+                await BackgroundGlyph.FadeTo(restingOpacity, beatFallMs, Easing.CubicOut);
+                if (ct.IsCancellationRequested) break;
 
-            await Task.Delay((int)restMs, ct);
+                await Task.Delay((int)restMs, ct);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Normal loop exit on page disappearance or pulse cancellation
         }
     }
 
@@ -319,12 +326,19 @@ public partial class MainPage : ContentPage
 
         BackgroundGlyph.Opacity = minOpacity;
 
-        while (ct.IsCancellationRequested.Not())
+        try
         {
-            await BackgroundGlyph.FadeTo(maxOpacity, halfCycleMs, Easing.SinInOut);
-            if (ct.IsCancellationRequested) break;
+            while (ct.IsCancellationRequested.Not())
+            {
+                await BackgroundGlyph.FadeTo(maxOpacity, halfCycleMs, Easing.SinInOut);
+                if (ct.IsCancellationRequested) break;
 
-            await BackgroundGlyph.FadeTo(minOpacity, halfCycleMs, Easing.SinInOut);
+                await BackgroundGlyph.FadeTo(minOpacity, halfCycleMs, Easing.SinInOut);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Normal loop exit on cancellation
         }
     }
     

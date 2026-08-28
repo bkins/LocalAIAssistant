@@ -307,9 +307,7 @@ public partial class ChatViewModel : ObservableObject
     {
         if (suggestion is null) return;
 
-        PromptText = suggestion.CommandTemplate.EndsWith(":")
-                         ? suggestion.CommandTemplate + " "
-                         : suggestion.CommandTemplate + " ";
+        PromptText = suggestion.CommandTemplate + " ";
 
         IsSuggestionsVisible = false;
         CommandSuggestions.Clear();
@@ -565,10 +563,18 @@ public partial class ChatViewModel : ObservableObject
     [RelayCommand]
     public void Cancel()
     {
-        if (_activeSendCts is null || _activeSendCts.IsCancellationRequested) return;
+        var cts = _activeSendCts;
+        if (cts is null || cts.IsCancellationRequested) return;
 
         _log.LogInformation("Cancel requested for active chat generation", Category.ChatViewModel);
-        _activeSendCts.Cancel();
+        try
+        {
+            cts.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+            // CTS was disposed concurrently in SendAsync finally block
+        }
         StopThinking();
     }
 
@@ -583,19 +589,6 @@ public partial class ChatViewModel : ObservableObject
         AddToPromptHistory(text);
         IsSuggestionsVisible = false;
         CommandSuggestions.Clear();
-
-        if (text.EqualsIgnoreCase("test:set_pending_memory"))
-        {
-            try { System.IO.File.AppendAllText(System.IO.Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, "debug_run_logs.txt"), "DEBUG: test:set_pending_memory hook hit!\n"); } catch {}
-            MainThread.BeginInvokeOnMainThread(() =>
-            {
-                _appShellMasterViewModel.PendingMemoryConfirmationCount = 3;
-            });
-            PromptText = string.Empty;
-            return;
-        }
-
-        try { System.IO.File.AppendAllText(System.IO.Path.Combine(Microsoft.Maui.Storage.FileSystem.AppDataDirectory, "debug_run_logs.txt"), "SendAsync text: " + text + "\n"); } catch {}
 
         _log.LogInformation($"SendAsync: {text.Length} chars", Category.ChatViewModel);
 
@@ -1060,6 +1053,7 @@ public partial class ChatViewModel : ObservableObject
     public async Task ClearMessagesAsync()
     {
         await _ttsService.StopAsync();
+        await _conversationMemory.ClearShortTermAsync();
         Messages.Clear();
     }
 
@@ -1153,6 +1147,8 @@ public partial class ChatViewModel : ObservableObject
     [RelayCommand]
     public async Task VoiceCaptureAsync()
     {
+        if (IsBusy) return;
+
         if (_speechToText is null || !_speechToText.IsAvailable)
         {
             await Shell.Current.DisplayAlert("Voice Capture", "Voice Capture is not configured. Please ensure your Azure Speech Subscription Key and Region are set in Settings.", "OK");
