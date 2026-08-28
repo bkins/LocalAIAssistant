@@ -15,10 +15,12 @@ public class KnowledgeKindToColorConverter : IValueConverter
 
         return kind switch
         {
-                KnowledgeKind.Journal => Color.FromArgb("#8B5CF6")
-              , KnowledgeKind.Task    => Color.FromArgb("#4CAF50")
-              , KnowledgeKind.Pending => Color.FromArgb("#FF9844")
-              , _                     => Colors.Gray
+                KnowledgeKind.Journal      => Color.FromArgb("#8B5CF6")
+              , KnowledgeKind.Task         => Color.FromArgb("#4CAF50")
+              , KnowledgeKind.Meal         => Color.FromArgb("#10B981")
+              , KnowledgeKind.Pending      => Color.FromArgb("#FF9844")
+              , KnowledgeKind.Conversation => Color.FromArgb("#3B82F6")
+              , _                          => Colors.Gray
         };
     }
 

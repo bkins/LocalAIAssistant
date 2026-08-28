@@ -12,4 +12,8 @@ public interface IConversationRecorderApiClient
     Task<Stream?> GetAudioStreamAsync( Guid conversationId, CancellationToken cancellationToken = default );
     Task<ConversationAnalysisDto?> AnalyzeConversationAsync( Guid conversationId, CancellationToken cancellationToken = default );
     Task<ConversationAnalysisDto?> GetAnalysisAsync( Guid conversationId, CancellationToken cancellationToken = default );
+    Task<List<ConversationMemoryCandidateDto>?> ExtractMemoriesAsync( Guid conversationId, CancellationToken cancellationToken = default );
+    Task<List<ConversationMemoryCandidateDto>?> GetMemoriesAsync( Guid conversationId, CancellationToken cancellationToken = default );
+    Task<bool> ConfirmMemoryAsync( Guid conversationId, Guid memoryId, CancellationToken cancellationToken = default );
+    Task<List<ConversationMemoryCandidateDto>?> QueryMemoriesAsync( string query, CancellationToken cancellationToken = default );
 }

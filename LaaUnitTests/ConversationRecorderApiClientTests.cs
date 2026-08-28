@@ -196,6 +196,99 @@ public class ConversationRecorderApiClientTests
         Assert.Equal("Cached analysis summary.", result.Summary);
     }
 
+    [Fact]
+    public async Task ExtractMemoriesAsync_ReturnsList_WhenApiReturnsSuccess()
+    {
+        var conversationId = Guid.NewGuid();
+        var expectedMemories = new List<ConversationMemoryCandidateDto>
+        {
+            new()
+            {
+                Id             = Guid.NewGuid()
+              , ConversationId = conversationId
+              , Category       = "Fact"
+              , Content        = "Sarah joined as lead."
+              , Speaker        = "Sarah"
+            }
+        };
+
+        var handler = new MockHttpMessageHandler(HttpStatusCode.OK, JsonSerializer.Serialize(expectedMemories));
+        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5273/") };
+        var apiClient = new ConversationRecorderApiClient(client);
+
+        var result = await apiClient.ExtractMemoriesAsync(conversationId);
+
+        Assert.NotNull(result);
+        Assert.Single(result);
+        Assert.Equal("Fact", result[0].Category);
+        Assert.Equal("Sarah joined as lead.", result[0].Content);
+    }
+
+    [Fact]
+    public async Task GetMemoriesAsync_ReturnsList_WhenApiReturnsSuccess()
+    {
+        var conversationId = Guid.NewGuid();
+        var expectedMemories = new List<ConversationMemoryCandidateDto>
+        {
+            new()
+            {
+                Id             = Guid.NewGuid()
+              , ConversationId = conversationId
+              , Category       = "Commitment"
+              , Content        = "Ben will design schema."
+            }
+        };
+
+        var handler = new MockHttpMessageHandler(HttpStatusCode.OK, JsonSerializer.Serialize(expectedMemories));
+        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5273/") };
+        var apiClient = new ConversationRecorderApiClient(client);
+
+        var result = await apiClient.GetMemoriesAsync(conversationId);
+
+        Assert.NotNull(result);
+        Assert.Single(result);
+        Assert.Equal("Commitment", result[0].Category);
+    }
+
+    [Fact]
+    public async Task ConfirmMemoryAsync_ReturnsTrue_WhenApiReturnsSuccess()
+    {
+        var conversationId = Guid.NewGuid();
+        var memoryId       = Guid.NewGuid();
+
+        var handler = new MockHttpMessageHandler(HttpStatusCode.OK, "{}");
+        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5273/") };
+        var apiClient = new ConversationRecorderApiClient(client);
+
+        var result = await apiClient.ConfirmMemoryAsync(conversationId, memoryId);
+
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task QueryMemoriesAsync_ReturnsMatchingList_WhenApiReturnsSuccess()
+    {
+        var expectedMemories = new List<ConversationMemoryCandidateDto>
+        {
+            new()
+            {
+                Id       = Guid.NewGuid()
+              , Category = "Fact"
+              , Content  = "Database uses SQLite."
+            }
+        };
+
+        var handler = new MockHttpMessageHandler(HttpStatusCode.OK, JsonSerializer.Serialize(expectedMemories));
+        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5273/") };
+        var apiClient = new ConversationRecorderApiClient(client);
+
+        var result = await apiClient.QueryMemoriesAsync("SQLite");
+
+        Assert.NotNull(result);
+        Assert.Single(result);
+        Assert.Equal("Database uses SQLite.", result[0].Content);
+    }
+
     private class MockHttpMessageHandler : HttpMessageHandler
     {
         private readonly HttpStatusCode _statusCode;

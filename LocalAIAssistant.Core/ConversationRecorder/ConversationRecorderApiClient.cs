@@ -252,5 +252,73 @@ public class ConversationRecorderApiClient : IConversationRecorderApiClient
             return null;
         }
     }
+
+    public async Task<List<ConversationMemoryCandidateDto>?> ExtractMemoriesAsync( Guid conversationId, CancellationToken cancellationToken = default )
+    {
+        try
+        {
+            var response = await _httpClient.PostAsync($"api/recorder/conversations/{conversationId}/memories/extract", null, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<List<ConversationMemoryCandidateDto>>(_jsonOptions, cancellationToken);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<List<ConversationMemoryCandidateDto>?> GetMemoriesAsync( Guid conversationId, CancellationToken cancellationToken = default )
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"api/recorder/conversations/{conversationId}/memories", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<List<ConversationMemoryCandidateDto>>(_jsonOptions, cancellationToken);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<bool> ConfirmMemoryAsync( Guid conversationId, Guid memoryId, CancellationToken cancellationToken = default )
+    {
+        try
+        {
+            var response = await _httpClient.PostAsync($"api/recorder/conversations/{conversationId}/memories/{memoryId}/confirm", null, cancellationToken);
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task<List<ConversationMemoryCandidateDto>?> QueryMemoriesAsync( string query, CancellationToken cancellationToken = default )
+    {
+        try
+        {
+            var encodedQuery = Uri.EscapeDataString(query);
+            var response = await _httpClient.GetAsync($"api/recorder/conversations/memories/query?q={encodedQuery}", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<List<ConversationMemoryCandidateDto>>(_jsonOptions, cancellationToken);
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }
 

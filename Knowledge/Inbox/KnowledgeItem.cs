@@ -37,6 +37,7 @@ public enum KnowledgeKind
   , Task
   , Meal
   , Pending // queued offline — kind not yet assigned by API
+  , Conversation
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
