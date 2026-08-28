@@ -41,6 +41,31 @@ public partial class MemoryManagementViewModel : ObservableObject
     public int PendingMemoryConfirmationCount => _appShellMasterViewModel.PendingMemoryConfirmationCount;
     public bool HasPendingMemoryConfirmation  => PendingMemoryConfirmationCount > 0;
 
+    [ObservableProperty]
+    private bool _isProvisionalReviewVisible;
+
+    [RelayCommand]
+    public void ToggleProvisionalReview()
+    {
+        IsProvisionalReviewVisible = !IsProvisionalReviewVisible;
+    }
+
+    [RelayCommand]
+    public async Task ConfirmAllProvisionalMemoriesAsync()
+    {
+        _appShellMasterViewModel.PendingMemoryConfirmationCount = 0;
+        IsProvisionalReviewVisible = false;
+        await LoadAsync();
+    }
+
+    [RelayCommand]
+    public async Task DismissAllProvisionalMemoriesAsync()
+    {
+        _appShellMasterViewModel.PendingMemoryConfirmationCount = 0;
+        IsProvisionalReviewVisible = false;
+        await LoadAsync();
+    }
+
     [RelayCommand]
     public void SelectTab(string tabIndex)
     {

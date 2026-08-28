@@ -332,7 +332,9 @@ public partial class RecordingsViewModel : ObservableObject
             var speakerMap = new Dictionary<string, string>
             {
                 { "Speaker 1", string.IsNullOrWhiteSpace(item.SpeakerName1) ? "Speaker 1" : item.SpeakerName1 },
-                { "Speaker 2", string.IsNullOrWhiteSpace(item.SpeakerName2) ? "Speaker 2" : item.SpeakerName2 }
+                { "Speaker 2", string.IsNullOrWhiteSpace(item.SpeakerName2) ? "Speaker 2" : item.SpeakerName2 },
+                { "Speaker 3", string.IsNullOrWhiteSpace(item.SpeakerName3) ? "Speaker 3" : item.SpeakerName3 },
+                { "Speaker 4", string.IsNullOrWhiteSpace(item.SpeakerName4) ? "Speaker 4" : item.SpeakerName4 }
             };
 
             await _recorderApiClient.MapParticipantsAsync(conversationGuid, speakerMap);

@@ -21,9 +21,9 @@
                 Stroke="{StaticResource Primary}"
                 BackgroundColor="{StaticResource PurpleSurface}"
                 IsVisible="{Binding HasPendingMemoryConfirmation}">
-            <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
-                <Label Text="🧠" FontSize="24" VerticalOptions="Center" />
-                <VerticalStackLayout VerticalOptions="Center">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" VerticalOptions="Center">
+                <Label Grid.Column="0" Text="🧠" FontSize="24" VerticalOptions="Center" />
+                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
                     <Label Text="Provisional Memories Pending" 
                            FontAttributes="Bold" 
                            FontSize="14" 
@@ -33,7 +33,25 @@
                            FontSize="12" 
                            TextColor="{StaticResource SecondaryTextColor}" />
                 </VerticalStackLayout>
-            </HorizontalStackLayout>
+                <HorizontalStackLayout Grid.Column="2" Spacing="8" VerticalOptions="Center">
+                    <Button Text="✔ Confirm All"
+                            Command="{Binding ConfirmAllProvisionalMemoriesCommand}"
+                            BackgroundColor="{StaticResource SuccessColor}"
+                            TextColor="White"
+                            CornerRadius="6"
+                            HeightRequest="36"
+                            Padding="10,0"
+                            FontSize="12" />
+                    <Button Text="✕ Dismiss"
+                            Command="{Binding DismissAllProvisionalMemoriesCommand}"
+                            BackgroundColor="#444455"
+                            TextColor="White"
+                            CornerRadius="6"
+                            HeightRequest="36"
+                            Padding="10,0"
+                            FontSize="12" />
+                </HorizontalStackLayout>
+            </Grid>
         </Border>
 
         <!-- Row 1: Action Buttons -->

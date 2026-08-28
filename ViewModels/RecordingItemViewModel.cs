@@ -51,6 +51,8 @@ public partial class RecordingItemViewModel : ObservableObject
     [ObservableProperty] private bool _isTranscriptExpanded;
     [ObservableProperty] private string _speakerName1 = "Speaker 1";
     [ObservableProperty] private string _speakerName2 = "Speaker 2";
+    [ObservableProperty] private string _speakerName3 = "Speaker 3";
+    [ObservableProperty] private string _speakerName4 = "Speaker 4";
     [ObservableProperty] private TranscriptDto? _transcript;
 
     public ObservableCollection<TranscriptSegmentViewModel> Segments { get; } = new();
@@ -122,6 +124,14 @@ public partial class RecordingItemViewModel : ObservableObject
                 else if (p.SpeakerId.Equals("Speaker 2", StringComparison.OrdinalIgnoreCase))
                 {
                     SpeakerName2 = p.DisplayName;
+                }
+                else if (p.SpeakerId.Equals("Speaker 3", StringComparison.OrdinalIgnoreCase))
+                {
+                    SpeakerName3 = p.DisplayName;
+                }
+                else if (p.SpeakerId.Equals("Speaker 4", StringComparison.OrdinalIgnoreCase))
+                {
+                    SpeakerName4 = p.DisplayName;
                 }
             }
         }

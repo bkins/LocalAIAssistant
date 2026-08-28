@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -77,10 +77,8 @@ public sealed class CocoApiClient : ICocoApiClient
         await using var stream = await response.Content.ReadAsStreamAsync(ct);
         using var       reader = new StreamReader(stream);
 
-        while (!reader.EndOfStream)
+        while (await reader.ReadLineAsync(ct) is { } line)
         {
-            var line = await reader.ReadLineAsync(ct);
-            if (line == null) break;
             if (!line.StartsWith("data: ", StringComparison.Ordinal)) continue;
 
             var eventJson = line["data: ".Length..];
@@ -158,10 +156,8 @@ public sealed class CocoApiClient : ICocoApiClient
         await using var stream = await response.Content.ReadAsStreamAsync(ct);
         using var       reader = new StreamReader(stream);
 
-        while (!reader.EndOfStream)
+        while (await reader.ReadLineAsync(ct) is { } line)
         {
-            var line = await reader.ReadLineAsync(ct);
-            if (line == null) break;
             if (!line.StartsWith("data: ", StringComparison.Ordinal)) continue;
 
             var eventJson = line["data: ".Length..];
