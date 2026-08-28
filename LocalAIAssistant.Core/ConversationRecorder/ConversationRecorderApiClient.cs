@@ -358,6 +358,41 @@ public class ConversationRecorderApiClient : IConversationRecorderApiClient
         }
     }
 
+    public async Task<LiveStreamChunkResultDto?> ProcessLiveStreamChunkAsync( Guid conversationId
+                                                                            , Stream audioStream
+                                                                            , int chunkIndex
+                                                                            , double offsetSeconds
+                                                                            , double durationSeconds = 2.5
+                                                                            , string? priorContext = null
+                                                                            , CancellationToken cancellationToken = default )
+    {
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            var streamContent = new StreamContent(audioStream);
+            streamContent.Headers.ContentType = new MediaTypeHeaderValue("audio/wav");
+            content.Add(streamContent, "file", "stream_chunk.wav");
+
+            var url = $"api/recorder/conversations/{conversationId}/copilot/stream-chunk?chunkIndex={chunkIndex}&offsetSeconds={offsetSeconds}&durationSeconds={durationSeconds}";
+            if (priorContext != null)
+            {
+                url += $"&priorContext={Uri.EscapeDataString(priorContext)}";
+            }
+
+            var response = await _httpClient.PostAsync(url, content, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<LiveStreamChunkResultDto>(_jsonOptions, cancellationToken);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     public async Task<List<CopilotInsightDto>?> GetCopilotInsightsAsync( Guid conversationId
                                                                        , CancellationToken cancellationToken = default )
     {

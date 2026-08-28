@@ -28,13 +28,18 @@ public partial class RecordingsViewModel : ObservableObject
     [ObservableProperty] private string? _currentlyPlayingId;
     [ObservableProperty] private string _statusMessage = string.Empty;
     [ObservableProperty] private bool _isCopilotEnabled = true;
+    [ObservableProperty] private bool _isLiveStreamingMode;
     [ObservableProperty] private CopilotInsightDto? _activeCopilotInsight;
     [ObservableProperty] private bool _hasActiveCopilotInsight;
+    [ObservableProperty] private string _liveSpeakerBalanceDisplay = string.Empty;
+
+    public bool IsDesktopPlatform => DeviceInfo.Idiom == DeviceIdiom.Desktop || DeviceInfo.Platform == DevicePlatform.WinUI || OperatingSystem.IsWindows();
 
     public string RecordingButtonText => IsRecording ? (IsPaused ? "Resume" : "Pause") : "Record";
 
     public ObservableCollection<RecordingItemViewModel> Recordings { get; } = new();
     public ObservableCollection<CopilotInsightDto> SessionCopilotInsights { get; } = new();
+    public ObservableCollection<TranscriptSegmentDto> LiveTranscriptSegments { get; } = new();
 
     public RecordingsViewModel( IConversationRecordingService recordingService
                                , IConversationRecordingStore   recordingStore
@@ -45,14 +50,21 @@ public partial class RecordingsViewModel : ObservableObject
         _recorderApiClient = recorderApiClient;
 
         _recordingService.IsCopilotEnabled = _isCopilotEnabled;
+        _recordingService.IsLiveStreamingMode = _isLiveStreamingMode;
         _recordingService.RecordingTimerTicked += OnTimerTicked;
         _recordingService.RecordingStateChanged += OnRecordingStateChanged;
         _recordingService.CopilotInsightReceived += OnCopilotInsightReceived;
+        _recordingService.LiveStreamChunkReceived += OnLiveStreamChunkReceived;
     }
 
     partial void OnIsCopilotEnabledChanged(bool value)
     {
         _recordingService.IsCopilotEnabled = value;
+    }
+
+    partial void OnIsLiveStreamingModeChanged(bool value)
+    {
+        _recordingService.IsLiveStreamingMode = value;
     }
 
     [RelayCommand]
@@ -124,6 +136,7 @@ public partial class RecordingsViewModel : ObservableObject
             }
 
             StatusMessage = "Recording started...";
+            LiveTranscriptSegments.Clear();
             var started = await _recordingService.StartRecordingAsync();
             if (!started)
             {
@@ -391,6 +404,23 @@ public partial class RecordingsViewModel : ObservableObject
             ActiveCopilotInsight    = insight;
             HasActiveCopilotInsight = true;
             SessionCopilotInsights.Add(insight);
+        });
+    }
+
+    private void OnLiveStreamChunkReceived(object? sender, LiveStreamChunkResultDto chunk)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            if (chunk.Segment != null && !string.IsNullOrWhiteSpace(chunk.Segment.Text))
+            {
+                LiveTranscriptSegments.Add(chunk.Segment);
+            }
+
+            if (chunk.SpeakerTalkTime != null && chunk.SpeakerTalkTime.Count > 0)
+            {
+                var summary = string.Join(" • ", chunk.SpeakerTalkTime.Select(pair => $"{pair.Key}: {pair.Value}%"));
+                LiveSpeakerBalanceDisplay = summary;
+            }
         });
     }
 }

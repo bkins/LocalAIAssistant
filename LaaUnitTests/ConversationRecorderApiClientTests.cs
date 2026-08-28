@@ -366,6 +366,39 @@ public class ConversationRecorderApiClientTests
         Assert.True(result);
     }
 
+    [Fact]
+    public async Task ProcessLiveStreamChunkAsync_ReturnsStreamChunkResult_WhenApiReturnsSuccess()
+    {
+        var conversationId = Guid.NewGuid();
+        var expectedResult = new LiveStreamChunkResultDto
+        {
+            ConversationId  = conversationId
+          , ChunkIndex      = 0
+          , Segment         = new TranscriptSegmentDto
+                              {
+                                  Start        = TimeSpan.Zero
+                                , End          = TimeSpan.FromSeconds(2.5)
+                                , Text         = "Live transcription stream chunk."
+                                , SpeakerLabel = "Speaker 1"
+                              }
+          , SpeakerTalkTime = new Dictionary<string, double> { ["Speaker 1"] = 100.0 }
+        };
+
+        var handler = new MockHttpMessageHandler(HttpStatusCode.OK, JsonSerializer.Serialize(expectedResult));
+        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5273/") };
+        var apiClient = new ConversationRecorderApiClient(client);
+
+        using var audioStream = new MemoryStream(new byte[] { 1, 2, 3, 4 });
+        var result = await apiClient.ProcessLiveStreamChunkAsync(conversationId, audioStream, 0, 0.0, 2.5);
+
+        Assert.NotNull(result);
+        Assert.Equal(conversationId, result.ConversationId);
+        Assert.NotNull(result.Segment);
+        Assert.Equal("Live transcription stream chunk.", result.Segment.Text);
+        Assert.Equal("Speaker 1", result.Segment.SpeakerLabel);
+        Assert.Equal(100.0, result.SpeakerTalkTime["Speaker 1"]);
+    }
+
     private class MockHttpMessageHandler : HttpMessageHandler
     {
         private readonly HttpStatusCode _statusCode;

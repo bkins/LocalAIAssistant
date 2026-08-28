@@ -124,4 +124,14 @@ public class ConversationRecordingServiceTests
         Assert.True(started);
         Assert.Empty(_service.ActiveSessionInsights);
     }
+
+    [Fact]
+    public void IsLiveStreamingMode_DefaultsToFalse_AndCanBeToggled()
+    {
+        Assert.False(_service.IsLiveStreamingMode);
+
+        _service.IsLiveStreamingMode = true;
+
+        Assert.True(_service.IsLiveStreamingMode);
+    }
 }

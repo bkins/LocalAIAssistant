@@ -26,6 +26,8 @@ public class ConversationRecordingService : IConversationRecordingService
     private string? _activeConversationId;
     private int _sliceIndex;
     private int _lastCopilotTickSeconds;
+    private double _lastStreamTickSeconds;
+    private int _streamChunkIndex;
     private readonly List<CopilotInsightDto> _activeSessionInsights = new();
 
     public bool IsRecording { get; private set; }
@@ -42,6 +44,8 @@ public class ConversationRecordingService : IConversationRecordingService
 
     public bool IsCopilotEnabled { get; set; }
 
+    public bool IsLiveStreamingMode { get; set; }
+
     public IReadOnlyList<CopilotInsightDto> ActiveSessionInsights => _activeSessionInsights;
 
     public event EventHandler<TimeSpan>? RecordingTimerTicked;
@@ -49,6 +53,8 @@ public class ConversationRecordingService : IConversationRecordingService
     public event EventHandler? RecordingStateChanged;
 
     public event EventHandler<CopilotInsightDto>? CopilotInsightReceived;
+
+    public event EventHandler<LiveStreamChunkResultDto>? LiveStreamChunkReceived;
 
     public ConversationRecordingService( IAudioManager                  audioManager
                                         , IConversationRecordingStore    recordingStore
@@ -132,6 +138,8 @@ public class ConversationRecordingService : IConversationRecordingService
             _activeConversationId = Guid.NewGuid().ToString();
             _sliceIndex = 0;
             _lastCopilotTickSeconds = 0;
+            _streamChunkIndex = 0;
+            _lastStreamTickSeconds = 0;
             _activeSessionInsights.Clear();
 
             _currentSegmentPath = Path.Combine(_recordingsDirectory, $"seg_{Guid.NewGuid()}.wav");
@@ -588,14 +596,73 @@ public class ConversationRecordingService : IConversationRecordingService
         ElapsedRecordingTime = elapsed;
         RecordingTimerTicked?.Invoke(this, elapsed);
 
-        if (IsCopilotEnabled && IsRecording && !IsPaused && _apiClient != null && _activeConversationId != null)
+        if (IsRecording && !IsPaused && _apiClient != null && _activeConversationId != null)
         {
-            var totalSeconds = (int)elapsed.TotalSeconds;
-            if (totalSeconds >= 15 && totalSeconds - _lastCopilotTickSeconds >= 15)
+            if (IsLiveStreamingMode)
             {
-                _lastCopilotTickSeconds = totalSeconds;
-                _ = TriggerCopilotSliceAsync(_activeConversationId, _sliceIndex++, totalSeconds);
+                var totalSeconds = elapsed.TotalSeconds;
+                if (totalSeconds >= 2.0 && totalSeconds - _lastStreamTickSeconds >= 2.5)
+                {
+                    _lastStreamTickSeconds = totalSeconds;
+                    _ = TriggerLiveStreamChunkAsync(_activeConversationId, _streamChunkIndex++, totalSeconds);
+                }
             }
+            else if (IsCopilotEnabled)
+            {
+                var totalSeconds = (int)elapsed.TotalSeconds;
+                if (totalSeconds >= 15 && totalSeconds - _lastCopilotTickSeconds >= 15)
+                {
+                    _lastCopilotTickSeconds = totalSeconds;
+                    _ = TriggerCopilotSliceAsync(_activeConversationId, _sliceIndex++, totalSeconds);
+                }
+            }
+        }
+    }
+
+    private async Task TriggerLiveStreamChunkAsync(string conversationId, int chunkIndex, double totalSeconds)
+    {
+        try
+        {
+            if (_apiClient == null || _currentSegmentPath == null || !File.Exists(_currentSegmentPath))
+            {
+                return;
+            }
+
+            if (!Guid.TryParse(conversationId, out var parsedGuid))
+            {
+                return;
+            }
+
+            using var fileStream = new FileStream(_currentSegmentPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            if (fileStream.Length < 1000)
+            {
+                return;
+            }
+
+            var result = await _apiClient.ProcessLiveStreamChunkAsync(
+                conversationId:  parsedGuid,
+                audioStream:     fileStream,
+                chunkIndex:      chunkIndex,
+                offsetSeconds:   Math.Max(0, totalSeconds - 2.5),
+                durationSeconds: 2.5);
+
+            if (result != null)
+            {
+                LiveStreamChunkReceived?.Invoke(this, result);
+
+                if (result.Insights != null && result.Insights.Count > 0)
+                {
+                    foreach (var insight in result.Insights)
+                    {
+                        _activeSessionInsights.Add(insight);
+                        CopilotInsightReceived?.Invoke(this, insight);
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // Streaming error swallowed to prevent recording disruption
         }
     }
 
@@ -603,7 +670,7 @@ public class ConversationRecordingService : IConversationRecordingService
     {
         try
         {
-            if (_currentSegmentPath == null || !File.Exists(_currentSegmentPath))
+            if (_apiClient == null || _currentSegmentPath == null || !File.Exists(_currentSegmentPath))
             {
                 return;
             }

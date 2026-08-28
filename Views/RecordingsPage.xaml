@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewModels="clr-namespace:LocalAIAssistant.ViewModels"
+             xmlns:core="clr-namespace:LocalAIAssistant.Core.ConversationRecorder;assembly=LocalAIAssistant.Core"
              x:Class="LocalAIAssistant.Views.RecordingsPage"
              x:DataType="viewModels:RecordingsViewModel"
              Title="Conversation Recorder"
@@ -66,6 +67,64 @@
                             AutomationId="CopilotToggle"
                             VerticalOptions="Center"/>
                 </HorizontalStackLayout>
+
+                <!-- Continuous Live Streaming Toggle (Desktop Only) -->
+                <HorizontalStackLayout Spacing="8"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"
+                                       IsVisible="{Binding IsDesktopPlatform}">
+                    <Label Text="Live Streaming Mode (Desktop)"
+                           FontSize="13"
+                           TextColor="{StaticResource SecondaryTextColor}"
+                           VerticalOptions="Center"/>
+                    <Switch IsToggled="{Binding IsLiveStreamingMode}"
+                            AutomationId="LiveStreamingToggle"
+                            VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+
+                <!-- Desktop Live Teleprompter / Closed Captioning Card -->
+                <Border IsVisible="{Binding IsLiveStreamingMode}"
+                        Margin="0,4,0,0"
+                        Padding="12,8"
+                        BackgroundColor="#0F172A"
+                        Stroke="#475569"
+                        StrokeThickness="1"
+                        MaximumHeightRequest="160">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8"/>
+                    </Border.StrokeShape>
+                    <VerticalStackLayout Spacing="6">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Grid.Column="0"
+                                   Text="Live Captions &amp; Diarization"
+                                   FontSize="12"
+                                   FontAttributes="Bold"
+                                   TextColor="#94A3B8"/>
+                            <Label Grid.Column="1"
+                                   Text="{Binding LiveSpeakerBalanceDisplay}"
+                                   FontSize="11"
+                                   TextColor="#38BDF8"
+                                   FontAttributes="Bold"/>
+                        </Grid>
+                        <ScrollView MaximumHeightRequest="110">
+                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding LiveTranscriptSegments}" Spacing="4">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="core:TranscriptSegmentDto">
+                                        <HorizontalStackLayout Spacing="6">
+                                            <Border BackgroundColor="#334155" Padding="4,1" StrokeThickness="0">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="4"/>
+                                                </Border.StrokeShape>
+                                                <Label Text="{Binding SpeakerLabel}" FontSize="10" TextColor="#F8FAFC" FontAttributes="Bold"/>
+                                            </Border>
+                                            <Label Text="{Binding Text}" FontSize="12" TextColor="#E2E8F0" VerticalOptions="Center"/>
+                                        </HorizontalStackLayout>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </ScrollView>
+                    </VerticalStackLayout>
+                </Border>
 
                 <!-- In-Flight Copilot Insight Card -->
                 <Border IsVisible="{Binding HasActiveCopilotInsight}"

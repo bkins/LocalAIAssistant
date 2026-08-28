@@ -22,6 +22,8 @@ public interface IConversationRecordingService
 
     bool IsCopilotEnabled { get; set; }
 
+    bool IsLiveStreamingMode { get; set; }
+
     IReadOnlyList<CopilotInsightDto> ActiveSessionInsights { get; }
 
     event EventHandler<TimeSpan>? RecordingTimerTicked;
@@ -29,6 +31,8 @@ public interface IConversationRecordingService
     event EventHandler? RecordingStateChanged;
 
     event EventHandler<CopilotInsightDto>? CopilotInsightReceived;
+
+    event EventHandler<LiveStreamChunkResultDto>? LiveStreamChunkReceived;
 
     Task<bool> StartRecordingAsync( CancellationToken cancellationToken = default );
 
