@@ -27,10 +27,14 @@ public partial class RecordingsViewModel : ObservableObject
     [ObservableProperty] private string _totalStorageSizeDisplay = "Total Storage: 0 B";
     [ObservableProperty] private string? _currentlyPlayingId;
     [ObservableProperty] private string _statusMessage = string.Empty;
+    [ObservableProperty] private bool _isCopilotEnabled = true;
+    [ObservableProperty] private CopilotInsightDto? _activeCopilotInsight;
+    [ObservableProperty] private bool _hasActiveCopilotInsight;
 
     public string RecordingButtonText => IsRecording ? (IsPaused ? "Resume" : "Pause") : "Record";
 
     public ObservableCollection<RecordingItemViewModel> Recordings { get; } = new();
+    public ObservableCollection<CopilotInsightDto> SessionCopilotInsights { get; } = new();
 
     public RecordingsViewModel( IConversationRecordingService recordingService
                                , IConversationRecordingStore   recordingStore
@@ -40,8 +44,22 @@ public partial class RecordingsViewModel : ObservableObject
         _recordingStore    = recordingStore ?? throw new ArgumentNullException(nameof(recordingStore));
         _recorderApiClient = recorderApiClient;
 
+        _recordingService.IsCopilotEnabled = _isCopilotEnabled;
         _recordingService.RecordingTimerTicked += OnTimerTicked;
         _recordingService.RecordingStateChanged += OnRecordingStateChanged;
+        _recordingService.CopilotInsightReceived += OnCopilotInsightReceived;
+    }
+
+    partial void OnIsCopilotEnabledChanged(bool value)
+    {
+        _recordingService.IsCopilotEnabled = value;
+    }
+
+    [RelayCommand]
+    public void DismissCopilotInsight()
+    {
+        HasActiveCopilotInsight = false;
+        ActiveCopilotInsight    = null;
     }
 
     [RelayCommand]
@@ -363,6 +381,16 @@ public partial class RecordingsViewModel : ObservableObject
                 item.IsPlaying = (item.Id == CurrentlyPlayingId && IsPlaying);
                 item.IsPlaybackPaused = (item.Id == CurrentlyPlayingId && IsPlaybackPaused);
             }
+        });
+    }
+
+    private void OnCopilotInsightReceived(object? sender, CopilotInsightDto insight)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            ActiveCopilotInsight    = insight;
+            HasActiveCopilotInsight = true;
+            SessionCopilotInsights.Add(insight);
         });
     }
 }

@@ -56,6 +56,53 @@
                             CornerRadius="8"/>
                 </HorizontalStackLayout>
 
+                <!-- Live Copilot Toggle -->
+                <HorizontalStackLayout Spacing="8" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Label Text="Live Copilot"
+                           FontSize="13"
+                           TextColor="{StaticResource SecondaryTextColor}"
+                           VerticalOptions="Center"/>
+                    <Switch IsToggled="{Binding IsCopilotEnabled}"
+                            AutomationId="CopilotToggle"
+                            VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+
+                <!-- In-Flight Copilot Insight Card -->
+                <Border IsVisible="{Binding HasActiveCopilotInsight}"
+                        Margin="0,4,0,0"
+                        Padding="12,8"
+                        BackgroundColor="#1E293B"
+                        Stroke="#3B82F6"
+                        StrokeThickness="1">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8"/>
+                    </Border.StrokeShape>
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                        <Label Grid.Column="0"
+                               Text="💡"
+                               FontSize="16"
+                               VerticalOptions="Center"/>
+                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                            <Label Text="{Binding ActiveCopilotInsight.Headline}"
+                                   FontSize="13"
+                                   FontAttributes="Bold"
+                                   TextColor="#60A5FA"/>
+                            <Label Text="{Binding ActiveCopilotInsight.Detail}"
+                                   FontSize="12"
+                                   TextColor="#E2E8F0"
+                                   LineBreakMode="WordWrap"/>
+                        </VerticalStackLayout>
+                        <Button Grid.Column="2"
+                                Text="✕"
+                                Command="{Binding DismissCopilotInsightCommand}"
+                                BackgroundColor="Transparent"
+                                TextColor="#94A3B8"
+                                FontSize="14"
+                                Padding="6,2"
+                                VerticalOptions="Center"/>
+                    </Grid>
+                </Border>
+
                 <Label Text="{Binding StatusMessage}"
                        FontSize="13"
                        HorizontalOptions="Center"

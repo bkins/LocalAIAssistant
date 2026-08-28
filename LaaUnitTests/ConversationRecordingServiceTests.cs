@@ -102,4 +102,26 @@ public class ConversationRecordingServiceTests
         Assert.True(result);
         _recordingStoreMock.Verify(s => s.SoftDeleteAsync("rec-to-del", It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    [Fact]
+    public void IsCopilotEnabled_DefaultsToFalse_AndCanBeToggled()
+    {
+        Assert.False(_service.IsCopilotEnabled);
+
+        _service.IsCopilotEnabled = true;
+
+        Assert.True(_service.IsCopilotEnabled);
+    }
+
+    [Fact]
+    public async Task StartRecordingAsync_ClearsActiveSessionInsights()
+    {
+        _audioRecorderMock.Setup(r => r.StartAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
+        _service.IsCopilotEnabled = true;
+
+        var started = await _service.StartRecordingAsync();
+
+        Assert.True(started);
+        Assert.Empty(_service.ActiveSessionInsights);
+    }
 }

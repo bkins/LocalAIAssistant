@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using LocalAIAssistant.Core.ConversationRecorder;
 
 namespace LocalAIAssistant.Services.Recordings;
 
@@ -19,9 +20,15 @@ public interface IConversationRecordingService
 
     string? CurrentlyPlayingId { get; }
 
+    bool IsCopilotEnabled { get; set; }
+
+    IReadOnlyList<CopilotInsightDto> ActiveSessionInsights { get; }
+
     event EventHandler<TimeSpan>? RecordingTimerTicked;
 
     event EventHandler? RecordingStateChanged;
+
+    event EventHandler<CopilotInsightDto>? CopilotInsightReceived;
 
     Task<bool> StartRecordingAsync( CancellationToken cancellationToken = default );
 

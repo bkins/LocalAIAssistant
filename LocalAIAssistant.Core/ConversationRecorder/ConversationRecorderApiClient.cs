@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -318,6 +319,76 @@ public class ConversationRecorderApiClient : IConversationRecorderApiClient
         catch
         {
             return null;
+        }
+    }
+
+    public async Task<CopilotSliceResultDto?> ProcessCopilotSliceAsync( Guid conversationId
+                                                                      , Stream audioStream
+                                                                      , int sliceIndex
+                                                                      , double offsetSeconds
+                                                                      , double durationSeconds
+                                                                      , string? contextWindowText = null
+                                                                      , string mimeType = "audio/wav"
+                                                                      , CancellationToken cancellationToken = default )
+    {
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            var streamContent = new StreamContent(audioStream);
+            streamContent.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
+            content.Add(streamContent, "file", $"slice_{sliceIndex}.wav");
+
+            var url = $"api/recorder/conversations/{conversationId}/copilot/slice?sliceIndex={sliceIndex}&offsetSeconds={offsetSeconds}&durationSeconds={durationSeconds}";
+            if (contextWindowText != null)
+            {
+                url += $"&contextWindowText={Uri.EscapeDataString(contextWindowText)}";
+            }
+
+            var response = await _httpClient.PostAsync(url, content, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<CopilotSliceResultDto>(_jsonOptions, cancellationToken);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<List<CopilotInsightDto>?> GetCopilotInsightsAsync( Guid conversationId
+                                                                       , CancellationToken cancellationToken = default )
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"api/recorder/conversations/{conversationId}/copilot/insights", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<List<CopilotInsightDto>>(_jsonOptions, cancellationToken);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<bool> DismissCopilotInsightAsync( Guid conversationId
+                                                      , Guid insightId
+                                                      , CancellationToken cancellationToken = default )
+    {
+        try
+        {
+            var response = await _httpClient.PostAsync($"api/recorder/conversations/{conversationId}/copilot/insights/{insightId}/dismiss", null, cancellationToken);
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
         }
     }
 }

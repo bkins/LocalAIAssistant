@@ -16,4 +16,7 @@ public interface IConversationRecorderApiClient
     Task<List<ConversationMemoryCandidateDto>?> GetMemoriesAsync( Guid conversationId, CancellationToken cancellationToken = default );
     Task<bool> ConfirmMemoryAsync( Guid conversationId, Guid memoryId, CancellationToken cancellationToken = default );
     Task<List<ConversationMemoryCandidateDto>?> QueryMemoriesAsync( string query, CancellationToken cancellationToken = default );
+    Task<CopilotSliceResultDto?> ProcessCopilotSliceAsync( Guid conversationId, Stream audioStream, int sliceIndex, double offsetSeconds, double durationSeconds, string? contextWindowText = null, string mimeType = "audio/wav", CancellationToken cancellationToken = default );
+    Task<List<CopilotInsightDto>?> GetCopilotInsightsAsync( Guid conversationId, CancellationToken cancellationToken = default );
+    Task<bool> DismissCopilotInsightAsync( Guid conversationId, Guid insightId, CancellationToken cancellationToken = default );
 }

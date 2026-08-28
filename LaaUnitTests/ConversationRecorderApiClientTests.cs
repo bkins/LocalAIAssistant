@@ -289,6 +289,83 @@ public class ConversationRecorderApiClientTests
         Assert.Equal("Database uses SQLite.", result[0].Content);
     }
 
+    [Fact]
+    public async Task ProcessCopilotSliceAsync_ReturnsSliceResult_WhenApiReturnsSuccess()
+    {
+        var conversationId = Guid.NewGuid();
+        var expectedResult = new CopilotSliceResultDto
+        {
+            ConversationId  = conversationId
+          , SliceIndex      = 1
+          , TranscribedText = "Do you remember Sarah's dog's name?"
+          , Insights        = new List<CopilotInsightDto>
+                              {
+                                  new()
+                                  {
+                                      Id             = Guid.NewGuid()
+                                    , ConversationId = conversationId
+                                    , InsightType    = "RecallHint"
+                                    , Headline       = "Memory Recall: Sarah's dog"
+                                    , Detail         = "Milo (Golden Retriever)"
+                                  }
+                              }
+        };
+
+        var handler = new MockHttpMessageHandler(HttpStatusCode.OK, JsonSerializer.Serialize(expectedResult));
+        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5273/") };
+        var apiClient = new ConversationRecorderApiClient(client);
+
+        using var audioStream = new MemoryStream(new byte[] { 1, 2, 3, 4 });
+        var result = await apiClient.ProcessCopilotSliceAsync(conversationId, audioStream, 1, 15.0, 15.0, "Previous sentence.");
+
+        Assert.NotNull(result);
+        Assert.Equal(conversationId, result.ConversationId);
+        Assert.True(result.HasActionableInsight);
+        Assert.Single(result.Insights);
+        Assert.Equal("Memory Recall: Sarah's dog", result.Insights[0].Headline);
+    }
+
+    [Fact]
+    public async Task GetCopilotInsightsAsync_ReturnsInsightsList_WhenApiReturnsSuccess()
+    {
+        var conversationId = Guid.NewGuid();
+        var expectedInsights = new List<CopilotInsightDto>
+        {
+            new()
+            {
+                Id             = Guid.NewGuid()
+              , ConversationId = conversationId
+              , Headline       = "Insight 1"
+              , Detail         = "Detail 1"
+            }
+        };
+
+        var handler = new MockHttpMessageHandler(HttpStatusCode.OK, JsonSerializer.Serialize(expectedInsights));
+        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5273/") };
+        var apiClient = new ConversationRecorderApiClient(client);
+
+        var result = await apiClient.GetCopilotInsightsAsync(conversationId);
+
+        Assert.NotNull(result);
+        Assert.Single(result);
+        Assert.Equal("Insight 1", result[0].Headline);
+    }
+
+    [Fact]
+    public async Task DismissCopilotInsightAsync_ReturnsTrue_WhenApiReturnsSuccess()
+    {
+        var conversationId = Guid.NewGuid();
+        var insightId = Guid.NewGuid();
+
+        var handler = new MockHttpMessageHandler(HttpStatusCode.OK, "{\"status\":\"Dismissed\"}");
+        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5273/") };
+        var apiClient = new ConversationRecorderApiClient(client);
+
+        var result = await apiClient.DismissCopilotInsightAsync(conversationId, insightId);
+
+        Assert.True(result);
+    }
+
     private class MockHttpMessageHandler : HttpMessageHandler
     {
         private readonly HttpStatusCode _statusCode;

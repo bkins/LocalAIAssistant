@@ -23,6 +23,10 @@ public class ConversationRecordingService : IConversationRecordingService
     private TimeSpan _accumulatedTime = TimeSpan.Zero;
     private readonly List<string> _segmentFilePaths = new();
     private string? _currentSegmentPath;
+    private string? _activeConversationId;
+    private int _sliceIndex;
+    private int _lastCopilotTickSeconds;
+    private readonly List<CopilotInsightDto> _activeSessionInsights = new();
 
     public bool IsRecording { get; private set; }
 
@@ -36,9 +40,15 @@ public class ConversationRecordingService : IConversationRecordingService
 
     public string? CurrentlyPlayingId { get; private set; }
 
+    public bool IsCopilotEnabled { get; set; }
+
+    public IReadOnlyList<CopilotInsightDto> ActiveSessionInsights => _activeSessionInsights;
+
     public event EventHandler<TimeSpan>? RecordingTimerTicked;
 
     public event EventHandler? RecordingStateChanged;
+
+    public event EventHandler<CopilotInsightDto>? CopilotInsightReceived;
 
     public ConversationRecordingService( IAudioManager                  audioManager
                                         , IConversationRecordingStore    recordingStore
@@ -119,6 +129,10 @@ public class ConversationRecordingService : IConversationRecordingService
             _accumulatedTime = TimeSpan.Zero;
             _segmentFilePaths.Clear();
             _segmentStartTime = DateTimeOffset.UtcNow;
+            _activeConversationId = Guid.NewGuid().ToString();
+            _sliceIndex = 0;
+            _lastCopilotTickSeconds = 0;
+            _activeSessionInsights.Clear();
 
             _currentSegmentPath = Path.Combine(_recordingsDirectory, $"seg_{Guid.NewGuid()}.wav");
             _audioRecorder = _audioManager.CreateRecorder();
@@ -282,7 +296,7 @@ public class ConversationRecordingService : IConversationRecordingService
             IsPaused = false;
             ElapsedRecordingTime = totalDuration;
 
-            var conversationId = Guid.NewGuid().ToString();
+            var conversationId = _activeConversationId ?? Guid.NewGuid().ToString();
             var finalPath = Path.Combine(_recordingsDirectory, $"recording_{conversationId}.wav");
 
             await MergeWavFilesAsync(_segmentFilePaths, finalPath, cancellationToken);
@@ -573,6 +587,58 @@ public class ConversationRecordingService : IConversationRecordingService
         var elapsed = _accumulatedTime + (DateTimeOffset.UtcNow - _segmentStartTime);
         ElapsedRecordingTime = elapsed;
         RecordingTimerTicked?.Invoke(this, elapsed);
+
+        if (IsCopilotEnabled && IsRecording && !IsPaused && _apiClient != null && _activeConversationId != null)
+        {
+            var totalSeconds = (int)elapsed.TotalSeconds;
+            if (totalSeconds >= 15 && totalSeconds - _lastCopilotTickSeconds >= 15)
+            {
+                _lastCopilotTickSeconds = totalSeconds;
+                _ = TriggerCopilotSliceAsync(_activeConversationId, _sliceIndex++, totalSeconds);
+            }
+        }
+    }
+
+    private async Task TriggerCopilotSliceAsync(string conversationId, int sliceIndex, int totalSeconds)
+    {
+        try
+        {
+            if (_currentSegmentPath == null || !File.Exists(_currentSegmentPath))
+            {
+                return;
+            }
+
+            if (!Guid.TryParse(conversationId, out var parsedGuid))
+            {
+                return;
+            }
+
+            using var fileStream = new FileStream(_currentSegmentPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            if (fileStream.Length < 1000)
+            {
+                return;
+            }
+
+            var result = await _apiClient.ProcessCopilotSliceAsync(
+                conversationId:    parsedGuid,
+                audioStream:       fileStream,
+                sliceIndex:        sliceIndex,
+                offsetSeconds:     Math.Max(0, totalSeconds - 15),
+                durationSeconds:   15);
+
+            if (result?.Insights != null && result.Insights.Count > 0)
+            {
+                foreach (var insight in result.Insights)
+                {
+                    _activeSessionInsights.Add(insight);
+                    CopilotInsightReceived?.Invoke(this, insight);
+                }
+            }
+        }
+        catch
+        {
+            // Background copilot error swallowed to prevent recording disruption
+        }
     }
 
     private void OnPlaybackEnded(object? sender, EventArgs e)
