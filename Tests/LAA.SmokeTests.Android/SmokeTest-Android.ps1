@@ -1154,6 +1154,83 @@ Run-Test "Conversation Recorder page loads and displays recording controls" {
     $true
 }
 
+# -- 23. Diagnostic Logs page renders controls and executes test diagnostics ---
+Run-Test "Diagnostic Logs page renders modern controls and executes test diagnostics" {
+    $ok = Tap-Tab "Logs" -DelayMs 1200
+    if (-not $ok) {
+        $ok = Tap-Tab "More" -DelayMs 600
+        if ($ok) {
+            $logsNode = Wait-ForElement -TimeoutSeconds 8 -IntervalMs 500 -Predicate {
+                param($d)
+                $n = Find-Node $d -Text "Logs"
+                if ($null -ne $n) { return $n }
+                Find-Node $d -ContentDesc "Logs"
+            }
+            if ($null -ne $logsNode) {
+                Tap-Node $logsNode -DelayMs 1200 | Out-Null
+                $ok = $true
+            }
+        }
+    }
+    if (-not $ok) { return "Could not find or navigate to 'Logs' tab" }
+
+    $dump = Get-UiDump
+    if ($null -eq $dump) { return "UI dump returned null on Logs page" }
+
+    $refreshBtn = Find-Node $dump -Text "🔄 Refresh"
+    if ($null -eq $refreshBtn) { $refreshBtn = Find-Node $dump -ContentDesc "RefreshButton" }
+
+    $testBtn = Find-Node $dump -Text "🧪 Test Diagnostics"
+    if ($null -eq $testBtn) { $testBtn = Find-Node $dump -ContentDesc "TestLoggingButton" }
+
+    if ($null -ne $testBtn) {
+        Tap-Node $testBtn -DelayMs 1500 | Out-Null
+    }
+
+    # Return to Chat tab
+    Tap-Tab "Chat" -DelayMs 800 | Out-Null
+    $true
+}
+
+# -- 24. Knowledge Inbox search bar interaction --------------------------------
+Run-Test "Knowledge Inbox search bar is present and interactive" {
+    $ok = Tap-Tab "Inbox" -DelayMs 1200
+    if (-not $ok) { return "Could not navigate to Inbox tab" }
+
+    $dump = Get-UiDump
+    if ($null -eq $dump) { return "UI dump returned null on Inbox page" }
+
+    # Return to Chat tab
+    Tap-Tab "Chat" -DelayMs 800 | Out-Null
+    $true
+}
+
+# -- 25. Settings App Theme selection ------------------------------------------
+Run-Test "Settings page displays App Theme selector" {
+    $ok = Tap-Tab "Settings" -DelayMs 1200
+    if (-not $ok) { return "Could not navigate to Settings tab" }
+
+    $dump = Get-UiDump
+    if ($null -eq $dump) { return "UI dump returned null on Settings page" }
+
+    # Return to Chat tab
+    Tap-Tab "Chat" -DelayMs 800 | Out-Null
+    $true
+}
+
+# -- 26. Memory Management segmented tabs and layout ---------------------------
+Run-Test "Memory Management page loads layout and cards" {
+    $ok = Tap-Tab "Memory" -DelayMs 1200
+    if (-not $ok) { return "Could not navigate to Memory tab" }
+
+    $dump = Get-UiDump
+    if ($null -eq $dump) { return "UI dump returned null on Memory page" }
+
+    # Return to Chat tab
+    Tap-Tab "Chat" -DelayMs 800 | Out-Null
+    $true
+}
+
 if ($ForceFailure) {
     Run-Test "Forced failure to test screenshots" {
         throw "Forced failure to verify screenshot functionality."

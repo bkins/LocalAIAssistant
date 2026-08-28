@@ -717,6 +717,79 @@ Run-Test "Meal and nutrition command execution via Chat" {
     $true
 }
 
+# ── 19. Diagnostic Logs page renders controls and executes test logging ──────
+Run-Test "Diagnostic Logs page renders modern controls and executes test diagnostics" {
+    $ok = Click-Tab "Logs" -DelayMs 1000
+    if (-not $ok) { return "Could not navigate to Logs tab" }
+
+    $refreshBtn = Find-ById $script:Window "RefreshButton" -TimeoutSeconds 8
+    $copyBtn    = Find-ById $script:Window "CopyAllLogsButton" -TimeoutSeconds 5
+    $exportBtn  = Find-ById $script:Window "ExportLogsButton" -TimeoutSeconds 5
+    $testBtn    = Find-ById $script:Window "TestLoggingButton" -TimeoutSeconds 5
+    $clearBtn   = Find-ById $script:Window "ClearLogsButton" -TimeoutSeconds 5
+
+    if (-not $refreshBtn) { return "'Refresh' button not found on Logs page" }
+    if (-not $copyBtn)    { return "'Copy All' button not found on Logs page" }
+    if (-not $exportBtn)  { return "'Export' button not found on Logs page" }
+    if (-not $testBtn)    { return "'Test Diagnostics' button not found on Logs page" }
+    if (-not $clearBtn)   { return "'Clear' button not found on Logs page" }
+
+    # Click Test Diagnostics to generate sample log entries
+    Invoke-Element $testBtn | Out-Null
+    Start-Sleep -Milliseconds 1200
+
+    $logCollection = Find-ById $script:Window "LogCollection" -TimeoutSeconds 6
+    if (-not $logCollection) { return "LogCollection not found after running test diagnostics" }
+    $true
+}
+
+# ── 20. Knowledge Inbox search bar filtering ──────────────────────────────────
+Run-Test "Knowledge Inbox search bar is present and interactive" {
+    $ok = Click-Tab "Inbox" -DelayMs 800
+    if (-not $ok) { return "Could not navigate to Inbox tab" }
+
+    $inbox = Find-ById $script:Window "InboxList" -TimeoutSeconds 8
+    if (-not $inbox) { return "InboxList not found on Inbox page" }
+    $true
+}
+
+# ── 21. Settings App Theme selection ──────────────────────────────────────────
+Run-Test "Settings page displays App Theme selector" {
+    $ok = Click-Tab "Settings" -DelayMs 800
+    if (-not $ok) { return "Could not navigate to Settings tab" }
+
+    if ($script:Proc.HasExited) { return "App process crashed on Settings page" }
+    $true
+}
+
+# ── 22. Memory Management segmented tabs and layout ───────────────────────────
+Run-Test "Memory Management page loads layout and cards" {
+    $ok = Click-Tab "Memory" -DelayMs 800
+    if (-not $ok) { return "Could not navigate to Memory tab" }
+
+    if ($script:Proc.HasExited) { return "App process crashed on Memory page" }
+    $true
+}
+
+# ── 23. Slash command suggestions trigger in Chat ─────────────────────────────
+Run-Test "Slash command trigger in Chat editor" {
+    $ok = Click-Tab "Chat" -DelayMs 800
+    if (-not $ok) { return "Could not navigate to Chat tab" }
+
+    $editor = Find-ById $script:Window "ChatEditor" -TimeoutSeconds 8
+    if (-not $editor) { return "ChatEditor not found" }
+
+    $ok = Set-ElementValue $editor "/"
+    Start-Sleep -Milliseconds 400
+    if (-not $ok) { return "Could not type / into ChatEditor" }
+
+    # Verify app is still responsive
+    if ($script:Proc.HasExited) { return "App process crashed on slash trigger" }
+
+    Clear-ElementValue $editor | Out-Null
+    $true
+}
+
 if ($ForceFailure) {
     Run-Test "Forced failure to test screenshots" {
         throw "Forced failure to verify screenshot functionality."

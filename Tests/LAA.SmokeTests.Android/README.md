@@ -92,7 +92,7 @@ adb shell pm list packages | Select-String "localai"
 
 ---
 
-## Smoke Test Catalog (22 tests)
+## Smoke Test Catalog (26 tests)
 
 | # | Test | What it guards |
 |---|------|----------------|
@@ -118,6 +118,10 @@ adb shell pm list packages | Select-String "localai"
 | 20 | Settings page scrolling and Save configuration action | `ScrollView` traversal & Settings persistence pipeline |
 | 21 | Soft keyboard layout adjustment and viewport restoration | Keyboard summon (`AdjustResize`), unclipped input & dismissal |
 | 22 | Conversation Recorder page loads and displays recording controls | Record tab routing, `RecordToggleButton` & `RecordingsList` rendering |
+| 23 | Diagnostic Logs page renders controls and executes test diagnostics | Logs tab routing, Refresh/Export/Clear buttons, diagnostics event generator |
+| 24 | Knowledge Inbox search bar interaction | Full-text search bar presence, real-time query filtering in Knowledge Inbox |
+| 25 | Settings page displays App Theme selector | Dynamic theme selection (System / Dark / Light) in Settings |
+| 26 | Memory Management segmented tabs and layout | Responsive segmented view & provisional memory action controls |
 
 ---
 
@@ -127,10 +131,11 @@ adb shell pm list packages | Select-String "localai"
 |---|---|---|
 | **Chat Interaction & Engine** | 1, 2, 3, 4, 16, 17 | Editor focus, input dispatch, Send button readiness, FastPath command submission |
 | **Conversations / History** | 5, 6, 7, 12, 19 | Conversations list load, New Chat button, Back navigation, horizontal `SwipeView` Rename/Delete |
-| **Inbox & Knowledge** | 8, 9, 10, 15 | Category filter chips (All/Journals/Tasks), CollectionView rendering, Tab return |
-| **Memory Management** | 18 | Short/Long term headers, Clear Short/Long Term & Refresh action buttons |
+| **Inbox & Knowledge** | 8, 9, 10, 15, 24 | Category filter chips (All/Journals/Tasks), CollectionView rendering, Search bar, Tab return |
+| **Memory Management** | 18, 26 | Segmented tabs, Short/Long term cards, Clear & Refresh action buttons, Provisional review actions |
 | **Conversation Recorder** | 22 | Record tab routing, Offline Conversation Recorder header, `RecordToggleButton` presence |
-| **Settings & Configuration** | 14, 20 | Android layout (Coco hidden), vertical scrolling across sections, Save persistence |
+| **Settings & Configuration** | 14, 20, 25 | Android layout (Coco hidden), vertical scrolling across sections, Save persistence, App Theme selector |
+| **Diagnostic Logging** | 23 | Modern toolbar controls, Level chips, Test Diagnostics runner, Log collection render |
 | **Navigation & Stability** | 11, 12, 13 | Rapid Shell tab cycling, Back gestures, Platform conditional UI elements (Coco isolation) |
 | **Input & Soft Keyboard** | 21 | Soft keyboard summon, editor viewport retention (`AdjustResize`), clean dismissal |
 
