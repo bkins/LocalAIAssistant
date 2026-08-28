@@ -156,6 +156,62 @@ public partial class MainPage : ContentPage
     {
         if (!_isPageActive) return;
 
+        if (e.Key == Windows.System.VirtualKey.Escape)
+        {
+            if (ChatViewModel.IsSuggestionsVisible)
+            {
+                ChatViewModel.DismissSuggestions();
+                e.Handled = true;
+                return;
+            }
+        }
+
+        if (e.Key == Windows.System.VirtualKey.Up)
+        {
+            if (sender is Microsoft.UI.Xaml.Controls.TextBox tb)
+            {
+                var text = tb.Text ?? string.Empty;
+                var caret = tb.SelectionStart;
+                var isSingleLine = !text.Contains('\n');
+                var isAtTop = caret == 0 || (caret <= text.Length && !text[..caret].Contains('\n'));
+
+                if (isSingleLine || isAtTop)
+                {
+                    if (ChatViewModel.TryRecallPreviousPrompt(out var recalled))
+                    {
+                        ChatViewModel.PromptText = recalled;
+                        tb.Text = recalled;
+                        tb.SelectionStart = recalled.Length;
+                        e.Handled = true;
+                        return;
+                    }
+                }
+            }
+        }
+
+        if (e.Key == Windows.System.VirtualKey.Down)
+        {
+            if (sender is Microsoft.UI.Xaml.Controls.TextBox tb)
+            {
+                var text = tb.Text ?? string.Empty;
+                var caret = tb.SelectionStart;
+                var isSingleLine = !text.Contains('\n');
+                var isAtBottom = caret == text.Length || (caret <= text.Length && !text[caret..].Contains('\n'));
+
+                if (isSingleLine || isAtBottom)
+                {
+                    if (ChatViewModel.TryRecallNextPrompt(out var recalled))
+                    {
+                        ChatViewModel.PromptText = recalled;
+                        tb.Text = recalled;
+                        tb.SelectionStart = recalled.Length;
+                        e.Handled = true;
+                        return;
+                    }
+                }
+            }
+        }
+
         if (e.Key == Windows.System.VirtualKey.Enter)
         {
             var isShiftDown = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift)

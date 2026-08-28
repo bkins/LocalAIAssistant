@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Maui.Views;
@@ -35,6 +35,23 @@ public partial class KnowledgeInboxViewModel : ObservableObject
     [ObservableProperty] private bool           _hasError;
     [ObservableProperty] private string         _errorMessage = string.Empty;
     [ObservableProperty] private KnowledgeItem? _selectedItem;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSearchText))]
+    private string _searchText = string.Empty;
+
+    public bool HasSearchText => _searchText.HasValue();
+
+    partial void OnSearchTextChanged(string value)
+    {
+        RebuildGroups();
+    }
+
+    [RelayCommand]
+    private void ClearSearch()
+    {
+        SearchText = string.Empty;
+    }
 
     // ── Filter chips ─────────────────────────────────────────────────────────
 
@@ -187,6 +204,16 @@ public partial class KnowledgeInboxViewModel : ObservableObject
 
         if (_activeWorkspaceFilter is not null)
             filtered = filtered.Where(item => item.Workspace == _activeWorkspaceFilter);
+
+        if (SearchText.HasValue())
+        {
+            var search = SearchText.Trim();
+            filtered = filtered.Where(item => (item.Title.HasValue() && item.Title.ContainsIgnoreCase(search))
+                                           || (item.Summary.HasValue() && item.Summary!.ContainsIgnoreCase(search))
+                                           || (item.Mood.HasValue() && item.Mood!.ContainsIgnoreCase(search))
+                                           || (item.Workspace.HasValue() && item.Workspace!.ContainsIgnoreCase(search))
+                                           || (item.Tags != null && item.Tags.Any(tag => tag.ContainsIgnoreCase(search))));
+        }
 
         var rebuilt = filtered
             .GroupBy(item => item.Kind)

@@ -4,6 +4,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:LocalAIAssistant.Views.Controls"
              xmlns:viewModels="clr-namespace:LocalAIAssistant.ViewModels"
+             xmlns:models="clr-namespace:LocalAIAssistant.Data.Models"
              x:Class="LocalAIAssistant.Views.MainPage"
              BackgroundColor="{StaticResource SplashBackgroundColor}"
              Title="Local AI Assistant">
@@ -332,6 +333,66 @@
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
             </CollectionView>
+
+            <!-- Slash Command Suggestions Popup -->
+            <Border Grid.Row="1"
+                    VerticalOptions="End"
+                    HorizontalOptions="Fill"
+                    Margin="12,0,12,8"
+                    MaximumHeightRequest="220"
+                    BackgroundColor="#242436"
+                    Stroke="#7C5CE6"
+                    StrokeThickness="1"
+                    IsVisible="{Binding IsSuggestionsVisible}"
+                    ZIndex="100">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="12" />
+                </Border.StrokeShape>
+                <Border.Shadow>
+                    <Shadow Brush="Black"
+                            Offset="0,4"
+                            Radius="8"
+                            Opacity="0.6" />
+                </Border.Shadow>
+                <CollectionView ItemsSource="{Binding CommandSuggestions}"
+                                SelectionMode="None">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:CommandSuggestion">
+                            <Grid Padding="12,8"
+                                  ColumnDefinitions="Auto,*,Auto"
+                                  BackgroundColor="Transparent">
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ChatViewModel}}, Path=ApplySuggestionCommand}"
+                                        CommandParameter="{Binding .}" />
+                                </Grid.GestureRecognizers>
+                                <Label Grid.Column="0"
+                                       Text="{Binding Icon}"
+                                       FontSize="18"
+                                       VerticalOptions="Center"
+                                       Margin="0,0,10,0" />
+                                <VerticalStackLayout Grid.Column="1"
+                                                     Spacing="2"
+                                                     VerticalOptions="Center">
+                                    <Label Text="{Binding Title}"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           TextColor="White" />
+                                    <Label Text="{Binding Description}"
+                                           FontSize="11"
+                                           TextColor="#A0A0B0"
+                                           LineBreakMode="TailTruncation" />
+                                </VerticalStackLayout>
+                                <Label Grid.Column="2"
+                                       Text="↵"
+                                       FontSize="14"
+                                       TextColor="#7C5CE6"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Border>
 
             <!-- Automation helper: Accessible element for UI automation and Smoke Tests to inspect active conversation ID -->
             <Label Grid.Row="1"

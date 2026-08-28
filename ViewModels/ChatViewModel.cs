@@ -91,6 +91,13 @@ public partial class ChatViewModel : ObservableObject
     public ObservableCollection<Message>     Messages      { get; } = new();
     public ObservableCollection<Personality> Personalities { get; } = new();
 
+    public ObservableCollection<CommandSuggestion> CommandSuggestions { get; } = new();
+    [ObservableProperty] private bool _isSuggestionsVisible;
+
+    private readonly List<string> _promptHistory = new();
+    private int _promptHistoryIndex = -1;
+    private string _temporaryDraft = string.Empty;
+
     [ObservableProperty]
     private string _conversationId = string.Empty;
     public bool   HasBeenInitialized { get; private set; }
@@ -164,6 +171,82 @@ public partial class ChatViewModel : ObservableObject
 
     }
 
+    private static readonly IReadOnlyList<CommandSuggestion> AllCommandSuggestions = new List<CommandSuggestion>
+    {
+        new()
+        {
+            Prefix = "/task",
+            Title = "/task",
+            Description = "Create or manage tasks (e.g. /task Review PR by Friday)",
+            CommandTemplate = "Task:",
+            Icon = "📋"
+        },
+        new()
+        {
+            Prefix = "/journal",
+            Title = "/journal",
+            Description = "Add a journal or reflection entry (e.g. /journal Made good progress today)",
+            CommandTemplate = "Journal:",
+            Icon = "📖"
+        },
+        new()
+        {
+            Prefix = "/meal",
+            Title = "/meal",
+            Description = "Log nutrition, meals, or water (e.g. /meal Grilled salmon with asparagus)",
+            CommandTemplate = "/meal",
+            Icon = "🥗"
+        },
+        new()
+        {
+            Prefix = "/health",
+            Title = "/health",
+            Description = "Review health, sleep, and activity metrics",
+            CommandTemplate = "/health",
+            Icon = "❤️"
+        },
+        new()
+        {
+            Prefix = "/copilot",
+            Title = "/copilot",
+            Description = "Interact with conversation recorder copilot insights",
+            CommandTemplate = "/copilot",
+            Icon = "🎙️"
+        },
+        new()
+        {
+            Prefix = "/search",
+            Title = "/search",
+            Description = "Search memories and recorded conversations",
+            CommandTemplate = "/search",
+            Icon = "🔍"
+        },
+        new()
+        {
+            Prefix = "Idea:",
+            Title = "Idea:",
+            Description = "Save a new feature idea to the ideas backlog",
+            CommandTemplate = "Idea:",
+            Icon = "💡"
+        },
+        new()
+        {
+            Prefix = "Bug:",
+            Title = "Bug:",
+            Description = "Report a bug or unexpected behavior",
+            CommandTemplate = "Bug:",
+            Icon = "🐞"
+        },
+        new()
+        {
+            Prefix = "/help",
+            Title = "/help",
+            Description = "List system capabilities and available command patterns",
+            CommandTemplate = "/help",
+            Icon = "❓"
+        }
+    };
+
     partial void OnPromptTextChanged(string value)
     {
         if (value.HasNoValue() || value.EqualsIgnoreCase("Listening... Speak now!"))
@@ -174,6 +257,128 @@ public partial class ChatViewModel : ObservableObject
         {
             Preferences.Set(StringConsts.ChatDraftPromptPrefKey, value);
         }
+
+        UpdateCommandSuggestions(value);
+    }
+
+    private void UpdateCommandSuggestions(string? input)
+    {
+        if (input.HasNoValue())
+        {
+            IsSuggestionsVisible = false;
+            CommandSuggestions.Clear();
+            return;
+        }
+
+        var trimmed = input.TrimStart();
+        if (trimmed.StartsWith("/") || trimmed.StartsWithIgnoreCase("Idea:") || trimmed.StartsWithIgnoreCase("Bug:") || trimmed.StartsWithIgnoreCase("Task:") || trimmed.StartsWithIgnoreCase("Journal:"))
+        {
+            var firstSpaceIdx = trimmed.IndexOf(' ');
+            if (firstSpaceIdx > 0 && firstSpaceIdx < trimmed.Length - 1)
+            {
+                IsSuggestionsVisible = false;
+                CommandSuggestions.Clear();
+                return;
+            }
+
+            var query = firstSpaceIdx > 0 ? trimmed[..firstSpaceIdx] : trimmed;
+            var matches = AllCommandSuggestions
+                .Where(suggestion => suggestion.Prefix.StartsWithIgnoreCase(query) || suggestion.Title.StartsWithIgnoreCase(query))
+                .ToList();
+
+            if (matches.Count > 0)
+            {
+                CommandSuggestions.Clear();
+                foreach (var match in matches)
+                {
+                    CommandSuggestions.Add(match);
+                }
+                IsSuggestionsVisible = true;
+                return;
+            }
+        }
+
+        IsSuggestionsVisible = false;
+        CommandSuggestions.Clear();
+    }
+
+    [RelayCommand]
+    public void ApplySuggestion(CommandSuggestion? suggestion)
+    {
+        if (suggestion is null) return;
+
+        PromptText = suggestion.CommandTemplate.EndsWith(":")
+                         ? suggestion.CommandTemplate + " "
+                         : suggestion.CommandTemplate + " ";
+
+        IsSuggestionsVisible = false;
+        CommandSuggestions.Clear();
+    }
+
+    [RelayCommand]
+    public void DismissSuggestions()
+    {
+        IsSuggestionsVisible = false;
+        CommandSuggestions.Clear();
+    }
+
+    public void AddToPromptHistory(string prompt)
+    {
+        if (prompt.HasNoValue()) return;
+
+        var trimmed = prompt.Trim();
+        if (_promptHistory.Count == 0 || !_promptHistory[^1].EqualsIgnoreCase(trimmed))
+        {
+            _promptHistory.Add(trimmed);
+            if (_promptHistory.Count > 50)
+            {
+                _promptHistory.RemoveAt(0);
+            }
+        }
+        _promptHistoryIndex = -1;
+        _temporaryDraft = string.Empty;
+    }
+
+    public bool TryRecallPreviousPrompt(out string prompt)
+    {
+        if (_promptHistory.Count == 0)
+        {
+            prompt = string.Empty;
+            return false;
+        }
+
+        if (_promptHistoryIndex == -1)
+        {
+            _temporaryDraft = PromptText ?? string.Empty;
+            _promptHistoryIndex = _promptHistory.Count - 1;
+        }
+        else if (_promptHistoryIndex > 0)
+        {
+            _promptHistoryIndex--;
+        }
+
+        prompt = _promptHistory[_promptHistoryIndex];
+        return true;
+    }
+
+    public bool TryRecallNextPrompt(out string prompt)
+    {
+        if (_promptHistoryIndex == -1)
+        {
+            prompt = string.Empty;
+            return false;
+        }
+
+        if (_promptHistoryIndex < _promptHistory.Count - 1)
+        {
+            _promptHistoryIndex++;
+            prompt = _promptHistory[_promptHistoryIndex];
+            return true;
+        }
+
+        _promptHistoryIndex = -1;
+        prompt = _temporaryDraft;
+        return true;
     }
 
     public async Task InitializeAsync()
@@ -374,6 +579,10 @@ public partial class ChatViewModel : ObservableObject
     {
         var text = PromptText?.Trim() ?? string.Empty;
         if (text.HasNoValue()) return;
+
+        AddToPromptHistory(text);
+        IsSuggestionsVisible = false;
+        CommandSuggestions.Clear();
 
         if (text.EqualsIgnoreCase("test:set_pending_memory"))
         {

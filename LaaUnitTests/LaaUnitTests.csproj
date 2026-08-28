@@ -37,6 +37,7 @@
 
   <ItemGroup>
     <Compile Include="../Data/Models/Message.cs" Link="Linked/Message.cs" />
+    <Compile Include="../Data/Models/CommandSuggestion.cs" Link="Linked/CommandSuggestion.cs" />
     <Compile Include="../Data/Models/DtoError.cs" Link="Linked/DtoError.cs" />
     <Compile Include="../Data/StringConsts.cs" Link="Linked/StringConsts.cs" />
     <Compile Include="../Knowledge/Tasks/Models/TasksDto.cs" Link="Linked/TasksDto.cs" />

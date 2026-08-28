@@ -43,6 +43,44 @@
                        HorizontalOptions="Center" />
             </Border>
 
+            <!-- Search bar -->
+            <Border Margin="8,6,8,2"
+                    Padding="8,0"
+                    BackgroundColor="#1E1E2E"
+                    Stroke="#444455"
+                    StrokeThickness="1"
+                    HeightRequest="42">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="8" />
+                </Border.StrokeShape>
+                <Grid ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center">
+                    <Label Grid.Column="0"
+                           Text="🔍"
+                           FontSize="14"
+                           VerticalOptions="Center"
+                           Margin="4,0,8,0" />
+                    <Entry Grid.Column="1"
+                           AutomationId="KnowledgeSearchBar"
+                           Text="{Binding SearchText}"
+                           Placeholder="Search knowledge, tasks, journals, tags..."
+                           PlaceholderColor="#888899"
+                           TextColor="White"
+                           FontSize="14"
+                           BackgroundColor="Transparent"
+                           VerticalOptions="Center" />
+                    <Button Grid.Column="2"
+                            Text="✕"
+                            Command="{Binding ClearSearchCommand}"
+                            IsVisible="{Binding HasSearchText}"
+                            BackgroundColor="Transparent"
+                            TextColor="#888899"
+                            FontSize="14"
+                            Padding="6,0"
+                            HeightRequest="36"
+                            WidthRequest="36" />
+                </Grid>
+            </Border>
+
             <!-- Type filter chips -->
             <ScrollView Orientation="Horizontal" HeightRequest="44" Padding="8,4">
                 <HorizontalStackLayout BindableLayout.ItemsSource="{Binding TypeFilters}"
