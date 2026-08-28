@@ -50,6 +50,34 @@
             </Border>
 
             <!-- ═══════════════════════════════════════════ -->
+            <!-- Section: Appearance & Theme                 -->
+            <!-- ═══════════════════════════════════════════ -->
+            <Label Text="APPEARANCE &amp; THEME"
+                   FontSize="11"
+                   FontAttributes="Bold"
+                   TextColor="{StaticResource SecondaryTextColor}"
+                   Margin="20,20,20,6"
+                   CharacterSpacing="1.5" />
+
+            <Border Margin="12,0"
+                    Padding="16"
+                    StrokeThickness="0"
+                    BackgroundColor="{StaticResource SurfaceColor}">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="10" />
+                </Border.StrokeShape>
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="App Theme"
+                           FontSize="13"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource PrimaryTextColor}" />
+                    <Picker Title="Select Theme"
+                            ItemsSource="{Binding AvailableThemes}"
+                            SelectedItem="{Binding SelectedTheme}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- ═══════════════════════════════════════════ -->
             <!-- Section: Model                              -->
             <!-- ═══════════════════════════════════════════ -->
             <Label Text="MODEL"

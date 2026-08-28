@@ -17,11 +17,38 @@ public partial class MemoryManagementViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<Message> _longTermMessages = new();
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowShortTerm))]
+    [NotifyPropertyChangedFor(nameof(ShowLongTerm))]
+    [NotifyPropertyChangedFor(nameof(IsShortTermSelected))]
+    [NotifyPropertyChangedFor(nameof(IsLongTermSelected))]
+    private int _selectedTabIndex = 0; // 0 = Short-Term, 1 = Long-Term
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowShortTerm))]
+    [NotifyPropertyChangedFor(nameof(ShowLongTerm))]
+    private bool _isMobileLayout = DeviceInfo.Idiom == DeviceIdiom.Phone;
+
+    public bool IsShortTermSelected => SelectedTabIndex == 0;
+    public bool IsLongTermSelected  => SelectedTabIndex == 1;
+
+    public bool ShowShortTerm => !IsMobileLayout || SelectedTabIndex == 0;
+    public bool ShowLongTerm  => !IsMobileLayout || SelectedTabIndex == 1;
+
     public int ShortTermCount => ShortTermMessages.Count;
     public int LongTermCount  => LongTermMessages.Count;
 
     public int PendingMemoryConfirmationCount => _appShellMasterViewModel.PendingMemoryConfirmationCount;
     public bool HasPendingMemoryConfirmation  => PendingMemoryConfirmationCount > 0;
+
+    [RelayCommand]
+    public void SelectTab(string tabIndex)
+    {
+        if (int.TryParse(tabIndex, out var idx))
+        {
+            SelectedTabIndex = idx;
+        }
+    }
     
     public MemoryManagementViewModel(IConversationMemory conversationMemory, AppShellMasterViewModel appShellMasterViewModel)
     {

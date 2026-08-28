@@ -36,6 +36,14 @@ public partial class App : Application
 		_healthPushService       = healthPushService;
 		_fileGatewayService      = fileGatewayService;
 
+		var savedTheme = Preferences.Default.Get("AppThemePreference", "System");
+		UserAppTheme = savedTheme switch
+		{
+			"Dark"  => AppTheme.Dark,
+			"Light" => AppTheme.Light,
+			_       => AppTheme.Unspecified
+		};
+
 		RegisterGlobalExceptionHandlers();
 	}
 

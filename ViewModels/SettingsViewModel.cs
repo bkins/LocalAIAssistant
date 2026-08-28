@@ -1,4 +1,4 @@
-﻿
+
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -37,6 +37,38 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private bool   _enableStartupProbes;
     [ObservableProperty] private bool   _enableStartupDiagnostics;
     [ObservableProperty] private bool   _streamingEnabled;
+
+    // ── App Theme ─────────────────────────────────────────────────────────────
+    [ObservableProperty] private string _selectedTheme = "System";
+
+    public IReadOnlyList<string> AvailableThemes { get; } = new[]
+    {
+        "System"
+      , "Dark"
+      , "Light"
+    };
+
+    partial void OnSelectedThemeChanged(string value)
+    {
+        if (value.HasNoValue()) return;
+        Preferences.Default.Set("AppThemePreference", value);
+        ApplyTheme(value);
+    }
+
+    public static void ApplyTheme(string theme)
+    {
+        if (Application.Current is null) return;
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            Application.Current.UserAppTheme = theme switch
+            {
+                "Dark"  => AppTheme.Dark,
+                "Light" => AppTheme.Light,
+                _       => AppTheme.Unspecified
+            };
+        });
+    }
 
     // ── TTS ───────────────────────────────────────────────────────────────────
     [ObservableProperty]
@@ -147,6 +179,7 @@ public partial class SettingsViewModel : ObservableObject
         EnableStartupProbes         = Preferences.Default.Get(StringConsts.EnableStartupProbesPrefKey,          true);
         EnableStartupDiagnostics    = Preferences.Default.Get(StringConsts.EnableStartupDiagnosticsPrefKey,     defaultDiagnosticsEnabled);
         StreamingEnabled            = Preferences.Default.Get(StringConsts.StreamingEnabledPrefKey,              true);
+        SelectedTheme               = Preferences.Default.Get("AppThemePreference",                             "System");
     }
 
     public Task RefreshHealthStatusAsync() => RefreshHealthStatus();

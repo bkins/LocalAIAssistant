@@ -11,7 +11,7 @@
     </ContentPage.Resources>
 
     <Grid x:Name="MainLayout"
-          RowDefinitions="Auto,Auto,*">
+          RowDefinitions="Auto,Auto,Auto,*">
         <!-- Row 0: Pending memory confirmation badge banner -->
         <Border Grid.Row="0"
                 Margin="15,10,15,5"
@@ -38,102 +38,142 @@
 
         <!-- Row 1: Action Buttons -->
         <HorizontalStackLayout Grid.Row="1"
-                               Padding="10"
-                               Spacing="15"
+                               Padding="10,6"
+                               Spacing="12"
                                HorizontalOptions="Center">
-            <!--Command="{Binding ClearShortTermAsyncCommand}" -->
             <Button x:Name="ClearShorTermButton"
                     AutomationId="ClearShorTermButton"
                     Text="Clear Short Term" 
                     Clicked="ClearShorTermButton_OnClicked"
                     BackgroundColor="{StaticResource DangerColor}" 
                     TextColor="White"
-                    CornerRadius="8"/>
-            <!--Command="{Binding ClearLongTermAsyncCommand}" -->
+                    CornerRadius="8"
+                    HeightRequest="40"
+                    Padding="12,0" />
             <Button x:Name="ClearLongTermButton"
                     AutomationId="ClearLongTermButton"
                     Text="Clear Long Term" 
                     Clicked="ClearLongTermButton_OnClicked"
                     BackgroundColor="{StaticResource WarningColor}" 
                     TextColor="White"
-                    CornerRadius="8"/>
-            <!--Command="{Binding RefreshAsyncCommand}"-->
+                    CornerRadius="8"
+                    HeightRequest="40"
+                    Padding="12,0" />
             <Button x:Name="RefreshButton"
                     AutomationId="RefreshButton"
                     Text="Refresh" 
                     Clicked="RefreshButton_OnClicked"
                     BackgroundColor="{StaticResource SuccessColor}" 
                     TextColor="White"
-                    CornerRadius="8"/>
+                    CornerRadius="8"
+                    HeightRequest="40"
+                    Padding="12,0" />
         </HorizontalStackLayout>
-    
-        <!-- Row 2: Short & Long Term Memory CollectionViews -->
+
+        <!-- Row 2: Mobile Segmented Switcher (Visible on Phone Viewports) -->
         <Grid Grid.Row="2"
+              Margin="12,4,12,8"
+              ColumnDefinitions="*,*"
+              ColumnSpacing="8"
+              IsVisible="{Binding IsMobileLayout}">
+            <Button Text="{Binding ShortTermCount, StringFormat='Short Term ({0})'}"
+                    Command="{Binding SelectTabCommand}"
+                    CommandParameter="0"
+                    BackgroundColor="{Binding IsShortTermSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter='#7C5CE6|#242436'}"
+                    TextColor="White"
+                    CornerRadius="8"
+                    HeightRequest="38" />
+            <Button Grid.Column="1"
+                    Text="{Binding LongTermCount, StringFormat='Long Term ({0})'}"
+                    Command="{Binding SelectTabCommand}"
+                    CommandParameter="1"
+                    BackgroundColor="{Binding IsLongTermSelected, Converter={StaticResource BoolToColorConverter}, ConverterParameter='#7C5CE6|#242436'}"
+                    TextColor="White"
+                    CornerRadius="8"
+                    HeightRequest="38" />
+        </Grid>
+    
+        <!-- Row 3: Short & Long Term Memory CollectionViews -->
+        <Grid Grid.Row="3"
               Padding="10"
               ColumnDefinitions="*,*"
               RowDefinitions="Auto,*"
               ColumnSpacing="10">
 
-            <!-- Column headers -->
+            <!-- Desktop Column headers (hidden on mobile) -->
             <Label Grid.Row="0"
                    Grid.Column="0"
-                   Text="Short Term Memory"
+                   Text="{Binding ShortTermCount, StringFormat='Short Term Memory ({0})'}"
                    FontAttributes="Bold"
                    FontSize="Medium"
-                   HorizontalOptions="Center"/>
+                   HorizontalOptions="Center"
+                   IsVisible="{Binding IsMobileLayout, Converter={StaticResource InverseBoolConverter}}" />
             <Label Grid.Row="0"
                    Grid.Column="1"
-                   Text="Long Term Memory"
+                   Text="{Binding LongTermCount, StringFormat='Long Term Memory ({0})'}"
                    FontAttributes="Bold"
                    FontSize="Medium"
-                   HorizontalOptions="Center"/>
+                   HorizontalOptions="Center"
+                   IsVisible="{Binding IsMobileLayout, Converter={StaticResource InverseBoolConverter}}" />
 
             <!-- Short Term Messages -->
             <CollectionView Grid.Row="1"
-                            Grid.Column="0"
-                            ItemsSource="{Binding ShortTermMessages}">
+                            Grid.Column="{Binding IsMobileLayout, Converter={StaticResource BoolToIntConverter}, ConverterParameter='0|0'}"
+                            Grid.ColumnSpan="{Binding IsMobileLayout, Converter={StaticResource BoolToIntConverter}, ConverterParameter='2|1'}"
+                            ItemsSource="{Binding ShortTermMessages}"
+                            IsVisible="{Binding ShowShortTerm}">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
-                        <Frame Padding="5"
-                               Margin="3"
-                               BorderColor="LightGray"
-                               CornerRadius="6">
-                            <VerticalStackLayout>
+                        <Border Padding="12,10"
+                                Margin="0,0,0,8"
+                                StrokeShape="RoundRectangle 8"
+                                Stroke="#333344"
+                                StrokeThickness="1"
+                                BackgroundColor="{StaticResource SurfaceColor}">
+                            <VerticalStackLayout Spacing="4">
                                 <Label Text="{Binding Sender}"
                                        FontAttributes="Bold"
-                                       FontSize="Small"/>
+                                       FontSize="13"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
                                 <Label Text="{Binding Content}"
-                                       FontSize="Small"/>
+                                       FontSize="13"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
                                 <Label Text="{Binding Timestamp, Converter={StaticResource UtcToLocalDateTimeConverter}, StringFormat='{0:yyyy-MM-dd HH:mm:ss}'}"
-                                       FontSize="Micro"
-                                       TextColor="Gray"/>
+                                       FontSize="11"
+                                       TextColor="Gray" />
                             </VerticalStackLayout>
-                        </Frame>
+                        </Border>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
 
             <!-- Long Term Messages -->
             <CollectionView Grid.Row="1"
-                            Grid.Column="1"
-                            ItemsSource="{Binding LongTermMessages}">
+                            Grid.Column="{Binding IsMobileLayout, Converter={StaticResource BoolToIntConverter}, ConverterParameter='0|1'}"
+                            Grid.ColumnSpan="{Binding IsMobileLayout, Converter={StaticResource BoolToIntConverter}, ConverterParameter='2|1'}"
+                            ItemsSource="{Binding LongTermMessages}"
+                            IsVisible="{Binding ShowLongTerm}">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
-                        <Frame Padding="5"
-                               Margin="3"
-                               BorderColor="LightGray"
-                               CornerRadius="6">
-                            <VerticalStackLayout>
+                        <Border Padding="12,10"
+                                Margin="0,0,0,8"
+                                StrokeShape="RoundRectangle 8"
+                                Stroke="#333344"
+                                StrokeThickness="1"
+                                BackgroundColor="{StaticResource SurfaceColor}">
+                            <VerticalStackLayout Spacing="4">
                                 <Label Text="{Binding Sender}"
                                        FontAttributes="Bold"
-                                       FontSize="Small"/>
+                                       FontSize="13"
+                                       TextColor="{StaticResource PrimaryTextColor}" />
                                 <Label Text="{Binding Content}"
-                                       FontSize="Small"/>
+                                       FontSize="13"
+                                       TextColor="{StaticResource SecondaryTextColor}" />
                                 <Label Text="{Binding Timestamp, Converter={StaticResource UtcToLocalDateTimeConverter}, StringFormat='{0:yyyy-MM-dd HH:mm:ss}'}"
-                                       FontSize="Micro"
-                                       TextColor="Gray"/>
+                                       FontSize="11"
+                                       TextColor="Gray" />
                             </VerticalStackLayout>
-                        </Frame>
+                        </Border>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
