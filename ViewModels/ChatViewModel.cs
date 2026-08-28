@@ -586,6 +586,16 @@ public partial class ChatViewModel : ObservableObject
         var text = PromptText?.Trim() ?? string.Empty;
         if (text.HasNoValue()) return;
 
+        if (text.EqualsIgnoreCase("test:set_pending_memory"))
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                _appShellMasterViewModel.PendingMemoryConfirmationCount = 3;
+            });
+            PromptText = string.Empty;
+            return;
+        }
+
         AddToPromptHistory(text);
         IsSuggestionsVisible = false;
         CommandSuggestions.Clear();

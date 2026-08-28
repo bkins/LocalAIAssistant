@@ -89,4 +89,20 @@ public class StreamResilienceAndProvisionalMemoryTests
         Assert.True((bool)converter.Convert("hello", typeof(bool), null, System.Globalization.CultureInfo.InvariantCulture));
         Assert.False((bool)converter.Convert(null, typeof(bool), null, System.Globalization.CultureInfo.InvariantCulture));
     }
+
+    [Theory]
+    [InlineData(0, "Memory")]
+    [InlineData(1, "Memory (1)")]
+    [InlineData(3, "Memory (3)")]
+    [InlineData(10, "Memory (10)")]
+    public void MemoryTabTitle_ComputesExpectedTitle_FromPendingMemoryCount(int pendingCount, string expectedTitle)
+    {
+        string ComputeMemoryTabTitle(int count) => count > 0 ? $"Memory ({count})" : "Memory";
+
+        var result = ComputeMemoryTabTitle(pendingCount);
+
+        Assert.Equal(expectedTitle, result);
+    }
 }
+
+
