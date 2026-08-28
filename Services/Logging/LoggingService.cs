@@ -104,6 +104,7 @@ public class LoggingService : ILoggingService
             using var reader = new StreamReader(stream);
 
             string? line;
+            var idCounter = 1;
             while ((line = await reader.ReadLineAsync()) != null)
             {
                 if (line.HasNoValue()) continue;
@@ -113,23 +114,46 @@ public class LoggingService : ILoggingService
                     var logEvent = JsonSerializer.Deserialize<SerilogLogEvent>(line);
                     if (logEvent != null)
                     {
-                        var sb = new StringBuilder();
+                        var category = "General";
+                        var properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-                        if (logEvent.Properties.TryGetValue("Category"
-                                                          , out var categoryElement)
-                         && categoryElement.ValueKind == JsonValueKind.String)
+                        foreach (var (key, element) in logEvent.Properties)
                         {
-                            sb.Append($"[{categoryElement.GetString()}] ");
+                            if (key.Equals("Category", StringComparison.OrdinalIgnoreCase))
+                            {
+                                category = element.GetString() ?? category;
+                            }
+                            else if (key.Equals("SourceContext", StringComparison.OrdinalIgnoreCase))
+                            {
+                                var sourceContext = element.GetString() ?? string.Empty;
+                                if (category == "General" && sourceContext.HasValue())
+                                {
+                                    category = sourceContext.Split('.').Last();
+                                }
+                            }
+                            else
+                            {
+                                properties[key] = element.ValueKind == JsonValueKind.String
+                                                      ? element.GetString() ?? string.Empty
+                                                      : element.ToString();
+                            }
                         }
 
-                        sb.Append(logEvent.RenderedMessage ?? logEvent.MessageTemplate);
+                        var messageText = logEvent.RenderedMessage 
+                                          ?? logEvent.RenderedMessageCompact 
+                                          ?? logEvent.MessageTemplate 
+                                          ?? logEvent.Message;
 
                         logEntries.Add(new LogEntry
                                        {
-                                           Timestamp       = logEvent.Timestamp.ToLocalTime()
+                                           Id              = idCounter++
+                                         , Timestamp       = logEvent.Timestamp.ToLocalTime()
                                          , Level           = logEvent.Level ?? "Information"
-                                         , Message         = sb.ToString()
-                                         , RenderedMessage = sb.ToString()
+                                         , Category        = category
+                                         , Message         = messageText
+                                         , RenderedMessage = messageText
+                                         , Exception       = logEvent.Exception
+                                         , Properties      = properties
                                          , FullText        = line
                                        });
                     }
@@ -178,11 +202,17 @@ public class SerilogLogEvent
     [JsonPropertyName("@mt")]
     public string MessageTemplate { get; set; } = string.Empty;
 
+    [JsonPropertyName("@m")]
+    public string? RenderedMessageCompact { get; set; }
+
     [JsonPropertyName("@l")]
     public string? Level { get; set; }
 
     [JsonPropertyName("@r")]
     public string? RenderedMessage { get; set; }
+
+    [JsonPropertyName("@x")]
+    public string? Exception { get; set; }
 
     [JsonExtensionData]
     public Dictionary<string, JsonElement> Properties { get; set; } = new();

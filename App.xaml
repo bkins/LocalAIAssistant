@@ -13,6 +13,7 @@
             <converters:ApiStatusTextConverter x:Key="ApiStatusTextConverter" />
             <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
             <converters:TagsToTextConverter x:Key="TagsToTextConverter"/>
+            <converters:LogLevelToColorConverter x:Key="LogLevelToColorConverter" />
             <converters:IntGreaterThanZeroConverter x:Key="IntGreaterThanZeroConverter" />
             
             <ResourceDictionary.MergedDictionaries>

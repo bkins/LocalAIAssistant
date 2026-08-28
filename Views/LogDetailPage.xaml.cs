@@ -1,12 +1,17 @@
-﻿using LocalAIAssistant.Services.Logging;
+using System;
+using System.Threading.Tasks;
+using CP.Client.Core.Avails;
+using LocalAIAssistant.Services.Logging;
+using Microsoft.Maui.ApplicationModel.DataTransfer;
+using Microsoft.Maui.Controls;
 
 namespace LocalAIAssistant.Views;
 
 [QueryProperty(nameof(Entry), nameof(LogEntry))]
 public partial class LogDetailPage : ContentPage
 {
-    private LogEntry _entry;
-    public LogEntry Entry
+    private LogEntry? _entry;
+    public LogEntry? Entry
     {
         get => _entry;
         set
@@ -19,32 +24,33 @@ public partial class LogDetailPage : ContentPage
     public LogDetailPage()
     {
         InitializeComponent();
-        
-        //BindingContext = entry;
     }
 
-    private async void OnLogTapped( object?         sender
-                            , TappedEventArgs e )
+    private async void OnCopyMessageClicked(object? sender, EventArgs e)
     {
-        if (sender is not Label label)
-            return;
-
-        var message = label.BindingContext;
-
-        var contentProp = message?.GetType().GetProperty("FullText");
-        var text        = contentProp?.GetValue(message)?.ToString();
-
-        if (text.HasNoValue())
-            return;
-
-        await Clipboard.Default.SetTextAsync(text);
-
-        // Optional: UX feedback
-        await DisplayToast("Copied to clipboard");
+        if (_entry?.Message.HasValue() == true)
+        {
+            await Clipboard.Default.SetTextAsync(_entry.Message);
+            await DisplayAlert("Copied", "Message text copied to clipboard.", "OK");
+        }
     }
-    
-    private async Task DisplayToast(string message)
+
+    private async void OnCopyExceptionClicked(object? sender, EventArgs e)
     {
-        await DisplayAlert("", message, "OK");
+        if (_entry?.Exception.HasValue() == true)
+        {
+            await Clipboard.Default.SetTextAsync(_entry.Exception);
+            await DisplayAlert("Copied", "Exception stack trace copied to clipboard.", "OK");
+        }
+    }
+
+    private async void OnCopyRawJsonClicked(object? sender, EventArgs e)
+    {
+        var text = _entry?.PrettifiedFullText ?? _entry?.FullText;
+        if (text.HasValue())
+        {
+            await Clipboard.Default.SetTextAsync(text);
+            await DisplayAlert("Copied", "Raw event JSON copied to clipboard.", "OK");
+        }
     }
 }

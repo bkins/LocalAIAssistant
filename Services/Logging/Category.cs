@@ -14,4 +14,8 @@ public enum Category
   , ChatViewModel
   , Ui
   , PersonaAndContextEngine
+  , Network
+  , General
+  , Sync
+  , Storage
 }

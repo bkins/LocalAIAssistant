@@ -73,6 +73,8 @@
     <Compile Include="../Services/Recordings/ConversationRecordingService.cs" Link="Linked/ConversationRecordingService.cs" />
     <Compile Include="../Converters/BoolToIntConverter.cs" Link="Linked/BoolToIntConverter.cs" />
     <Compile Include="../Converters/NullToBoolConverter.cs" Link="Linked/NullToBoolConverter.cs" />
+    <Compile Include="../Converters/LogLevelToColorConverter.cs" Link="Linked/LogLevelToColorConverter.cs" />
+    <Compile Include="../ViewModels/LogsViewModel.cs" Link="Linked/LogsViewModel.cs" />
   </ItemGroup>
 
 </Project>

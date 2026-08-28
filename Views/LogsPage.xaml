@@ -2,105 +2,266 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewModels="clr-namespace:LocalAIAssistant.ViewModels"
-             xmlns:converters1="clr-namespace:LocalAIAssistant.Converters"
+             xmlns:logging="clr-namespace:LocalAIAssistant.Services.Logging"
              x:Class="LocalAIAssistant.Views.LogsPage"
-             Title="Application Logs"
-             x:Name="Page">
+             x:DataType="viewModels:LogsViewModel"
+             Title="Diagnostic Logs"
+             BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource AppBackgroundColor}}">
 
-    <ContentPage.Resources>
-        <ResourceDictionary Source="/Resources/Styles/Colors.xaml"/>
-        <converters1:LogLevelToColorConverter x:Key="LogLevelToColorConverter"/>
-    </ContentPage.Resources>
+    <Grid RowDefinitions="Auto, Auto, *" Padding="12" RowSpacing="10">
+        
+        <!-- Controls Header Area -->
+        <VerticalStackLayout Grid.Row="0" Spacing="8">
+            
+            <!-- Error Banner -->
+            <Border IsVisible="{Binding HasError}"
+                    BackgroundColor="#FFEBEE"
+                    Stroke="#FFCDD2"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 8"
+                    Padding="10">
+                <Label Text="{Binding ErrorMessage}"
+                       TextColor="#B71C1C"
+                       FontSize="12"
+                       LineBreakMode="WordWrap" />
+            </Border>
 
-    <Grid RowDefinitions="Auto, *" Padding="10">
-        <VerticalStackLayout Spacing="10" Grid.Row="0">
-            <VerticalStackLayout IsVisible="{Binding HasError}">
-                <Border BackgroundColor="#FFEBEE"
-                        Stroke="#FFCDD2"
+            <!-- Search Bar & Category Filter -->
+            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="8">
+                <!-- Search Input -->
+                <Border Grid.Column="0"
+                        Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
                         StrokeThickness="1"
-                        Padding="10">
-                    <Label Text="{Binding ErrorMessage}"
-                           TextColor="#B71C1C"/>
+                        StrokeShape="RoundRectangle 8"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource SurfaceColor}}"
+                        Padding="8,2">
+                    <Grid ColumnDefinitions="Auto, *">
+                        <Label Text="🔍"
+                               VerticalOptions="Center"
+                               Margin="0,0,6,0"
+                               FontSize="14" />
+                        <Entry Grid.Column="1"
+                               Placeholder="Search logs, categories, exceptions..."
+                               Text="{Binding SearchText, Mode=TwoWay}"
+                               FontSize="13"
+                               ClearButtonVisibility="WhileEditing"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray100}}"
+                               PlaceholderColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" />
+                    </Grid>
                 </Border>
-            </VerticalStackLayout>
 
-            <ActivityIndicator IsRunning="{Binding IsLoading}"
-                               IsVisible="{Binding IsLoading}"
-                               HorizontalOptions="Center"/>
+                <!-- Category Dropdown Picker -->
+                <Border Grid.Column="1"
+                        Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 8"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource SurfaceColor}}"
+                        Padding="6,0">
+                    <Picker ItemsSource="{Binding Categories}"
+                            SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                            Title="Category"
+                            FontSize="12"
+                            WidthRequest="140"
+                            TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray100}}"
+                            TitleColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" />
+                </Border>
+            </Grid>
 
-            <HorizontalStackLayout Spacing="10" 
-                                   HorizontalOptions="Center">
-                <Button Text="Refresh"
-                        AutomationId="RefreshButton"
-                        Command="{Binding RefreshLogsCommand}"
-                        BackgroundColor="LightBlue"/>
-                <Button Text="Clear Logs"
-                        AutomationId="ClearLogsButton"
-                        Command="{Binding ClearLogsCommand}"
-                        BackgroundColor="Orange"/>
-                <Button Text="Test Logging"
-                        AutomationId="TestLoggingButton"
-                        Command="{Binding TestLoggingCommand}"
-                        BackgroundColor="LightGreen"/>
-            </HorizontalStackLayout>
-            
-            <HorizontalStackLayout Spacing="10" HorizontalOptions="Center" VerticalOptions="Center">
-                <Label Text="Information" VerticalOptions="Center" />
-                <Switch IsToggled="{Binding ShowInformation}"
-                        Toggled="OnFilterToggled"/>
-                
-                <Label Text="Warnings" VerticalOptions="Center" />
-                <Switch IsToggled="{Binding ShowWarning}"
-                        Toggled="OnFilterToggled"/>
+            <!-- Level Filter Chips Bar -->
+            <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                <HorizontalStackLayout Spacing="6">
+                    <Button Text="{Binding TotalCount, StringFormat='All ({0})'}"
+                            Command="{Binding SetLevelFilterCommand}"
+                            CommandParameter="All"
+                            FontSize="11"
+                            CornerRadius="6"
+                            Padding="10,4"
+                            HeightRequest="32"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                            TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray100}}" />
+                    
+                    <Button Text="{Binding ErrorCount, StringFormat='🔴 Errors ({0})'}"
+                            Command="{Binding SetLevelFilterCommand}"
+                            CommandParameter="Error"
+                            FontSize="11"
+                            CornerRadius="6"
+                            Padding="10,4"
+                            HeightRequest="32"
+                            BackgroundColor="#FFEBEE"
+                            TextColor="#B71C1C" />
 
-                <Label Text="Errors" VerticalOptions="Center" />
-                <Switch IsToggled="{Binding ShowError}"
-                        Toggled="OnFilterToggled"/>
-            </HorizontalStackLayout>
-            
+                    <Button Text="{Binding WarningCount, StringFormat='🟡 Warnings ({0})'}"
+                            Command="{Binding SetLevelFilterCommand}"
+                            CommandParameter="Warning"
+                            FontSize="11"
+                            CornerRadius="6"
+                            Padding="10,4"
+                            HeightRequest="32"
+                            BackgroundColor="#FFF8E1"
+                            TextColor="#F57F17" />
+
+                    <Button Text="{Binding InfoCount, StringFormat='🔵 Info ({0})'}"
+                            Command="{Binding SetLevelFilterCommand}"
+                            CommandParameter="Information"
+                            FontSize="11"
+                            CornerRadius="6"
+                            Padding="10,4"
+                            HeightRequest="32"
+                            BackgroundColor="#E3F2FD"
+                            TextColor="#1565C0" />
+
+                    <Button Text="{Binding DebugCount, StringFormat='⚪ Debug ({0})'}"
+                            Command="{Binding SetLevelFilterCommand}"
+                            CommandParameter="Debug"
+                            FontSize="11"
+                            CornerRadius="6"
+                            Padding="10,4"
+                            HeightRequest="32"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                            TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
+                </HorizontalStackLayout>
+            </ScrollView>
+
+            <!-- Action Buttons Toolbar -->
+            <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                <HorizontalStackLayout Spacing="8">
+                    <Button Text="🔄 Refresh"
+                            AutomationId="RefreshButton"
+                            Command="{Binding RefreshLogsCommand}"
+                            FontSize="12"
+                            CornerRadius="6"
+                            Padding="12,4"
+                            HeightRequest="34"
+                            BackgroundColor="{StaticResource Primary}"
+                            TextColor="White" />
+
+                    <Button Text="📋 Copy All"
+                            AutomationId="CopyAllLogsButton"
+                            Command="{Binding CopyAllLogsCommand}"
+                            FontSize="12"
+                            CornerRadius="6"
+                            Padding="12,4"
+                            HeightRequest="34"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                            TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray100}}" />
+
+                    <Button Text="📤 Export"
+                            AutomationId="ExportLogsButton"
+                            Command="{Binding ExportLogsCommand}"
+                            FontSize="12"
+                            CornerRadius="6"
+                            Padding="12,4"
+                            HeightRequest="34"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                            TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray100}}" />
+
+                    <Button Text="🧪 Test Diagnostics"
+                            AutomationId="TestLoggingButton"
+                            Command="{Binding TestLoggingCommand}"
+                            FontSize="12"
+                            CornerRadius="6"
+                            Padding="12,4"
+                            HeightRequest="34"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                            TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray100}}" />
+
+                    <Button Text="🗑 Clear"
+                            AutomationId="ClearLogsButton"
+                            Command="{Binding ClearLogsCommand}"
+                            FontSize="12"
+                            CornerRadius="6"
+                            Padding="12,4"
+                            HeightRequest="34"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                            TextColor="#E53935" />
+                </HorizontalStackLayout>
+            </ScrollView>
+
         </VerticalStackLayout>
 
-        <CollectionView x:Name="LogCollection"
+        <!-- Loading Indicator -->
+        <ActivityIndicator Grid.Row="1"
+                           IsRunning="{Binding IsLoading}"
+                           IsVisible="{Binding IsLoading}"
+                           Color="{StaticResource Primary}"
+                           HorizontalOptions="Center"
+                           HeightRequest="24" />
+
+        <!-- Log Collection View -->
+        <CollectionView Grid.Row="2"
+                        x:Name="LogCollection"
                         AutomationId="LogCollection"
-                        Grid.Row="1"
                         ItemsSource="{Binding LogEntries}"
                         SelectionMode="Single"
                         SelectedItem="{Binding SelectedLogEntry, Mode=TwoWay}">
             <CollectionView.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate x:DataType="logging:LogEntry">
                     <Border Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
                             StrokeThickness="1"
-                            StrokeShape="RoundRectangle 5"
-                            Margin="5"
-                            Padding="10">
-                        <Grid RowDefinitions="Auto, Auto" 
-                              ColumnDefinitions="*, Auto">
-                            <HorizontalStackLayout Grid.Row="0" 
-                                                   Grid.Column="0" 
-                                                   Spacing="10">
-                                <Label Text="{Binding FormattedTimestamp}"
-                                       FontSize="12"
-                                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
+                            StrokeShape="RoundRectangle 8"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource SurfaceColor}}"
+                            Margin="0,3"
+                            Padding="10,8">
+                        <Grid RowDefinitions="Auto, Auto, Auto" RowSpacing="4">
+                            
+                            <!-- Header Row: Level Badge, Category Pill, Timestamp, Exception Indicator -->
+                            <HorizontalStackLayout Grid.Row="0" Spacing="6" VerticalOptions="Center">
+                                
                                 <Border BackgroundColor="{Binding Level, Converter={StaticResource LogLevelToColorConverter}}"
                                         StrokeThickness="0"
-                                        Padding="4,2">
-                                    <Label Text="{Binding Level}"
+                                        StrokeShape="RoundRectangle 4"
+                                        Padding="5,1">
+                                    <Label Text="{Binding LevelBadgeText}"
                                            FontSize="10"
                                            TextColor="White"
-                                           FontAttributes="Bold"/>
+                                           FontAttributes="Bold" />
                                 </Border>
+
+                                <Border BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource SurfaceAltColor}}"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 4"
+                                        Padding="5,1">
+                                    <Label Text="{Binding Category}"
+                                           FontSize="10"
+                                           TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray300}}" />
+                                </Border>
+
+                                <Label Text="{Binding FormattedTime}"
+                                       FontSize="11"
+                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
+                                       VerticalOptions="Center" />
+
+                                <Label Text="⚠ Exception"
+                                       FontSize="10"
+                                       TextColor="#E53935"
+                                       FontAttributes="Bold"
+                                       IsVisible="{Binding HasException}"
+                                       VerticalOptions="Center" />
                             </HorizontalStackLayout>
 
-                            <Label Grid.Row="1" Grid.Column="0"
-                                   Text="{Binding RenderedMessage}"
-                                   FontSize="14"
-                                   TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray100}}"
-                                   LineBreakMode="WordWrap"/>
-                            <Label Grid.Row="1" Grid.Column="0"
+                            <!-- Log Message (Single Label - No Overlapping) -->
+                            <Label Grid.Row="1"
                                    Text="{Binding Message}"
-                                   FontSize="14"
+                                   FontSize="13"
                                    TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray100}}"
-                                   LineBreakMode="WordWrap"/>
+                                   LineBreakMode="WordWrap" />
+
+                            <!-- Exception One-Liner Preview (if present) -->
+                            <Border Grid.Row="2"
+                                    IsVisible="{Binding HasException}"
+                                    BackgroundColor="{AppThemeBinding Light=#FFF3E0, Dark=#2C1F0E}"
+                                    Stroke="#FFB74D"
+                                    StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 4"
+                                    Padding="6,3">
+                                <Label Text="{Binding Exception}"
+                                       FontSize="11"
+                                       FontFamily="Consolas, monospace"
+                                       MaxLines="2"
+                                       LineBreakMode="TailTruncation"
+                                       TextColor="{AppThemeBinding Light=#BF360C, Dark=#FFCC80}" />
+                            </Border>
+
                         </Grid>
                     </Border>
                 </DataTemplate>
@@ -109,17 +270,24 @@
             <CollectionView.EmptyView>
                 <VerticalStackLayout HorizontalOptions="Center" 
                                      VerticalOptions="Center"
-                                     Spacing="4">
-                    <Label Text="No log entries found"
+                                     Spacing="8"
+                                     Padding="20">
+                    <Label Text="📝"
+                           FontSize="36"
+                           HorizontalOptions="Center" />
+                    <Label Text="No Log Entries Found"
                            HorizontalOptions="Center"
                            FontSize="16"
-                           TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
-                    <Label Text="Try adding test logs or adjust your filter selection."
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray100}}" />
+                    <Label Text="Try clearing search queries, changing category filters, or tapping 'Test Diagnostics' to generate sample events."
                            HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center"
                            FontSize="12"
-                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray500}}"/>
+                           TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" />
                 </VerticalStackLayout>
             </CollectionView.EmptyView>
         </CollectionView>
+
     </Grid>
 </ContentPage>
