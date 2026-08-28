@@ -1,4 +1,4 @@
-﻿using System.Collections.Specialized;
+using System.Collections.Specialized;
 using CP.Client.Core.Avails;
 using LocalAIAssistant.Services.Logging;
 using LocalAIAssistant.Services.Logging.Interfaces;
@@ -44,6 +44,11 @@ public partial class MainPage : ContentPage
         _logger = logger;
         _logger.LogWarning($"{_mainViewModel.ApiEnvironmentDescriptor.Name}{Environment.NewLine}{_mainViewModel.ApiEnvironmentDescriptor.BaseUrl}"
                          , Category.MainPage);
+
+#if WINDOWS
+        ChatEditor.HandlerChanged += OnChatEditorHandlerChanged;
+        ChatEditor.Loaded         += OnChatEditorLoaded;
+#endif
 
 #if DEBUG && false
         var harness = new TestHarness(_logger);
@@ -127,25 +132,56 @@ public partial class MainPage : ContentPage
 
     // ── Input handlers ────────────────────────────────────────────────────────
 
-    // UX-01: _isPageActive guard — keyboard-dismiss events fired during navigation must not submit.
-    // On Windows, Editor.Completed fires from LostFocus, making IsFocused checks unreliable.
-    // TextChanged is used instead: Return key inserts \n; focus loss does not.
-    // The delta check (newText == oldText + '\n') restricts submission to the Return-at-end-of-input
-    // path only — paste operations add more than one character or insert at a different position.
-    private void OnEditorTextChanged(object? sender, TextChangedEventArgs e)
+#if WINDOWS
+    private void OnChatEditorLoaded(object? sender, EventArgs e)
+    {
+        AttachWindowsKeyHandler();
+    }
+
+    private void OnChatEditorHandlerChanged(object? sender, EventArgs e)
+    {
+        AttachWindowsKeyHandler();
+    }
+
+    private void AttachWindowsKeyHandler()
+    {
+        if (ChatEditor.Handler?.PlatformView is Microsoft.UI.Xaml.Controls.TextBox textBox)
+        {
+            textBox.PreviewKeyDown -= OnTextBoxPreviewKeyDown;
+            textBox.PreviewKeyDown += OnTextBoxPreviewKeyDown;
+        }
+    }
+
+    private void OnTextBoxPreviewKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
     {
         if (!_isPageActive) return;
 
-        var oldText = e.OldTextValue ?? string.Empty;
-        var newText = e.NewTextValue ?? string.Empty;
+        if (e.Key == Windows.System.VirtualKey.Enter)
+        {
+            var isShiftDown = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift)
+                                                                     .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+            var isCtrlDown  = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control)
+                                                                     .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
 
-        if (newText != oldText + '\n') return;
+            if (!isShiftDown && !isCtrlDown)
+            {
+                e.Handled = true;
 
-        if (sender is Editor editor)
-            editor.Text = oldText;
+                if (ChatViewModel.SendCommand.CanExecute(null))
+                {
+                    ChatViewModel.SendCommand.Execute(null);
+                }
+            }
+            // If Shift or Control is pressed, allow WinUI TextBox to insert newline naturally
+        }
+    }
+#endif
 
-        if (ChatViewModel.SendCommand.CanExecute(null))
-            ChatViewModel.SendCommand.Execute(null);
+    // UX-01: _isPageActive guard — keyboard-dismiss events fired during navigation must not submit.
+    // On Windows, Enter-to-send and Shift+Enter multiline insertions are handled via PreviewKeyDown.
+    // On Mobile, Editor allows multiline entry naturally; Send button submits prompt.
+    private void OnEditorTextChanged(object? sender, TextChangedEventArgs e)
+    {
     }
 
     public static Keyboard CreateKeyboard =>

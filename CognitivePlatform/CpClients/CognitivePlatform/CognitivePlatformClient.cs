@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using CP.Client.Core.Avails;
@@ -28,9 +28,10 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
         _loggingService      = loggingService;
     }
 
-    public override async Task<ConverseResponseDto> ConverseAsync( string userMessage
-                                                                 , string conversationId
-                                                                 , string model )
+    public override async Task<ConverseResponseDto> ConverseAsync( string            userMessage
+                                                                 , string            conversationId
+                                                                 , string            model
+                                                                 , CancellationToken ct = default )
     {
         var response = new HttpResponseMessage();
 
@@ -43,13 +44,14 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
                                      , model);
 
             response = await _httpClient.PostAsJsonAsync("api/conversation/converse"
-                                                       , request);
+                                                       , request
+                                                       , ct);
 
             if (response.IsSuccessStatusCode)
             {
                 Connectivity.ReportOnline();
 
-                return await response.Content.ReadFromJsonAsync<ConverseResponseDto>()
+                return await response.Content.ReadFromJsonAsync<ConverseResponseDto>(cancellationToken: ct)
                     ?? new ConverseResponseDto
                        {
                                Message = "(empty response)"
@@ -69,6 +71,11 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
         }
         catch (TaskCanceledException ex)
         {
+            if (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+
             Connectivity.ReportOffline(ex);
             throw;
         }

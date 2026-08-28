@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -94,6 +94,8 @@ public partial class ChatViewModel : ObservableObject
     [ObservableProperty]
     private string _conversationId = string.Empty;
     public bool   HasBeenInitialized { get; private set; }
+
+    private CancellationTokenSource? _activeSendCts;
 
     public ChatViewModel( ILlmService                      llmService
                         , IConversationMemory              conversationMemory
@@ -355,6 +357,16 @@ public partial class ChatViewModel : ObservableObject
 
     public Task StopSpeakingAsync() => _ttsService.StopAsync();
 
+    [RelayCommand]
+    public void Cancel()
+    {
+        if (_activeSendCts is null || _activeSendCts.IsCancellationRequested) return;
+
+        _log.LogInformation("Cancel requested for active chat generation", Category.ChatViewModel);
+        _activeSendCts.Cancel();
+        StopThinking();
+    }
+
     // ── Send ──────────────────────────────────────────────────────────────────
 
     [RelayCommand]
@@ -396,6 +408,8 @@ public partial class ChatViewModel : ObservableObject
         var modelToUse = string.Empty;
 
         IsTyping = true;
+        _activeSendCts = new CancellationTokenSource();
+        var ct = _activeSendCts.Token;
 
         var assistantMsg = new Message
                            {
@@ -498,7 +512,8 @@ public partial class ChatViewModel : ObservableObject
             {
                 var response = await cp.ConverseAsync(text
                                                     , ConversationId
-                                                    , modelToUse)
+                                                    , modelToUse
+                                                    , ct)
                                        .ConfigureAwait(false);
 
                 if (response.IsVaultUnlockRequired || response.IsVaultSetupRequired)
@@ -514,7 +529,8 @@ public partial class ChatViewModel : ObservableObject
                     {
                         response = await cp.ConverseAsync(text
                                                             , ConversationId
-                                                            , modelToUse)
+                                                            , modelToUse
+                                                            , ct)
                                                .ConfigureAwait(false);
                     }
                 }
@@ -542,7 +558,7 @@ public partial class ChatViewModel : ObservableObject
                     }).ConfigureAwait(false);
 
                     var followUpText = confirmed ? "yes" : "no";
-                    response = await cp.ConverseAsync(followUpText, ConversationId, modelToUse).ConfigureAwait(false);
+                    response = await cp.ConverseAsync(followUpText, ConversationId, modelToUse, ct).ConfigureAwait(false);
                 }
 
                 if (response.RequiresAuth && response.AuthUrl.HasValue())
@@ -669,7 +685,8 @@ public partial class ChatViewModel : ObservableObject
 
                 await foreach (var chunk in cp.ConverseStreamAsync(text
                                                                   , ConversationId
-                                                                  , modelToUse))
+                                                                  , modelToUse
+                                                                  , ct))
                 {
                     // Stop the thinking animation as soon as the first real chunk arrives so it
                     // cannot overwrite streamed content. Cancel() is thread-safe per CTS docs.
@@ -727,37 +744,62 @@ public partial class ChatViewModel : ObservableObject
                     Category.ChatViewModel);
             }
         }
+        catch (OperationCanceledException) when (_activeSendCts?.IsCancellationRequested == true)
+        {
+            _log.LogInformation("SendAsync: user cancelled generation", Category.ChatViewModel);
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                assistantMsg.Content = assistantMsg.Content.HasValue() && assistantMsg.Content != "thinking"
+                                           ? assistantMsg.Content + "\n\n⏹ *[Generation stopped]*"
+                                           : "⏹ *Generation stopped.*";
+            });
+            assistantSucceeded = false;
+        }
         catch (Exception ex) when (ex is HttpRequestException || ex is TaskCanceledException || ex is System.Net.Sockets.SocketException)
         {
-            _log.LogWarning($"SendAsync: connectivity error — queuing offline: {ex.Message}", Category.ChatViewModel);
-            try
+            if (_activeSendCts?.IsCancellationRequested == true)
             {
-                await _offlineQueueService.EnqueueAsync(ConversationId
-                                                      , text
-                                                      , modelToUse);
-                await RefreshQueueStatusAsync();
-
+                _log.LogInformation("SendAsync: user cancelled generation during network call", Category.ChatViewModel);
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
-                    assistantMsg.Content = "Connection lost. Message saved to offline queue (will replay when online).";
+                    assistantMsg.Content = assistantMsg.Content.HasValue() && assistantMsg.Content != "thinking"
+                                               ? assistantMsg.Content + "\n\n⏹ *[Generation stopped]*"
+                                               : "⏹ *Generation stopped.*";
                 });
-
-                assistantSucceeded = true;
+                assistantSucceeded = false;
             }
-            catch (Exception dbEx)
+            else
             {
-                _log.LogError(dbEx, "SendAsync: offline queue persist failed", Category.ChatViewModel);
-                var errorMessage = dbEx.Message;
-                MainThread.BeginInvokeOnMainThread(() =>
+                _log.LogWarning($"SendAsync: connectivity error — queuing offline: {ex.Message}", Category.ChatViewModel);
+                try
                 {
-                    assistantMsg.Content = $"⚠ Offline Queue Error: {errorMessage}";
-                    Messages.Add(new Message
-                                 {
-                                         Sender    = "system"
-                                       , Content   = $"Failed to queue message locally:\n{errorMessage}"
-                                       , Timestamp = DateTime.Now
-                                 });
-                });
+                    await _offlineQueueService.EnqueueAsync(ConversationId
+                                                          , text
+                                                          , modelToUse);
+                    await RefreshQueueStatusAsync();
+
+                    await MainThread.InvokeOnMainThreadAsync(() =>
+                    {
+                        assistantMsg.Content = "Connection lost. Message saved to offline queue (will replay when online).";
+                    });
+
+                    assistantSucceeded = true;
+                }
+                catch (Exception dbEx)
+                {
+                    _log.LogError(dbEx, "SendAsync: offline queue persist failed", Category.ChatViewModel);
+                    var errorMessage = dbEx.Message;
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        assistantMsg.Content = $"⚠ Offline Queue Error: {errorMessage}";
+                        Messages.Add(new Message
+                                     {
+                                             Sender    = "system"
+                                           , Content   = $"Failed to queue message locally:\n{errorMessage}"
+                                           , Timestamp = DateTime.Now
+                                     });
+                    });
+                }
             }
         }
         catch (Exception ex)
@@ -782,6 +824,9 @@ public partial class ChatViewModel : ObservableObject
             StopThinking();
             var totalElapsed = DateTime.UtcNow - sendStartedAt;
             _log.LogInformation($"SendAsync: total elapsed {totalElapsed.TotalMilliseconds:F0}ms", Category.ChatViewModel);
+
+            _activeSendCts?.Dispose();
+            _activeSendCts = null;
 
             // IsTyping is an [ObservableProperty] — setting it from a background thread
             // (after ConfigureAwait(false)) causes a WinUI cross-thread exception.

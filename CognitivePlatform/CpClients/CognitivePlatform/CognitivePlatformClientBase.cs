@@ -14,9 +14,10 @@ public abstract class CognitivePlatformClientBase
 {
     public IConnectivityReporter? Connectivity;
 
-    public abstract Task<ConverseResponseDto> ConverseAsync( string userMessage
-                                                           , string conversationId
-                                                           , string model );
+    public abstract Task<ConverseResponseDto> ConverseAsync( string            userMessage
+                                                           , string            conversationId
+                                                           , string            model
+                                                           , CancellationToken ct = default );
 
     public abstract IAsyncEnumerable<string> ConverseStreamAsync( string            userMessage
                                                                 , string            conversationId

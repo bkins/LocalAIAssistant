@@ -275,40 +275,48 @@
                                         </VerticalStackLayout>
                                     </Border>
 
-                                    <Grid ColumnDefinitions="*" VerticalOptions="Start">
+                                    <Grid ColumnDefinitions="*,Auto" VerticalOptions="Start">
                                         <controls:NativeMarkdownView
                                             Grid.Column="0"
                                             Markdown="{Binding DisplayContent}"
                                             HorizontalOptions="Fill"
                                             VerticalOptions="Start" />
-                                        <Label Text="⚡"
-                                               FontSize="14"
-                                               HorizontalOptions="End"
-                                               VerticalOptions="Start"
-                                               Margin="0,-8,-4,0"
-                                               IsVisible="{Binding WasFastPath}"
-                                               InputTransparent="True">
-                                            <Label.Shadow>
-                                                <Shadow Brush="Black"
-                                                        Offset="1,1"
-                                                        Radius="2"
-                                                        Opacity="0.5" />
-                                            </Label.Shadow>
-                                        </Label>
-                                        <Label Text="💡"
-                                               FontSize="14"
-                                               HorizontalOptions="End"
-                                               VerticalOptions="Start"
-                                               Margin="0,-8,-4,0"
-                                               IsVisible="{Binding IsInsight}"
-                                               InputTransparent="True">
-                                            <Label.Shadow>
-                                                <Shadow Brush="Black"
-                                                        Offset="1,1"
-                                                        Radius="2"
-                                                        Opacity="0.5" />
-                                            </Label.Shadow>
-                                        </Label>
+
+                                        <HorizontalStackLayout Grid.Column="1"
+                                                               Spacing="4"
+                                                               VerticalOptions="Start"
+                                                               HorizontalOptions="End"
+                                                               Margin="4,0,0,0">
+                                            <Border IsVisible="{Binding WasFastPath}"
+                                                    BackgroundColor="#332B00"
+                                                    Stroke="#FFD54F"
+                                                    StrokeThickness="1"
+                                                    Padding="4,2">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="4" />
+                                                </Border.StrokeShape>
+                                                <Label Text="⚡ FastPath"
+                                                       FontSize="10"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#FFD54F"
+                                                       VerticalOptions="Center" />
+                                            </Border>
+
+                                            <Border IsVisible="{Binding IsInsight}"
+                                                    BackgroundColor="#2B1A00"
+                                                    Stroke="#FFA000"
+                                                    StrokeThickness="1"
+                                                    Padding="4,2">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="4" />
+                                                </Border.StrokeShape>
+                                                <Label Text="💡 Insight"
+                                                       FontSize="10"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#FFA000"
+                                                       VerticalOptions="Center" />
+                                            </Border>
+                                        </HorizontalStackLayout>
                                     </Grid>
 
                                     <!-- Response Telemetry Footer -->
@@ -342,6 +350,7 @@
                   BackgroundColor="{StaticResource SurfaceColor}">
 
                 <Editor Grid.Column="0"
+                        x:Name="ChatEditor"
                         AutomationId="ChatEditor"
                         Text="{Binding PromptText}"
                         Placeholder="Type a message…"
@@ -371,11 +380,22 @@
                         AutomationId="SendButton"
                         Text="Send"
                         Command="{Binding SendCommand}"
+                        IsVisible="{Binding IsTyping, Converter={StaticResource InverseBoolConverter}}"
                         IsEnabled="{Binding IsTyping, Converter={StaticResource InverseBoolConverter}}"
                         HeightRequest="44"
                         Padding="16,0"
                         Margin="0,0,8,0"
                         BackgroundColor="#4CAF50" />
+
+                <Button Grid.Column="2"
+                        AutomationId="StopButton"
+                        Text="⏹ Stop"
+                        Command="{Binding CancelCommand}"
+                        IsVisible="{Binding IsTyping}"
+                        HeightRequest="44"
+                        Padding="12,0"
+                        Margin="0,0,8,0"
+                        BackgroundColor="#E65100" />
 
                 <Button Grid.Column="3"
                         AutomationId="ClearButton"
