@@ -4,6 +4,20 @@
 
   ------
 
+  ## CP Universe Agent Entry Protocol
+
+  For CP Universe work, begin with the canon documentation workflow:
+
+  1. Read `C:\Users\benho\source\Application Documentation\The CP Universe\Documentation\DOCUMENTATION_HOME.md`.
+  2. Read `C:\Users\benho\source\Application Documentation\The CP Universe\Documentation\AGENT_WORKFLOW.md`.
+  3. Read `C:\Users\benho\source\Application Documentation\The CP Universe\Documentation\Development\STANDARDS.md` before writing code.
+  4. Classify the change before editing: target surface, change type, existing status, documentation layer, required docs, verification, and approval risk.
+  5. Check whether the bug, feature, or behavior already exists in raw intake, backlog source, completed backlog, As-Built, User Guide, Developer Log, source code, or tests.
+  6. Run or propose the triage ritual when raw Bugs/Ideas have accumulated, docs disagree, a major feature wave lands, or Ben asks for documentation hygiene.
+  7. Do not delete, archive, move, or broadly rewrite history/intake without Ben's explicit approval for the exact files or category.
+
+  ------
+
   ## Project Overview
 
   The **Cognitive Platform** (CP) is a natural-language command system backed by a .NET 10 Web API (`CognitivePlatform.Api`) and a .NET MAUI client (`LocalAIAssistant`). The system routes natural language input through a `FastPathResolver` (no LLM cost) or falls back to a Groq LLM. Domains include Tasks, Journal, and Memory. A universal `SqliteObjectStore` provides persistence.
