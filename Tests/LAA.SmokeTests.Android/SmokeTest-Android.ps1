@@ -941,11 +941,24 @@ Run-Test "Memory Management page loads and displays memory action controls" {
     if ($null -eq $clearLong)  { return "Clear Long Term button not found" }
     if ($null -eq $refreshBtn) { return "Refresh button not found" }
 
-    # Verify column headers
+    # Verify memory section selectors/headers. The current mobile layout uses
+    # segmented buttons with counts instead of always-visible column headers.
     $stHeader = Find-Node $dump -Text "Short Term Memory"
+    if ($null -eq $stHeader) {
+        $stHeader = Find-AllNodes $dump "//node[@text]" |
+            Where-Object { $_.text -match '^Short Term \([0-9]+\)$' } |
+            Select-Object -First 1
+    }
+
     $ltHeader = Find-Node $dump -Text "Long Term Memory"
+    if ($null -eq $ltHeader) {
+        $ltHeader = Find-AllNodes $dump "//node[@text]" |
+            Where-Object { $_.text -match '^Long Term \([0-9]+\)$' } |
+            Select-Object -First 1
+    }
+
     if ($null -eq $stHeader -and $null -eq $ltHeader) {
-        return "Memory column headers (Short Term / Long Term) not found"
+        return "Memory section selectors/headers (Short Term / Long Term) not found"
     }
 
     # Return to Chat tab
