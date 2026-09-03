@@ -56,6 +56,16 @@
 	<PropertyGroup Condition="'$(AppEnvironment)' == 'PROD'">
 		<ApplicationTitle>Local AI Assistant (PROD)</ApplicationTitle>
 	</PropertyGroup>
+
+	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+		<BeforeGenerateAndroidManifest>$(BeforeGenerateAndroidManifest);SetAndroidFullVersionName</BeforeGenerateAndroidManifest>
+	</PropertyGroup>
+	
+	<Target Name="SetAndroidFullVersionName" Condition="'$(AndroidFullVersionName)' != ''">
+		<PropertyGroup>
+			<_AndroidVersionName>$(AndroidFullVersionName)</_AndroidVersionName>
+		</PropertyGroup>
+	</Target>
 	
 <!-- GenerateBuildEnvironment -->
 	<PropertyGroup>
