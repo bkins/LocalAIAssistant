@@ -41,6 +41,7 @@ public partial class Message : ObservableObject
     [ObservableProperty] private string _reasoningSummary = "Thought for 0s";
 
     [ObservableProperty] private bool _isCalendarConnectPrompt;
+    [ObservableProperty] private bool _isError;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasTelemetry))]

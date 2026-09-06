@@ -31,6 +31,19 @@ public class MessageTelemetryTests
     }
 
     [Fact]
+    public void IsError_RetainsExplicitErrorState_ForSystemMessages()
+    {
+        var message = new Message
+        {
+            Sender  = "system"
+          , Content = "Connection failed"
+          , IsError = true
+        };
+
+        Assert.True(message.IsError);
+    }
+
+    [Fact]
     public void TelemetryText_FormatsFastPathResponse_Correctly()
     {
         var timestamp = new DateTime(2026, 8, 2, 9, 30, 0);

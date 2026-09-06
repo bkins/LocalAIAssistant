@@ -184,6 +184,15 @@
                                         <Setter Property="HorizontalOptions" Value="Center" />
                                     </DataTrigger>
 
+                                    <DataTrigger TargetType="Border"
+                                                 Binding="{Binding IsError}"
+                                                 Value="True">
+                                        <Setter Property="BackgroundColor"   Value="#3A1010" />
+                                        <Setter Property="Stroke"            Value="#E57373" />
+                                        <Setter Property="StrokeThickness"   Value="1" />
+                                        <Setter Property="HorizontalOptions" Value="Center" />
+                                    </DataTrigger>
+
                                     <!-- Insight override: amber card, left-aligned -->
                                     <DataTrigger TargetType="Border"
                                                  Binding="{Binding IsInsight}"

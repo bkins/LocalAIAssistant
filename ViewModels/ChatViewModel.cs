@@ -807,6 +807,7 @@ public partial class ChatViewModel : ObservableObject
                                      {
                                              Sender    = "system"
                                            , Content   = $"⚠ API rate limit reached:\n{response.Message}"
+                                           , IsError   = true
                                            , Timestamp = DateTime.Now
                                      });
 
@@ -1008,6 +1009,7 @@ public partial class ChatViewModel : ObservableObject
                                      {
                                              Sender    = "system"
                                            , Content   = $"Failed to queue message locally:\n{errorMessage}"
+                                           , IsError   = true
                                            , Timestamp = DateTime.Now
                                      });
                     });
@@ -1027,6 +1029,7 @@ public partial class ChatViewModel : ObservableObject
                              {
                                      Sender    = "system"
                                    , Content   = $"Error contacting CognitivePlatform:\n{errorMessage}"
+                                   , IsError   = true
                                    , Timestamp = DateTime.Now
                              });
             });
