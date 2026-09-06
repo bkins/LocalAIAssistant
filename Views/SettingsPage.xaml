@@ -216,10 +216,20 @@
                            FontAttributes="Bold"
                            TextColor="{StaticResource PrimaryTextColor}"
                            IsVisible="{Binding IsAzureSelected}" />
-                    <Entry Text="{Binding TtsAzureKey}"
-                           Placeholder="Paste your Azure Speech key here"
-                           IsPassword="True"
-                           IsVisible="{Binding IsAzureSelected}" />
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="8"
+                          IsVisible="{Binding IsAzureSelected}">
+                        <Entry Grid.Column="0"
+                               Text="{Binding TtsAzureKey}"
+                               Placeholder="Paste your Azure Speech key here"
+                               IsPassword="{Binding IsAzureKeyMasked}" />
+                        <Button Grid.Column="1"
+                                Text="👁"
+                                Command="{Binding ToggleAzureKeyVisibilityCommand}"
+                                SemanticProperties.Description="Show or hide Azure Speech key"
+                                WidthRequest="48"
+                                Padding="0" />
+                    </Grid>
 
                     <Label Text="Azure Region"
                            FontSize="13"
@@ -241,10 +251,20 @@
                            FontAttributes="Bold"
                            TextColor="{StaticResource PrimaryTextColor}"
                            IsVisible="{Binding IsElevenLabsSelected}" />
-                    <Entry Text="{Binding TtsElevenLabsKey}"
-                           Placeholder="Paste your ElevenLabs API key here"
-                           IsPassword="True"
-                           IsVisible="{Binding IsElevenLabsSelected}" />
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="8"
+                          IsVisible="{Binding IsElevenLabsSelected}">
+                        <Entry Grid.Column="0"
+                               Text="{Binding TtsElevenLabsKey}"
+                               Placeholder="Paste your ElevenLabs API key here"
+                               IsPassword="{Binding IsElevenLabsKeyMasked}" />
+                        <Button Grid.Column="1"
+                                Text="👁"
+                                Command="{Binding ToggleElevenLabsKeyVisibilityCommand}"
+                                SemanticProperties.Description="Show or hide ElevenLabs API key"
+                                WidthRequest="48"
+                                Padding="0" />
+                    </Grid>
 
                     <Label Text="Voice selection is available in the chat screen voice picker."
                            FontSize="11"

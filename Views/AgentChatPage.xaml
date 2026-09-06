@@ -53,7 +53,7 @@
                                 Margin="0,6"
                                 Stroke="#000000"
                                 StrokeThickness="0"
-                                MaximumWidthRequest="480"
+                                MaximumWidthRequest="900"
                                 HorizontalOptions="Start"
                                 VerticalOptions="Start"
                                 BackgroundColor="{StaticResource SurfaceColor}">

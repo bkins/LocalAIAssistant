@@ -79,6 +79,8 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string _ttsAzureKey;
     [ObservableProperty] private string _ttsAzureRegion;
     [ObservableProperty] private string _ttsElevenLabsKey;
+    [ObservableProperty] private bool _isAzureKeyMasked = true;
+    [ObservableProperty] private bool _isElevenLabsKeyMasked = true;
 
     public IReadOnlyList<string> TtsProviders { get; } = new[]
     {
@@ -89,6 +91,12 @@ public partial class SettingsViewModel : ObservableObject
 
     public bool IsAzureSelected      => SelectedTtsProvider == TtsProvider.Azure;
     public bool IsElevenLabsSelected  => SelectedTtsProvider == TtsProvider.ElevenLabs;
+
+    [RelayCommand]
+    private void ToggleAzureKeyVisibility() => IsAzureKeyMasked = !IsAzureKeyMasked;
+
+    [RelayCommand]
+    private void ToggleElevenLabsKeyVisibility() => IsElevenLabsKeyMasked = !IsElevenLabsKeyMasked;
 
     // ── Health Connect (Android-only) ─────────────────────────────────────────
     [ObservableProperty] private string _healthStatusText = "Checking…";
