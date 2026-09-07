@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using LocalAIAssistant.Core.Parsing;
 
+using System.Text.Json.Serialization;
+
 namespace LocalAIAssistant.Data.Models;
 
 public partial class Message : ObservableObject
@@ -42,6 +44,12 @@ public partial class Message : ObservableObject
 
     [ObservableProperty] private bool _isCalendarConnectPrompt;
     [ObservableProperty] private bool _isError;
+
+    // This state only controls the live chat placeholder. It must never be restored
+    // from a saved conversation as a permanently spinning message.
+    [ObservableProperty]
+    [property: JsonIgnore]
+    private bool _isThinking;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasTelemetry))]

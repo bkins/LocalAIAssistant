@@ -282,9 +282,23 @@
                                     </Border>
 
                                     <Grid ColumnDefinitions="*,Auto" VerticalOptions="Start">
+                                        <HorizontalStackLayout Grid.Column="0"
+                                                               Spacing="8"
+                                                               IsVisible="{Binding IsThinking}"
+                                                               VerticalOptions="Center">
+                                            <ActivityIndicator IsRunning="{Binding IsThinking}"
+                                                               Color="White"
+                                                               HeightRequest="20"
+                                                               WidthRequest="20" />
+                                            <Label Text="Thinking…"
+                                                   TextColor="White"
+                                                   VerticalTextAlignment="Center" />
+                                        </HorizontalStackLayout>
+
                                         <controls:NativeMarkdownView
                                             Grid.Column="0"
                                             Markdown="{Binding DisplayContent}"
+                                            IsVisible="{Binding IsThinking, Converter={StaticResource InverseBoolConverter}}"
                                             HorizontalOptions="Fill"
                                             VerticalOptions="Start" />
 
@@ -328,6 +342,7 @@
                                     <Button Text="Copy"
                                             Clicked="OnCopyMessageClicked"
                                             SemanticProperties.Description="Copy message"
+                                            IsVisible="{Binding IsThinking, Converter={StaticResource InverseBoolConverter}}"
                                             HeightRequest="{OnPlatform Android=48, Default=32}"
                                             MinimumWidthRequest="{OnPlatform Android=48, Default=48}"
                                             Padding="8,0"

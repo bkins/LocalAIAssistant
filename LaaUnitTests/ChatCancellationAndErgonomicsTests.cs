@@ -1,11 +1,28 @@
 using CP.Client.Core.Avails;
 using LocalAIAssistant.Data.Models;
+using System.Text.Json;
 using Xunit;
 
 namespace LaaUnitTests;
 
 public class ChatCancellationAndErgonomicsTests
 {
+    [Fact]
+    public void Message_ThinkingState_IsTransientAndDefaultsFalse()
+    {
+        Assert.False(new Message().IsThinking);
+
+        var message = new Message
+        {
+            Sender = "assistant"
+          , Content = string.Empty
+          , IsThinking = true
+        };
+
+        Assert.True(message.IsThinking);
+        Assert.DoesNotContain("IsThinking", JsonSerializer.Serialize(message));
+    }
+
     [Fact]
     public void Message_DisplayContent_StripsInsightPrefix_WhenIsInsightIsTrue()
     {

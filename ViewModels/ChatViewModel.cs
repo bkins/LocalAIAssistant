@@ -575,7 +575,6 @@ public partial class ChatViewModel : ObservableObject
         {
             // CTS was disposed concurrently in SendAsync finally block
         }
-        StopThinking();
     }
 
     // ── Send ──────────────────────────────────────────────────────────────────
@@ -626,13 +625,12 @@ public partial class ChatViewModel : ObservableObject
         var assistantMsg = new Message
                            {
                                    Sender         = "assistant"
-                                 , Content        = "thinking"
+                                 , Content        = string.Empty
+                                 , IsThinking     = true
                                  , Timestamp      = DateTime.Now
                                  , ConversationId = ConversationId
                            };
         Messages.Add(assistantMsg);
-
-        _ = StartThinkingAsync(assistantMsg);
 
         // Tracks whether the API was actually reached so we only
         // refresh usage when a real Groq call may have been made.
@@ -659,6 +657,7 @@ public partial class ChatViewModel : ObservableObject
 
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
+                    assistantMsg.IsThinking = false;
                     assistantMsg.Content = "Message saved to offline queue (currently offline).";
                 });
 
@@ -834,10 +833,7 @@ public partial class ChatViewModel : ObservableObject
 
                     await MainThread.InvokeOnMainThreadAsync(() =>
                     {
-                        // Cancel the thinking animation atomically on the main thread BEFORE
-                        // writing the real content. Any animation BeginInvokeOnMainThread
-                        // callbacks already queued will see the cancellation flag and skip.
-                        _thinkingCts?.Cancel();
+                        assistantMsg.IsThinking          = false;
 
                         assistantMsg.Content             = cleanMessage;
                         assistantMsg.WasFastPath         = response.WasFastPath;
@@ -901,15 +897,11 @@ public partial class ChatViewModel : ObservableObject
                                                                   , modelToUse
                                                                   , ct))
                 {
-                    // Stop the thinking animation as soon as the first real chunk arrives so it
-                    // cannot overwrite streamed content. Cancel() is thread-safe per CTS docs.
-                    if (hasReceivedFirstChunk.Not())
-                        _thinkingCts?.Cancel();
-
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
                         if (hasReceivedFirstChunk.Not())
                         {
+                            assistantMsg.IsThinking = false;
                             assistantMsg.Content  = string.Empty;
                             hasReceivedFirstChunk = true;
                         }
@@ -924,7 +916,7 @@ public partial class ChatViewModel : ObservableObject
                 var streamDurationMs = (DateTime.UtcNow - sendStartedAt).TotalMilliseconds;
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
-                    _thinkingCts?.Cancel();
+                    assistantMsg.IsThinking = false;
                     assistantMsg.ResponseDurationMs = streamDurationMs;
                     if (assistantMsg.Provider.IsNullOrEmpty())
                         assistantMsg.Provider = "Groq";
@@ -962,7 +954,9 @@ public partial class ChatViewModel : ObservableObject
             _log.LogInformation("SendAsync: user cancelled generation", Category.ChatViewModel);
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
-                assistantMsg.Content = assistantMsg.Content.HasValue() && assistantMsg.Content != "thinking"
+                var hadResponse = assistantMsg.IsThinking.Not() && assistantMsg.Content.HasValue();
+                assistantMsg.IsThinking = false;
+                assistantMsg.Content = hadResponse
                                            ? assistantMsg.Content + "\n\n⏹ *[Generation stopped]*"
                                            : "⏹ *Generation stopped.*";
             });
@@ -975,7 +969,9 @@ public partial class ChatViewModel : ObservableObject
                 _log.LogInformation("SendAsync: user cancelled generation during network call", Category.ChatViewModel);
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
-                    assistantMsg.Content = assistantMsg.Content.HasValue() && assistantMsg.Content != "thinking"
+                    var hadResponse = assistantMsg.IsThinking.Not() && assistantMsg.Content.HasValue();
+                    assistantMsg.IsThinking = false;
+                    assistantMsg.Content = hadResponse
                                                ? assistantMsg.Content + "\n\n⏹ *[Generation stopped]*"
                                                : "⏹ *Generation stopped.*";
                 });
@@ -993,6 +989,7 @@ public partial class ChatViewModel : ObservableObject
 
                     await MainThread.InvokeOnMainThreadAsync(() =>
                     {
+                        assistantMsg.IsThinking = false;
                         assistantMsg.Content = "Connection lost. Message saved to offline queue (will replay when online).";
                     });
 
@@ -1004,6 +1001,7 @@ public partial class ChatViewModel : ObservableObject
                     var errorMessage = dbEx.Message;
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
+                        assistantMsg.IsThinking = false;
                         assistantMsg.Content = $"⚠ Offline Queue Error: {errorMessage}";
                         Messages.Add(new Message
                                      {
@@ -1024,6 +1022,7 @@ public partial class ChatViewModel : ObservableObject
             var errorMessage = ex.Message;
             MainThread.BeginInvokeOnMainThread(() =>
             {
+                assistantMsg.IsThinking = false;
                 assistantMsg.Content = $"⚠ Error: {errorMessage}";
                 Messages.Add(new Message
                              {
@@ -1036,7 +1035,6 @@ public partial class ChatViewModel : ObservableObject
         }
         finally
         {
-            StopThinking();
             var totalElapsed = DateTime.UtcNow - sendStartedAt;
             _log.LogInformation($"SendAsync: total elapsed {totalElapsed.TotalMilliseconds:F0}ms", Category.ChatViewModel);
 
@@ -1045,7 +1043,11 @@ public partial class ChatViewModel : ObservableObject
 
             // IsTyping is an [ObservableProperty] — setting it from a background thread
             // (after ConfigureAwait(false)) causes a WinUI cross-thread exception.
-            MainThread.BeginInvokeOnMainThread(() => IsTyping = false);
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                assistantMsg.IsThinking = false;
+                IsTyping = false;
+            });
 
             // Refresh usage after every turn that reached the API.
             // Non-fatal — runs fire-and-forget so it never delays the UI.
@@ -1340,6 +1342,7 @@ public partial class ChatViewModel : ObservableObject
 
                     await MainThread.InvokeOnMainThreadAsync(() =>
                     {
+                        assistantMsg.IsThinking = false;
                         assistantMsg.Content   = answer;
                         assistantMsg.IsViaCoco = true;
                         if (sources?.Count > 0)
@@ -1350,11 +1353,9 @@ public partial class ChatViewModel : ObservableObject
                     break;
                 }
 
-                // Stage progress event — stop the generic thinking animation and show the
-                // Coco pipeline stage so the user sees what's happening (searching, analyzing…).
+                // Stage progress replaces the generic spinner with the Coco pipeline stage.
                 if (!stoppedThinkingForCoco)
                 {
-                    _thinkingCts?.Cancel();
                     stoppedThinkingForCoco = true;
                 }
 
@@ -1363,6 +1364,7 @@ public partial class ChatViewModel : ObservableObject
                 {
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
+                        assistantMsg.IsThinking = false;
                         assistantMsg.Content = $"🔵 {stageLabel}…";
                     });
                 }
@@ -1376,6 +1378,7 @@ public partial class ChatViewModel : ObservableObject
         {
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
+                assistantMsg.IsThinking = false;
                 assistantMsg.Content = $"⚠ Coco error: {ex.Message}";
             });
             return;
@@ -1386,6 +1389,7 @@ public partial class ChatViewModel : ObservableObject
             var baseUrl = Preferences.Default.Get(StringConsts.CocoBaseUrlPrefKey, StringConsts.CocoDefaultBaseUrl);
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
+                assistantMsg.IsThinking = false;
                 assistantMsg.Content = $"⚠ Coco is unavailable. Check that the Coco API is running at {baseUrl}.";
             });
         }
