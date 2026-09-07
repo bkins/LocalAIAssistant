@@ -1,5 +1,6 @@
 using System.Collections.Specialized;
 using CP.Client.Core.Avails;
+using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Services.Logging;
 using LocalAIAssistant.Services.Logging.Interfaces;
 using LocalAIAssistant.ViewModels;
@@ -353,20 +354,15 @@ public partial class MainPage : ContentPage
         await ChatViewModel.ClearMessagesAsync();
     }
 
-    private async void OnMessageTapped(object sender, TappedEventArgs e)
+    private async void OnCopyMessageClicked(object sender, EventArgs e)
     {
-        if (sender is not Border border)
+        if (sender is not Button copyButton)
             return;
 
-        var message = border.BindingContext;
-
-        var contentProp = message?.GetType().GetProperty("Content");
-        var text        = contentProp?.GetValue(message)?.ToString();
-
-        if (text.HasNoValue())
+        if (copyButton.BindingContext is not Message { Content.Length: > 0 } message)
             return;
 
-        await Clipboard.Default.SetTextAsync(text);
+        await Clipboard.Default.SetTextAsync(message.Content);
 
         // Optional: UX feedback
         await DisplayToast("Copied to clipboard");
