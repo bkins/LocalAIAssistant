@@ -4,8 +4,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CP.Client.Core.Common.ConnectivityToApi;
 using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
+using LocalAIAssistant.CognitivePlatform.CpClients.Personas;
 using LocalAIAssistant.Core.Environment;
 using LocalAIAssistant.Core.Environment.Models;
+using LocalAIAssistant.Data;
 using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.Interfaces;
 
@@ -18,6 +20,7 @@ public partial class AppShellMasterViewModel : ObservableObject, IDisposable
     private readonly EnvironmentHandshakeState                                         _handshakeState;
     private static   IConnectivityState                                                _connectivity;
     private readonly ICognitivePlatformClientFactory                                   _cpClientFactory;
+    private readonly IMemoryConfirmationApiClient                                      _memoryConfirmationApiClient;
     private readonly IOfflineQueueService                                              _offlineQueueService;
     private readonly System.ComponentModel.PropertyChangedEventHandler?                _environmentPropertyChangedHandler;
     private readonly EventHandler<CP.Client.Core.Common.ConnectivityToApi.ConnectivityStatus>? _connectivityChangedHandler;
@@ -25,15 +28,30 @@ public partial class AppShellMasterViewModel : ObservableObject, IDisposable
 
     [ObservableProperty] private int _pendingQueueCount;
 
-    // Pending persona-memory confirmations (Provisional → Reinforced → Canonical).
-    // Populated by the memory confirmation service once that pipeline is wired.
+    // Pending persona-memory confirmations for the currently active conversation.
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(MemoryTabTitle))]
+    [NotifyPropertyChangedFor(nameof(HasPendingMemoryConfirmation))]
+    [NotifyPropertyChangedFor(nameof(HasStalePendingMemoryConfirmation))]
+    [NotifyPropertyChangedFor(nameof(MemoryBadgeAccessibilityText))]
     private int _pendingMemoryConfirmationCount;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasStalePendingMemoryConfirmation))]
+    [NotifyPropertyChangedFor(nameof(MemoryBadgeAccessibilityText))]
+    private bool _isPendingMemoryConfirmationCountStale;
+
+    private string _memoryConfirmationConversationId = string.Empty;
 
     public string MemoryTabTitle => PendingMemoryConfirmationCount > 0
         ? $"Memory ({PendingMemoryConfirmationCount})"
         : "Memory";
+
+    public bool HasPendingMemoryConfirmation => PendingMemoryConfirmationCount > 0;
+    public bool HasStalePendingMemoryConfirmation => HasPendingMemoryConfirmation && IsPendingMemoryConfirmationCountStale;
+    public string MemoryBadgeAccessibilityText => HasStalePendingMemoryConfirmation
+        ? $"{PendingMemoryConfirmationCount} pending memory confirmations. Count may be stale while offline."
+        : $"{PendingMemoryConfirmationCount} pending memory confirmations.";
 
 
     public static bool IsOffline => _connectivity.IsOffline;
@@ -69,6 +87,7 @@ public partial class AppShellMasterViewModel : ObservableObject, IDisposable
                                   , EnvironmentHandshakeState       handshakeState
                                   , IConnectivityState              connectivity
                                   , ICognitivePlatformClientFactory cpClientFactory
+                                  , IMemoryConfirmationApiClient    memoryConfirmationApiClient
                                   , IOfflineQueueService            offlineQueueService )
     {
         ApiHealthViewModel = apiHealthViewModel;
@@ -76,6 +95,7 @@ public partial class AppShellMasterViewModel : ObservableObject, IDisposable
         UsageViewModel     = usageViewModel;
 
         _cpClientFactory = cpClientFactory;
+        _memoryConfirmationApiClient = memoryConfirmationApiClient;
         _statusColor     = Colors.Red;
 
         _environment = environment;
@@ -122,6 +142,8 @@ public partial class AppShellMasterViewModel : ObservableObject, IDisposable
         try
         {
             await RefreshQueueCountAsync();
+            RestoreMemoryConfirmationState();
+            await RefreshPendingMemoryConfirmationCountAsync();
         }
         catch
         {
@@ -155,6 +177,77 @@ public partial class AppShellMasterViewModel : ObservableObject, IDisposable
     public async Task RefreshQueueCountAsync()
     {
         PendingQueueCount = await _offlineQueueService.GetPendingCountAsync();
+    }
+
+    public async Task ActivateMemoryConfirmationConversationAsync(string conversationId)
+    {
+        RestoreMemoryConfirmationState(conversationId);
+        await RefreshPendingMemoryConfirmationCountAsync(conversationId);
+    }
+
+    public async Task RefreshPendingMemoryConfirmationCountAsync(string? conversationId = null)
+    {
+        var activeConversationId = conversationId ?? Preferences.Default.Get(StringConsts.ActiveConversationIdKey, string.Empty);
+        if (string.IsNullOrWhiteSpace(activeConversationId)) return;
+
+        if (!string.Equals(_memoryConfirmationConversationId, activeConversationId, StringComparison.Ordinal))
+        {
+            RestoreMemoryConfirmationState(activeConversationId);
+        }
+
+        try
+        {
+            var refreshResult = await _memoryConfirmationApiClient.RefreshAsync(activeConversationId);
+            if (!string.Equals(_memoryConfirmationConversationId, activeConversationId, StringComparison.Ordinal))
+                return;
+
+            if (refreshResult.IsAuthoritative)
+            {
+                UpdatePendingMemoryConfirmationCount(refreshResult.PendingCount, activeConversationId);
+            }
+            else if (HasPendingMemoryConfirmation)
+            {
+                IsPendingMemoryConfirmationCountStale = true;
+            }
+        }
+        catch
+        {
+            if (HasPendingMemoryConfirmation)
+            {
+                IsPendingMemoryConfirmationCountStale = true;
+            }
+        }
+    }
+
+    public void UpdatePendingMemoryConfirmationCount(int pendingCount, string conversationId)
+    {
+        if (string.IsNullOrWhiteSpace(conversationId)) return;
+
+        _memoryConfirmationConversationId = conversationId;
+        PendingMemoryConfirmationCount = Math.Max(0, pendingCount);
+        IsPendingMemoryConfirmationCountStale = false;
+
+        Preferences.Default.Set(StringConsts.PendingMemoryConfirmationConversationIdPrefKey, conversationId);
+        Preferences.Default.Set(StringConsts.PendingMemoryConfirmationCountPrefKey, PendingMemoryConfirmationCount);
+        Preferences.Default.Set(StringConsts.PendingMemoryConfirmationUpdatedUtcPrefKey, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+    }
+
+    private void RestoreMemoryConfirmationState(string? conversationId = null)
+    {
+        var activeConversationId = conversationId ?? Preferences.Default.Get(StringConsts.ActiveConversationIdKey, string.Empty);
+        if (string.IsNullOrWhiteSpace(activeConversationId)) return;
+
+        var cachedConversationId = Preferences.Default.Get(StringConsts.PendingMemoryConfirmationConversationIdPrefKey, string.Empty);
+        _memoryConfirmationConversationId = activeConversationId;
+        if (string.Equals(cachedConversationId, activeConversationId, StringComparison.Ordinal))
+        {
+            PendingMemoryConfirmationCount = Math.Max(0, Preferences.Default.Get(StringConsts.PendingMemoryConfirmationCountPrefKey, 0));
+            IsPendingMemoryConfirmationCountStale = HasPendingMemoryConfirmation;
+            return;
+        }
+
+        PendingMemoryConfirmationCount = 0;
+        IsPendingMemoryConfirmationCountStale = false;
     }
 
     [RelayCommand]

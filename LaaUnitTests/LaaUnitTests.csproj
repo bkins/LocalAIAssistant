@@ -51,6 +51,8 @@
     <Compile Include="../CognitivePlatform/DTOs/InsightDto.cs" Link="Linked/InsightDto.cs" />
     <Compile Include="../CognitivePlatform/DTOs/MealDto.cs" Link="Linked/MealDto.cs" />
     <Compile Include="../CognitivePlatform/DTOs/NutritionSummaryDto.cs" Link="Linked/NutritionSummaryDto.cs" />
+    <Compile Include="../CognitivePlatform/CpClients/Personas/IMemoryConfirmationApiClient.cs" Link="Linked/IMemoryConfirmationApiClient.cs" />
+    <Compile Include="../CognitivePlatform/CpClients/Personas/MemoryConfirmationApiClient.cs" Link="Linked/MemoryConfirmationApiClient.cs" />
     <Compile Include="../CognitivePlatform/CpClients/Tasks/ITaskApiClient.cs" Link="Linked/ITaskApiClient.cs" />
     <Compile Include="../CognitivePlatform/CpClients/Tasks/TaskApiClient.cs" Link="Linked/TaskApiClient.cs" />
     <Compile Include="../CognitivePlatform/CpClients/Journal/IJournalApiClient.cs" Link="Linked/IJournalApiClient.cs" />

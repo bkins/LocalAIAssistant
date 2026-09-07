@@ -54,7 +54,6 @@ public partial class MemoryManagementViewModel : ObservableObject, IDisposable
     [RelayCommand]
     public async Task ConfirmAllProvisionalMemoriesAsync()
     {
-        _appShellMasterViewModel.PendingMemoryConfirmationCount = 0;
         IsProvisionalReviewVisible = false;
         await LoadAsync();
     }
@@ -62,7 +61,6 @@ public partial class MemoryManagementViewModel : ObservableObject, IDisposable
     [RelayCommand]
     public async Task DismissAllProvisionalMemoriesAsync()
     {
-        _appShellMasterViewModel.PendingMemoryConfirmationCount = 0;
         IsProvisionalReviewVisible = false;
         await LoadAsync();
     }
@@ -101,6 +99,7 @@ public partial class MemoryManagementViewModel : ObservableObject, IDisposable
     [RelayCommand]
     public async Task LoadAsync()
     {
+        await _appShellMasterViewModel.RefreshPendingMemoryConfirmationCountAsync();
         OnPropertyChanged(nameof(PendingMemoryConfirmationCount));
         OnPropertyChanged(nameof(HasPendingMemoryConfirmation));
 

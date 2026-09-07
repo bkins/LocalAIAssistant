@@ -16,6 +16,9 @@ public static class StringConsts
     public const string SelectedPersonalityPrefKey  = "SelectedPersonalityName";
     public const string ActiveConversationIdKey     = "ActiveConversationId";
     public const string ChatDraftPromptPrefKey      = "ChatDraftPrompt";
+    public const string PendingMemoryConfirmationConversationIdPrefKey = "PendingMemoryConfirmationConversationId";
+    public const string PendingMemoryConfirmationCountPrefKey          = "PendingMemoryConfirmationCount";
+    public const string PendingMemoryConfirmationUpdatedUtcPrefKey     = "PendingMemoryConfirmationUpdatedUtc";
 
     public const string TtsEnabledPrefKey            = "TtsEnabled";
     public const string TtsPreferredVoiceNamePrefKey = "TtsPreferredVoiceName";

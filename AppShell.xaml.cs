@@ -24,37 +24,6 @@ public partial class AppShell : Shell
 
 		TitleViewGrid.BindingContext = masterViewModel;
 
-		_viewModel.PropertyChanged += (s, e) =>
-		{
-			if (e.PropertyName == nameof(AppShellMasterViewModel.PendingMemoryConfirmationCount) || e.PropertyName == nameof(AppShellMasterViewModel.PendingQueueCount))
-			{
-				MainThread.BeginInvokeOnMainThread(() =>
-				{
-					try
-					{
-						int count = _viewModel.PendingMemoryConfirmationCount;
-						if (count > 0)
-						{
-							MemoryBadgeFrame.BackgroundColor = Color.FromArgb("#7C5CE6");
-							MemoryBadgeIcon.Text = "🧠";
-							MemoryBadgeLabel.Text = count.ToString();
-						}
-						else
-						{
-							MemoryBadgeFrame.BackgroundColor = Colors.Transparent;
-							MemoryBadgeIcon.Text = string.Empty;
-							MemoryBadgeLabel.Text = string.Empty;
-						}
-						TitleViewGrid.InvalidateMeasure();
-						BadgesLayout.InvalidateMeasure();
-					}
-					catch
-					{
-					}
-				});
-			}
-		};
-
 //Main / Chat
 		Routing.RegisterRoute(nameof(MainPage)
 		                    , typeof(MainPage));

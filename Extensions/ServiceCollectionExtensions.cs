@@ -1,6 +1,7 @@
 using LocalAIAssistant.Services.Google;
 using LocalAIAssistant.CognitivePlatform.CpClients.BrainDump;
 using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
+using LocalAIAssistant.CognitivePlatform.CpClients.Personas;
 #if WINDOWS
 using LocalAIAssistant.Platforms.Windows;
 #endif
@@ -66,6 +67,13 @@ public static class ServiceCollectionExtensions
             var factory = sp.GetRequiredService<IHttpClientFactory>();
             var client  = factory.CreateClient(HttpClientNames.CpApi);
             return new ConversationApiClient(client);
+        });
+
+        services.AddSingleton<IMemoryConfirmationApiClient>(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            var client  = factory.CreateClient(HttpClientNames.CpApi);
+            return new MemoryConfirmationApiClient(client);
         });
 
         services.AddTransient<ILlmService, LlmService>();

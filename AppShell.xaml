@@ -101,22 +101,31 @@
                  <!-- Memory confirmation badge — tapping navigates to the Memory tab -->
                 <Frame x:Name="MemoryBadgeFrame"
                        AutomationId="MemoryBadgeFrame"
-                       BackgroundColor="Transparent"
+                       BackgroundColor="#7C5CE6"
                        Padding="4,2"
                        CornerRadius="20"
-                       HasShadow="False">
+                       HasShadow="False"
+                       IsVisible="{Binding HasPendingMemoryConfirmation}"
+                       SemanticProperties.Description="{Binding MemoryBadgeAccessibilityText}">
                     <Frame.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding GoToMemoryCommand}" />
                     </Frame.GestureRecognizers>
                     <HorizontalStackLayout Spacing="2">
                         <Label x:Name="MemoryBadgeIcon"
-                               Text=""
+                               Text="🧠"
                                FontSize="9"
                                VerticalOptions="Center" />
                         <Label x:Name="MemoryBadgeLabel"
-                               Text=""
+                               Text="{Binding PendingMemoryConfirmationCount}"
                                TextColor="White"
                                FontSize="10"
+                               VerticalOptions="Center" />
+                        <Label AutomationId="MemoryBadgeStaleIndicator"
+                               Text="•"
+                               TextColor="#FCD34D"
+                               FontSize="14"
+                               IsVisible="{Binding HasStalePendingMemoryConfirmation}"
+                               SemanticProperties.Description="Pending memory count may be stale while offline"
                                VerticalOptions="Center" />
                     </HorizontalStackLayout>
                 </Frame>

@@ -590,7 +590,7 @@ public partial class ChatViewModel : ObservableObject
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                _appShellMasterViewModel.PendingMemoryConfirmationCount = 3;
+                _appShellMasterViewModel.UpdatePendingMemoryConfirmationCount(3, ConversationId);
             });
             PromptText = string.Empty;
             return;
@@ -850,7 +850,7 @@ public partial class ChatViewModel : ObservableObject
                         {
                             assistantMsg.ReasoningSummary = $"Thought for {(responseDurationMs / 1000.0):F1}s";
                         }
-                        _appShellMasterViewModel.PendingMemoryConfirmationCount = response.PendingMemoryCount;
+                        _appShellMasterViewModel.UpdatePendingMemoryConfirmationCount(response.PendingMemoryCount, ConversationId);
                         if (tierNotice is not null)
                             assistantMsg.TierNotice = tierNotice;
 
@@ -1087,6 +1087,7 @@ public partial class ChatViewModel : ObservableObject
         var newConversationId = Guid.NewGuid().ToString();
         Preferences.Set(StringConsts.ActiveConversationIdKey, newConversationId);
         ConversationId = newConversationId;
+        await _appShellMasterViewModel.ActivateMemoryConfirmationConversationAsync(newConversationId);
 
         _log.LogInformation("Started new chat (STM cleared, ConversationId rotated).");
     }
@@ -1097,6 +1098,7 @@ public partial class ChatViewModel : ObservableObject
 
         Preferences.Set(StringConsts.ActiveConversationIdKey, conversationId);
         ConversationId = conversationId;
+        await _appShellMasterViewModel.ActivateMemoryConfirmationConversationAsync(conversationId);
 
         // InitializeAsync falls back to STM when the server is unreachable. Clear STM
         // only after the load so offline users see their locally-persisted history
