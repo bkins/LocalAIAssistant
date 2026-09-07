@@ -6,6 +6,9 @@
              Title="Settings">
 
     <ScrollView Padding="0,8">
+        <ScrollView.GestureRecognizers>
+            <TapGestureRecognizer Tapped="OnSettingsBackgroundTapped" />
+        </ScrollView.GestureRecognizers>
         <VerticalStackLayout Spacing="0">
 
             <!-- ═══════════════════════════════════════════ -->
@@ -43,7 +46,9 @@
                            FontSize="13"
                            FontAttributes="Bold"
                            TextColor="{StaticResource PrimaryTextColor}" />
-                    <Entry Text="{Binding Endpoint}"
+                    <Entry x:Name="EndpointEntry"
+                           Text="{Binding Endpoint}"
+                           Keyboard="Url"
                            Placeholder="http://localhost:11434" />
 
                 </VerticalStackLayout>
@@ -359,7 +364,9 @@
                            FontSize="13"
                            FontAttributes="Bold"
                            TextColor="{StaticResource PrimaryTextColor}" />
-                    <Entry Text="{Binding CocoBaseUrl, Mode=TwoWay}"
+                    <Entry x:Name="CocoBaseUrlEntry"
+                           Text="{Binding CocoBaseUrl, Mode=TwoWay}"
+                           Keyboard="Url"
                            Placeholder="http://localhost:5292" />
 
                     <BoxView HeightRequest="1"

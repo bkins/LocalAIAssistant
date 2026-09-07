@@ -16,6 +16,12 @@ public partial class SettingsPage : ContentPage
         _ = ((SettingsViewModel)BindingContext).RefreshHealthStatusAsync();
     }
 
+    private void OnSettingsBackgroundTapped(object sender, TappedEventArgs e)
+    {
+        EndpointEntry.Unfocus();
+        CocoBaseUrlEntry.Unfocus();
+    }
+
     private async void OnSendTestNotificationClicked(object sender, EventArgs e)
     {
         if (BindingContext is SettingsViewModel vm)
