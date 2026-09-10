@@ -21,4 +21,5 @@ public class ConverseResponseDto
     public string?                   AuthProvider           { get; set; }
     public string?                   AuthUrl                { get; set; }
     public string                    ReasoningContent       { get; set; } = "Standard Completion (Direct response generation; no Chain-of-Thought reasoning emitted)";
+    public IReadOnlyList<TransparencyItemDto> TransparencyItems { get; set; } = Array.Empty<TransparencyItemDto>();
 }

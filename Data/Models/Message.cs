@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using LocalAIAssistant.Core.Parsing;
+using LocalAIAssistant.CognitivePlatform.DTOs;
 
 using System.Text.Json.Serialization;
 
@@ -41,6 +42,17 @@ public partial class Message : ObservableObject
 
     [ObservableProperty] private bool   _isReasoningExpanded;
     [ObservableProperty] private string _reasoningSummary = "Thought for 0s";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasTransparency))]
+    [NotifyPropertyChangedFor(nameof(TransparencyText))]
+    private IReadOnlyList<TransparencyItemDto> _transparencyItems = Array.Empty<TransparencyItemDto>();
+
+    public bool HasTransparency => TransparencyItems.Count > 0 || HasReasoning;
+
+    public string TransparencyText => TransparencyItems.Count > 0
+        ? string.Join(Environment.NewLine, TransparencyItems.Select(item => $"**{item.Label}:** {item.Detail}"))
+        : ReasoningContent;
 
     [ObservableProperty] private bool _isCalendarConnectPrompt;
     [ObservableProperty] private bool _isError;

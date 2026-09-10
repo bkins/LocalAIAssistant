@@ -247,8 +247,8 @@
                                         </HorizontalStackLayout>
                                     </Border>
 
-                                    <!-- Collapsible Reasoning Accordion -->
-                                    <Border IsVisible="{Binding HasReasoning}"
+                                    <!-- Collapsible, display-safe explanation of this response. -->
+                                    <Border IsVisible="{Binding HasTransparency}"
                                             BackgroundColor="#261E3B"
                                             Stroke="#5D4B8C"
                                             StrokeThickness="1"
@@ -263,10 +263,10 @@
                                         </Border.GestureRecognizers>
                                         <VerticalStackLayout Spacing="4">
                                             <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
-                                                <Label Text="🧠"
+                                                <Label Text="ⓘ"
                                                        FontSize="11"
                                                        VerticalOptions="Center" />
-                                                <Label Text="{Binding ReasoningSummary}"
+                                                <Label Text="Why this response"
                                                        FontSize="11"
                                                        FontAttributes="Bold"
                                                        TextColor="#D1C4E9"
@@ -275,7 +275,7 @@
 
                                             <controls:NativeMarkdownView
                                                 IsVisible="{Binding IsReasoningExpanded}"
-                                                Markdown="{Binding ReasoningContent}"
+                                                Markdown="{Binding TransparencyText}"
                                                 HorizontalOptions="Fill"
                                                 Margin="0,4,0,0" />
                                         </VerticalStackLayout>

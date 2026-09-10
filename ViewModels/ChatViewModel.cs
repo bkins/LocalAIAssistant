@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using CP.Client.Core.Common.ConnectivityToApi;
 using LocalAIAssistant.CognitivePlatform.CpClients.Coco;
 using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
+using LocalAIAssistant.CognitivePlatform.DTOs;
 using LocalAIAssistant.Core.Coco;
 using LocalAIAssistant.Core.ConversationHistory;
 using LocalAIAssistant.Core.Tts;
@@ -841,6 +842,7 @@ public partial class ChatViewModel : ObservableObject
                         assistantMsg.Model               = response.Model;
                         assistantMsg.ResponseDurationMs  = responseDurationMs;
                         assistantMsg.ReasoningContent    = response.ReasoningContent ?? string.Empty;
+                        assistantMsg.TransparencyItems   = response.TransparencyItems ?? Array.Empty<TransparencyItemDto>();
                         assistantMsg.IsReasoningExpanded = false;
                         if (assistantMsg.HasReasoning)
                         {

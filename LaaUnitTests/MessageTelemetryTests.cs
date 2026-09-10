@@ -98,4 +98,19 @@ public class MessageTelemetryTests
         Assert.Equal("phi-3:mini", dto.Model);
         Assert.False(dto.WasFastPath);
     }
+
+    [Fact]
+    public void TransparencyText_UsesDisplaySafeItems_WhenProvided()
+    {
+        var message = new Message
+        {
+            TransparencyItems =
+            [
+                new TransparencyItemDto { Label = "Safety gate", Detail = "Confirmation is required." }
+            ]
+        };
+
+        Assert.True(message.HasTransparency);
+        Assert.Equal("**Safety gate:** Confirmation is required.", message.TransparencyText);
+    }
 }
