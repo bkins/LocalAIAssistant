@@ -13,7 +13,7 @@
         <toolkit:EventToCommandBehavior EventName="Appearing" Command="{Binding LoadActionsCommand}" />
     </ContentPage.Behaviors>
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="Auto,Auto,*">
         
         <!-- Search Bar -->
         <SearchBar Grid.Row="0"
@@ -23,8 +23,24 @@
                    TextColor="{StaticResource PrimaryTextColor}"
                    PlaceholderColor="{StaticResource SecondaryTextColor}"/>
 
+        <VerticalStackLayout Grid.Row="1" Padding="10,0" Spacing="6">
+            <Picker Title="Category"
+                    ItemsSource="{Binding Categories}"
+                    SelectedItem="{Binding SelectedCategory}" />
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <HorizontalStackLayout Spacing="5">
+                    <Switch IsToggled="{Binding ShowFastPathOnly}" />
+                    <Label Text="FastPath only" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+                <HorizontalStackLayout Grid.Column="1" Spacing="5">
+                    <Switch IsToggled="{Binding ShowConfirmationRequiredOnly}" />
+                    <Label Text="Confirmation required" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+            </Grid>
+        </VerticalStackLayout>
+
         <!-- Loading Indicator -->
-        <ActivityIndicator Grid.Row="1" 
+        <ActivityIndicator Grid.Row="2"
                            IsRunning="{Binding IsLoading}" 
                            IsVisible="{Binding IsLoading}" 
                            HorizontalOptions="Center" 
@@ -32,7 +48,7 @@
                            Color="{StaticResource Primary}"/>
 
         <!-- Actions List -->
-        <CollectionView Grid.Row="1"
+        <CollectionView Grid.Row="2"
                         ItemsSource="{Binding FilteredActions}"
                         IsVisible="{Binding IsLoading, Converter={x:StaticResource InverseBoolConverter}}"
                         SelectionMode="None"
@@ -73,7 +89,7 @@
                             </HorizontalStackLayout>
                             
                             <HorizontalStackLayout Spacing="10" IsVisible="{Binding IsDestructive}">
-                                <Label Text="⚠️ Destructive" 
+                                <Label Text="⚠️ Confirmation required"
                                        TextColor="Red" 
                                        FontSize="12" 
                                        FontAttributes="Bold"/>
