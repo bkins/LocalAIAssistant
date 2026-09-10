@@ -58,4 +58,28 @@ public sealed class MemoryConfirmationApiClient : IMemoryConfirmationApiClient
             return new MemoryConfirmationRefreshResult(false, 0);
         }
     }
+
+    public async Task<PendingMemorySummaryRefreshResult> GetSummaryAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var summary = await _httpClient.GetFromJsonAsync<PendingMemorySummaryDto>("api/persona/memory/pending-summary", cancellationToken);
+            return summary is null
+                ? new PendingMemorySummaryRefreshResult(false, 0)
+                : new PendingMemorySummaryRefreshResult(true, summary.PendingCount);
+        }
+        catch (HttpRequestException)
+        {
+            return new PendingMemorySummaryRefreshResult(false, 0);
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return new PendingMemorySummaryRefreshResult(false, 0);
+        }
+    }
+}
+
+public sealed class PendingMemorySummaryDto
+{
+    public int PendingCount { get; init; }
 }

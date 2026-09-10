@@ -116,6 +116,9 @@
             <Label Text="Remembered data"
                    FontAttributes="Bold"
                    FontSize="Medium" />
+            <Label Text="{Binding GlobalPendingMemoryConfirmationCount, StringFormat='Pending confirmations across your memory: {0}'}"
+                   IsVisible="{Binding IsGlobalPendingMemoryConfirmationCountAvailable}"
+                   TextColor="{StaticResource SecondaryTextColor}" />
             <Label Text="Review is unavailable while the platform cannot be reached."
                    IsVisible="{Binding IsMemoryReviewAvailable, Converter={StaticResource InverseBoolConverter}}"
                    TextColor="{StaticResource WarningColor}" />

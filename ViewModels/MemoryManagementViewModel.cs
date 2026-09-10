@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LocalAIAssistant.CognitivePlatform.CpClients.MemoryReview;
+using LocalAIAssistant.CognitivePlatform.CpClients.Personas;
 using LocalAIAssistant.Services.AiMemory.Interfaces;
 using Message = LocalAIAssistant.Data.Models.Message;
 
@@ -11,6 +12,7 @@ public partial class MemoryManagementViewModel : ObservableObject, IDisposable
 {
     private readonly IConversationMemory     _conversationMemory;
     private readonly IMemoryReviewApiClient   _memoryReviewApiClient;
+    private readonly IMemoryConfirmationApiClient _memoryConfirmationApiClient;
     private readonly AppShellMasterViewModel _appShellMasterViewModel;
     private readonly System.ComponentModel.PropertyChangedEventHandler _appShellPropertyChangedHandler;
 
@@ -56,6 +58,12 @@ public partial class MemoryManagementViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private bool _isMemoryReviewAvailable;
 
+    [ObservableProperty]
+    private int _globalPendingMemoryConfirmationCount;
+
+    [ObservableProperty]
+    private bool _isGlobalPendingMemoryConfirmationCountAvailable;
+
     [RelayCommand]
     public void ToggleProvisionalReview()
     {
@@ -87,10 +95,12 @@ public partial class MemoryManagementViewModel : ObservableObject, IDisposable
     
     public MemoryManagementViewModel( IConversationMemory     conversationMemory
                                     , IMemoryReviewApiClient   memoryReviewApiClient
+                                    , IMemoryConfirmationApiClient memoryConfirmationApiClient
                                     , AppShellMasterViewModel appShellMasterViewModel )
     {
         _conversationMemory      = conversationMemory;
         _memoryReviewApiClient   = memoryReviewApiClient;
+        _memoryConfirmationApiClient = memoryConfirmationApiClient;
         _appShellMasterViewModel = appShellMasterViewModel;
 
         _appShellPropertyChangedHandler = (s, e) =>
@@ -115,6 +125,7 @@ public partial class MemoryManagementViewModel : ObservableObject, IDisposable
     {
         await _appShellMasterViewModel.RefreshPendingMemoryConfirmationCountAsync();
         await LoadMemoryReviewAsync();
+        await LoadGlobalPendingMemoryConfirmationCountAsync();
         OnPropertyChanged(nameof(PendingMemoryConfirmationCount));
         OnPropertyChanged(nameof(HasPendingMemoryConfirmation));
 
@@ -174,6 +185,15 @@ public partial class MemoryManagementViewModel : ObservableObject, IDisposable
 
         foreach (var source in review.Sources.Where(source => !source.IsAvailable))
             UnavailableMemoryReviewSources.Add(source);
+    }
+
+    private async Task LoadGlobalPendingMemoryConfirmationCountAsync()
+    {
+        var summary = await _memoryConfirmationApiClient.GetSummaryAsync();
+        IsGlobalPendingMemoryConfirmationCountAvailable = summary.IsAuthoritative;
+
+        if (summary.IsAuthoritative)
+            GlobalPendingMemoryConfirmationCount = summary.PendingCount;
     }
 
 }
