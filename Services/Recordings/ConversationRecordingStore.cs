@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CognitivePlatform.Api.Data;
+using CP.Shared.Primitives.Avails.Extensions;
 
 namespace LocalAIAssistant.Services.Recordings;
 
@@ -32,7 +33,7 @@ public class ConversationRecordingStore : IConversationRecordingStore
     public Task<ConversationRecording?> GetByIdAsync( string            id
                                                       , CancellationToken cancellationToken = default )
     {
-        if (string.IsNullOrWhiteSpace(id))
+        if (id.HasNoValue())
         {
             return Task.FromResult<ConversationRecording?>(null);
         }
@@ -54,7 +55,7 @@ public class ConversationRecordingStore : IConversationRecordingStore
     public Task<bool> SoftDeleteAsync( string            id
                                       , CancellationToken cancellationToken = default )
     {
-        if (string.IsNullOrWhiteSpace(id))
+        if (id.HasNoValue())
         {
             return Task.FromResult(false);
         }

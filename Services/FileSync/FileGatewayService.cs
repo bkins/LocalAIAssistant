@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using CP.Shared.Primitives.Avails.Extensions;
 
 namespace LocalAIAssistant.Services.FileSync;
 
@@ -366,18 +367,15 @@ public sealed class FileGatewayService : BackgroundService
         if (_config.AllowedPaths is not { Length: > 0 })
             return false;
 
-        var comparison = OperatingSystem.IsWindows()
-            ? StringComparison.OrdinalIgnoreCase
-            : StringComparison.Ordinal;
-
         return _config.AllowedPaths.Any(allowedPath =>
         {
             try
             {
                 var normalized = Path.GetFullPath(allowedPath);
                 var boundary   = normalized.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
-                return resolvedPath.Equals(normalized, comparison)
-                    || resolvedPath.StartsWith(boundary, comparison);
+                return OperatingSystem.IsWindows()
+                    ? resolvedPath.EqualsIgnoreCase(normalized) || resolvedPath.StartsWithIgnoreCase(boundary)
+                    : resolvedPath.Equals(normalized, StringComparison.Ordinal) || resolvedPath.StartsWith(boundary, StringComparison.Ordinal);
             }
             catch (Exception)
             {

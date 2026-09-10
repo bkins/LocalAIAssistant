@@ -10,6 +10,7 @@ using LocalAIAssistant.Core.ConversationRecorder;
 using LocalAIAssistant.Services.Recordings;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
+using CP.Shared.Primitives.Avails.Extensions;
 
 namespace LocalAIAssistant.ViewModels;
 
@@ -331,19 +332,19 @@ public partial class RecordingsViewModel : ObservableObject
             StatusMessage = "Updating speaker mapping...";
             var speakerMap = new Dictionary<string, string>
             {
-                { "Speaker 1", string.IsNullOrWhiteSpace(item.SpeakerName1) ? "Speaker 1" : item.SpeakerName1 },
-                { "speaker_1", string.IsNullOrWhiteSpace(item.SpeakerName1) ? "Speaker 1" : item.SpeakerName1 },
-                { "Speaker 2", string.IsNullOrWhiteSpace(item.SpeakerName2) ? "Speaker 2" : item.SpeakerName2 },
-                { "speaker_2", string.IsNullOrWhiteSpace(item.SpeakerName2) ? "Speaker 2" : item.SpeakerName2 }
+                { "Speaker 1", item.SpeakerName1.HasNoValue() ? "Speaker 1" : item.SpeakerName1 },
+                { "speaker_1", item.SpeakerName1.HasNoValue() ? "Speaker 1" : item.SpeakerName1 },
+                { "Speaker 2", item.SpeakerName2.HasNoValue() ? "Speaker 2" : item.SpeakerName2 },
+                { "speaker_2", item.SpeakerName2.HasNoValue() ? "Speaker 2" : item.SpeakerName2 }
             };
 
-            if (!string.IsNullOrWhiteSpace(item.SpeakerName3) && !item.SpeakerName3.EqualsIgnoreCase("Speaker 3"))
+            if (item.SpeakerName3.HasValue() && !item.SpeakerName3.EqualsIgnoreCase("Speaker 3"))
             {
                 speakerMap["Speaker 3"] = item.SpeakerName3;
                 speakerMap["speaker_3"] = item.SpeakerName3;
             }
 
-            if (!string.IsNullOrWhiteSpace(item.SpeakerName4) && !item.SpeakerName4.EqualsIgnoreCase("Speaker 4"))
+            if (item.SpeakerName4.HasValue() && !item.SpeakerName4.EqualsIgnoreCase("Speaker 4"))
             {
                 speakerMap["Speaker 4"] = item.SpeakerName4;
                 speakerMap["speaker_4"] = item.SpeakerName4;
@@ -425,7 +426,7 @@ public partial class RecordingsViewModel : ObservableObject
     {
         MainThread.BeginInvokeOnMainThread(() =>
         {
-            if (chunk.Segment != null && !string.IsNullOrWhiteSpace(chunk.Segment.Text))
+            if (chunk.Segment != null && chunk.Segment.Text.HasValue())
             {
                 LiveTranscriptSegments.Add(chunk.Segment);
             }

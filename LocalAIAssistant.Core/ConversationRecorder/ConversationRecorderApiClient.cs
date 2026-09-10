@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using CP.Shared.Primitives.Avails.Extensions;
 
 namespace LocalAIAssistant.Core.ConversationRecorder;
 
@@ -189,7 +190,7 @@ public class ConversationRecorderApiClient : IConversationRecorderApiClient
         try
         {
             using var content = new StreamContent(audioStream);
-            content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(string.IsNullOrWhiteSpace(mimeType) ? "audio/wav" : mimeType);
+        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType.HasNoValue() ? "audio/wav" : mimeType);
 
             var response = await _httpClient.PostAsync($"api/recorder/conversations/{conversationId}/audio", content, cancellationToken);
             return response.IsSuccessStatusCode;
@@ -427,4 +428,3 @@ public class ConversationRecorderApiClient : IConversationRecorderApiClient
         }
     }
 }
-

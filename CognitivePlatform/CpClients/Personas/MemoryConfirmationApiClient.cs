@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using CP.Shared.Primitives.Avails.Extensions;
 
 namespace LocalAIAssistant.CognitivePlatform.CpClients.Personas;
 
@@ -16,7 +17,7 @@ public sealed class MemoryConfirmationApiClient : IMemoryConfirmationApiClient
     public async Task<MemoryConfirmationRefreshResult> RefreshAsync( string            conversationId
                                                                     , CancellationToken cancellationToken = default )
     {
-        if (string.IsNullOrWhiteSpace(conversationId))
+        if (conversationId.HasNoValue())
             return new MemoryConfirmationRefreshResult(false, 0);
 
         try

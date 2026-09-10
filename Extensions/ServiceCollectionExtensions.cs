@@ -18,6 +18,7 @@ using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Knowledge.Inbox;
 using LocalAIAssistant.Knowledge.Journals.ViewModels;
 using LocalAIAssistant.Knowledge.Journals.Views;
+using CP.Shared.Primitives.Avails.Extensions;
 using LocalAIAssistant.Knowledge.Tasks.ViewModels;
 using LocalAIAssistant.Knowledge.Tasks.Views;
 using LocalAIAssistant.PersonaAndContextEngine;
@@ -257,8 +258,8 @@ public static class ServiceCollectionExtensions
 
     public static string GetPersistentDataDirectory(string? environmentName = null)
     {
-        var env = string.IsNullOrWhiteSpace(environmentName) ? BuildEnvironment.Name : environmentName;
-        if (string.IsNullOrWhiteSpace(env))
+        var env = environmentName.HasNoValue() ? BuildEnvironment.Name : environmentName;
+        if (env.HasNoValue())
         {
             env = "Dev";
         }

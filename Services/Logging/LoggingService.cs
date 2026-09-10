@@ -5,6 +5,7 @@ using LocalAIAssistant.Extensions;
 using LocalAIAssistant.Services.Logging.Interfaces;
 using Microsoft.Extensions.Logging;
 using ILogger = Serilog.ILogger;
+using CP.Shared.Primitives.Avails.Extensions;
 
 namespace LocalAIAssistant.Services.Logging;
 
@@ -119,11 +120,11 @@ public class LoggingService : ILoggingService
 
                         foreach (var (key, element) in logEvent.Properties)
                         {
-                            if (key.Equals("Category", StringComparison.OrdinalIgnoreCase))
+            if (key.EqualsIgnoreCase("Category"))
                             {
                                 category = element.GetString() ?? category;
                             }
-                            else if (key.Equals("SourceContext", StringComparison.OrdinalIgnoreCase))
+            else if (key.EqualsIgnoreCase("SourceContext"))
                             {
                                 var sourceContext = element.GetString() ?? string.Empty;
                                 if (category == "General" && sourceContext.HasValue())

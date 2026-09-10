@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
+using CP.Shared.Primitives.Avails.Extensions;
 
 namespace LaaUnitTests;
 
@@ -20,7 +21,7 @@ public class StreamResilienceAndProvisionalMemoryTests
 
         while (await reader.ReadLineAsync() is { } line)
         {
-            if (string.IsNullOrWhiteSpace(line)) continue;
+            if (line.HasNoValue()) continue;
             if (!line.StartsWith("data: ", StringComparison.Ordinal)) continue;
 
             lineCount++;

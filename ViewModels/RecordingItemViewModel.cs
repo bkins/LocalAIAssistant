@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LocalAIAssistant.Core.ConversationRecorder;
 using LocalAIAssistant.Services.Recordings;
+using CP.Shared.Primitives.Avails.Extensions;
 
 namespace LocalAIAssistant.ViewModels;
 
@@ -18,7 +19,7 @@ public partial class TranscriptSegmentViewModel : ObservableObject
     public TranscriptSegmentViewModel(TranscriptSegmentDto dto, Dictionary<string, string>? speakerMap = null)
     {
         var rawLabel = dto.SpeakerLabel ?? dto.SpeakerId ?? "Speaker 1";
-        if (speakerMap != null && speakerMap.TryGetValue(rawLabel, out var mapped) && !string.IsNullOrWhiteSpace(mapped))
+        if (speakerMap != null && speakerMap.TryGetValue(rawLabel, out var mapped) && mapped.HasValue())
         {
             SpeakerLabel = mapped;
         }
@@ -66,7 +67,7 @@ public partial class RecordingItemViewModel : ObservableObject
         Model = recording ?? throw new ArgumentNullException(nameof(recording));
         Id = recording.Id;
         StartedAtDisplay = recording.StartedAt.ToLocalTime().ToString("g");
-        Title = !string.IsNullOrWhiteSpace(recording.Title) ? recording.Title : $"Conversation {StartedAtDisplay}";
+        Title = recording.Title.HasValue() ? recording.Title : $"Conversation {StartedAtDisplay}";
         DurationDisplay = recording.Duration.ToString(@"mm\:ss");
         Status = recording.Status;
         RecordingPath = recording.RecordingPath;
@@ -78,7 +79,7 @@ public partial class RecordingItemViewModel : ObservableObject
     {
         try
         {
-            if (!string.IsNullOrWhiteSpace(RecordingPath) && File.Exists(RecordingPath))
+            if (RecordingPath.HasValue() && File.Exists(RecordingPath))
             {
                 var fileInfo = new FileInfo(RecordingPath);
                 FileSizeBytes = fileInfo.Length;
@@ -117,23 +118,19 @@ public partial class RecordingItemViewModel : ObservableObject
             foreach (var p in participants)
             {
                 speakerMap[p.SpeakerId] = p.DisplayName;
-                if (p.SpeakerId.Equals("speaker_1", StringComparison.OrdinalIgnoreCase)
-                    || p.SpeakerId.Equals("Speaker 1", StringComparison.OrdinalIgnoreCase))
+                if (p.SpeakerId.EqualsAnyIgnoreCase("speaker_1", "Speaker 1"))
                 {
                     SpeakerName1 = p.DisplayName;
                 }
-                else if (p.SpeakerId.Equals("speaker_2", StringComparison.OrdinalIgnoreCase)
-                         || p.SpeakerId.Equals("Speaker 2", StringComparison.OrdinalIgnoreCase))
+                else if (p.SpeakerId.EqualsAnyIgnoreCase("speaker_2", "Speaker 2"))
                 {
                     SpeakerName2 = p.DisplayName;
                 }
-                else if (p.SpeakerId.Equals("speaker_3", StringComparison.OrdinalIgnoreCase)
-                         || p.SpeakerId.Equals("Speaker 3", StringComparison.OrdinalIgnoreCase))
+                else if (p.SpeakerId.EqualsAnyIgnoreCase("speaker_3", "Speaker 3"))
                 {
                     SpeakerName3 = p.DisplayName;
                 }
-                else if (p.SpeakerId.Equals("speaker_4", StringComparison.OrdinalIgnoreCase)
-                         || p.SpeakerId.Equals("Speaker 4", StringComparison.OrdinalIgnoreCase))
+                else if (p.SpeakerId.EqualsAnyIgnoreCase("speaker_4", "Speaker 4"))
                 {
                     SpeakerName4 = p.DisplayName;
                 }

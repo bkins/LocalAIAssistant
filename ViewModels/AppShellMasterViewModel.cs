@@ -10,6 +10,7 @@ using LocalAIAssistant.Core.Environment.Models;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.Interfaces;
+using CP.Shared.Primitives.Avails.Extensions;
 
 namespace LocalAIAssistant.ViewModels;
 
@@ -188,7 +189,7 @@ public partial class AppShellMasterViewModel : ObservableObject, IDisposable
     public async Task RefreshPendingMemoryConfirmationCountAsync(string? conversationId = null)
     {
         var activeConversationId = conversationId ?? Preferences.Default.Get(StringConsts.ActiveConversationIdKey, string.Empty);
-        if (string.IsNullOrWhiteSpace(activeConversationId)) return;
+        if (activeConversationId.HasNoValue()) return;
 
         if (!string.Equals(_memoryConfirmationConversationId, activeConversationId, StringComparison.Ordinal))
         {
@@ -221,7 +222,7 @@ public partial class AppShellMasterViewModel : ObservableObject, IDisposable
 
     public void UpdatePendingMemoryConfirmationCount(int pendingCount, string conversationId)
     {
-        if (string.IsNullOrWhiteSpace(conversationId)) return;
+        if (conversationId.HasNoValue()) return;
 
         _memoryConfirmationConversationId = conversationId;
         PendingMemoryConfirmationCount = Math.Max(0, pendingCount);
@@ -235,7 +236,7 @@ public partial class AppShellMasterViewModel : ObservableObject, IDisposable
     private void RestoreMemoryConfirmationState(string? conversationId = null)
     {
         var activeConversationId = conversationId ?? Preferences.Default.Get(StringConsts.ActiveConversationIdKey, string.Empty);
-        if (string.IsNullOrWhiteSpace(activeConversationId)) return;
+        if (activeConversationId.HasNoValue()) return;
 
         var cachedConversationId = Preferences.Default.Get(StringConsts.PendingMemoryConfirmationConversationIdPrefKey, string.Empty);
         _memoryConfirmationConversationId = activeConversationId;

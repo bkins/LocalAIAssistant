@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using LocalAIAssistant.Core.ConversationRecorder;
 using Plugin.Maui.Audio;
+using CP.Shared.Primitives.Avails.Extensions;
 
 namespace LocalAIAssistant.Services.Recordings;
 
@@ -66,7 +67,7 @@ public class ConversationRecordingService : IConversationRecordingService
         _recordingStore = recordingStore ?? throw new ArgumentNullException(nameof(recordingStore));
         _apiClient      = apiClient;
 
-        if (!string.IsNullOrWhiteSpace(recordingsDirectory))
+        if (recordingsDirectory.HasValue())
         {
             _recordingsDirectory = recordingsDirectory;
         }
@@ -83,7 +84,7 @@ public class ConversationRecordingService : IConversationRecordingService
 
     public static string GetPersistentDataDirectory(string? environmentName = null)
     {
-        var env = string.IsNullOrWhiteSpace(environmentName) ? "Dev" : environmentName;
+        var env = environmentName.HasNoValue() ? "Dev" : environmentName;
         try
         {
             string baseDir;
@@ -376,12 +377,12 @@ public class ConversationRecordingService : IConversationRecordingService
                                 StartedAt = remote.RecordedAtUtc,
                                 EndedAt = remote.RecordedAtUtc + remote.Duration,
                                 Duration = remote.Duration,
-                                RecordingPath = string.IsNullOrWhiteSpace(remote.AudioFilePath) ? $"recording_{idStr}.wav" : remote.AudioFilePath,
+                                RecordingPath = remote.AudioFilePath.HasNoValue() ? $"recording_{idStr}.wav" : remote.AudioFilePath,
                                 Status = remote.Status
                             };
                             await _recordingStore.SaveAsync(localItem, cancellationToken);
                         }
-                        else if (!string.IsNullOrWhiteSpace(remote.Title) && localItem.Title != remote.Title)
+                        else if (remote.Title.HasValue() && localItem.Title != remote.Title)
                         {
                             localItem.Title = remote.Title;
                             await _recordingStore.SaveAsync(localItem, cancellationToken);
@@ -406,7 +407,7 @@ public class ConversationRecordingService : IConversationRecordingService
 
     private string ResolveRecordingPath(string storedPath)
     {
-        if (string.IsNullOrWhiteSpace(storedPath))
+        if (storedPath.HasNoValue())
         {
             return string.Empty;
         }
@@ -444,7 +445,7 @@ public class ConversationRecordingService : IConversationRecordingService
     public async Task<bool> DeleteRecordingAsync( string            id
                                                  , CancellationToken cancellationToken = default )
     {
-        if (string.IsNullOrWhiteSpace(id))
+        if (id.HasNoValue())
         {
             return false;
         }
@@ -460,7 +461,7 @@ public class ConversationRecordingService : IConversationRecordingService
             await StopPlaybackAsync();
         }
 
-        if (!string.IsNullOrWhiteSpace(recording.RecordingPath) && File.Exists(recording.RecordingPath))
+        if (recording.RecordingPath.HasValue() && File.Exists(recording.RecordingPath))
         {
             try
             {
@@ -480,7 +481,7 @@ public class ConversationRecordingService : IConversationRecordingService
     public async Task<bool> PlayRecordingAsync( string            id
                                                , CancellationToken cancellationToken = default )
     {
-        if (string.IsNullOrWhiteSpace(id))
+        if (id.HasNoValue())
         {
             return false;
         }
