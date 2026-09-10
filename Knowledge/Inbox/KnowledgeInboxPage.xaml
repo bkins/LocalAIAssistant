@@ -5,6 +5,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:converters1="clr-namespace:LocalAIAssistant.Converters"
     xmlns:inbox="clr-namespace:LocalAIAssistant.Knowledge.Inbox"
+    xmlns:presentation="clr-namespace:LocalAIAssistant.Presentation"
+    xmlns:controls="clr-namespace:LocalAIAssistant.Views.Controls"
     Title="Knowledge">
 
     <ContentPage.Resources>
@@ -14,6 +16,7 @@
             <converters1:NullToBoolConverter            x:Key="NullToBool" />
             <converters1:KnowledgeKindToColorConverter  x:Key="KindToColorConverter" />
             <converters1:InverseBoolConverter           x:Key="InverseBool" />
+            <presentation:KnowledgeItemPresentationConverter x:Key="KnowledgeItemPresentationConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -214,10 +217,8 @@
 
                             <VerticalStackLayout Spacing="6">
 
-                                <Label
-                                    Text="{Binding Title}"
-                                    FontSize="16"
-                                    LineBreakMode="WordWrap" />
+                                <controls:PresentationHost
+                                    Model="{Binding ., Converter={StaticResource KnowledgeItemPresentationConverter}}" />
 
                                 <HorizontalStackLayout Spacing="8">
 

@@ -42,6 +42,7 @@
     <None Include="../AppShell.xaml" Link="Fixtures/AppShell.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Views/SettingsPage.xaml" Link="Fixtures/SettingsPage.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Views/RecordingsPage.xaml" Link="Fixtures/RecordingsPage.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../Knowledge/Inbox/KnowledgeInboxPage.xaml" Link="Fixtures/KnowledgeInboxPage.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
 
     <Compile Include="../Data/Models/Message.cs" Link="Linked/Message.cs" />
     <Compile Include="../Data/Models/CommandSuggestion.cs" Link="Linked/CommandSuggestion.cs" />
@@ -52,6 +53,8 @@
     <Compile Include="../Knowledge/Journals/Models/JournalEntryDto.cs" Link="Linked/JournalEntryDto.cs" />
     <Compile Include="../Knowledge/Journals/Models/JournalRevisionDto.cs" Link="Linked/JournalRevisionDto.cs" />
     <Compile Include="../Knowledge/Inbox/KnowledgeItem.cs" Link="Linked/KnowledgeItem.cs" />
+    <Compile Include="../Presentation/PresentationModel.cs" Link="Linked/PresentationModel.cs" />
+    <Compile Include="../Presentation/KnowledgeItemPresentationAdapter.cs" Link="Linked/KnowledgeItemPresentationAdapter.cs" />
     <Compile Include="../CognitivePlatform/DTOs/ConverseResponseDto.cs" Link="Linked/ConverseResponseDto.cs" />
     <Compile Include="../CognitivePlatform/DTOs/InsightDto.cs" Link="Linked/InsightDto.cs" />
     <Compile Include="../CognitivePlatform/DTOs/MealDto.cs" Link="Linked/MealDto.cs" />
