@@ -11,7 +11,7 @@
     </ContentPage.Resources>
 
     <Grid x:Name="MainLayout"
-          RowDefinitions="Auto,Auto,Auto,*">
+          RowDefinitions="Auto,Auto,Auto,Auto,*">
         <!-- Row 0: Pending memory confirmation badge banner -->
         <Border Grid.Row="0"
                 Margin="15,10,15,5"
@@ -111,8 +111,44 @@
                     HeightRequest="38" />
         </Grid>
     
-        <!-- Row 3: Short & Long Term Memory CollectionViews -->
-        <Grid Grid.Row="3"
+        <!-- Row 3: Read-only unified memory review -->
+        <VerticalStackLayout Grid.Row="3" Padding="10,4" Spacing="6">
+            <Label Text="Remembered data"
+                   FontAttributes="Bold"
+                   FontSize="Medium" />
+            <Label Text="Review is unavailable while the platform cannot be reached."
+                   IsVisible="{Binding IsMemoryReviewAvailable, Converter={StaticResource InverseBoolConverter}}"
+                   TextColor="{StaticResource WarningColor}" />
+            <CollectionView ItemsSource="{Binding MemoryReviewItems}"
+                            SelectionMode="None"
+                            HeightRequest="180">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Padding="10,8" Margin="0,0,0,6"
+                                Stroke="#333344" StrokeThickness="1"
+                                StrokeShape="RoundRectangle 8"
+                                BackgroundColor="{StaticResource SurfaceColor}">
+                            <VerticalStackLayout Spacing="3">
+                                <Label Text="{Binding Content}" FontAttributes="Bold" FontSize="13" />
+                                <Label Text="{Binding SourceLabel}" FontSize="11" TextColor="{StaticResource SecondaryTextColor}" />
+                                <Label Text="{Binding State}" FontSize="11" TextColor="{StaticResource SecondaryTextColor}" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+            <CollectionView ItemsSource="{Binding UnavailableMemoryReviewSources}"
+                            SelectionMode="None" HeightRequest="40">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Label Text="{Binding Message}" FontSize="11" TextColor="{StaticResource WarningColor}" />
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </VerticalStackLayout>
+
+        <!-- Row 4: Short & Long Term Memory CollectionViews -->
+        <Grid Grid.Row="4"
               Padding="10"
               ColumnDefinitions="*,*"
               RowDefinitions="Auto,*"
