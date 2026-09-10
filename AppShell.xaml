@@ -149,8 +149,23 @@
     </Shell.TitleView>
 
     <TabBar>
-        <Tab Title="Chat" AutomationId="ChatTabItem">
+        <Tab Title="Chat" Icon="tab_chat.svg" AutomationId="ChatTabItem">
             <ShellContent Route="Chat" ContentTemplate="{DataTemplate views:MainPage}"/>
+        </Tab>
+        <Tab Title="Inbox" Icon="tab_inbox.svg" AutomationId="InboxTabItem">
+            <ShellContent ContentTemplate="{DataTemplate inbox:KnowledgeInboxPage}"/>
+        </Tab>
+        <Tab Title="Record" Icon="tab_record.svg" AutomationId="RecordTabItem">
+            <ShellContent Route="Record" ContentTemplate="{DataTemplate views:RecordingsPage}"/>
+        </Tab>
+        <Tab Title="Memory" Icon="tab_psychology_alt.svg" x:Name="MemoryTab" AutomationId="MemoryTabItem">
+            <ShellContent x:Name="MemoryShellContent"
+                           Route="Memory"
+                           ContentTemplate="{DataTemplate views:MemoryManagementPage}"/>
+        </Tab>
+        <Tab Title="Actions" Icon="tab_actions.svg" AutomationId="ActionsTabItem">
+            <ShellContent Route="ActionDirectory"
+                           ContentTemplate="{DataTemplate views:ActionDirectoryPage}"/>
         </Tab>
         <Tab Title="Chats" AutomationId="ChatsTabItem">
             <ShellContent ContentTemplate="{DataTemplate views:ConversationsPage}"/>
@@ -158,23 +173,8 @@
         <Tab Title="Agent" AutomationId="AgentTabItem">
             <ShellContent Route="AgentChat" ContentTemplate="{DataTemplate views:AgentChatPage}"/>
         </Tab>
-        <Tab Title="Inbox" AutomationId="InboxTabItem">
-            <ShellContent ContentTemplate="{DataTemplate inbox:KnowledgeInboxPage}"/>
-        </Tab>
-        <Tab Title="Actions" AutomationId="ActionsTabItem">
-            <ShellContent Route="ActionDirectory" 
-                           ContentTemplate="{DataTemplate views:ActionDirectoryPage}"/>
-        </Tab>
-        <Tab Title="Memory" x:Name="MemoryTab" AutomationId="MemoryTabItem">
-            <ShellContent x:Name="MemoryShellContent"
-                           Route="Memory"
-                           ContentTemplate="{DataTemplate views:MemoryManagementPage}"/>
-        </Tab>
         <Tab Title="Logs" AutomationId="LogsTabItem">
             <ShellContent ContentTemplate="{DataTemplate views:LogsPage}" />
-        </Tab>
-        <Tab Title="Record" AutomationId="RecordTabItem">
-            <ShellContent Route="Record" ContentTemplate="{DataTemplate views:RecordingsPage}"/>
         </Tab>
         <Tab Title="Settings" AutomationId="SettingsTabItem">
             <ShellContent Title="Settings"

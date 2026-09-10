@@ -39,6 +39,7 @@
 
   <ItemGroup>
     <None Include="../Views/MainPage.xaml" Link="Fixtures/MainPage.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../AppShell.xaml" Link="Fixtures/AppShell.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Views/SettingsPage.xaml" Link="Fixtures/SettingsPage.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Views/RecordingsPage.xaml" Link="Fixtures/RecordingsPage.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
 
