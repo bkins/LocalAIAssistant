@@ -1,4 +1,5 @@
 using LocalAIAssistant.Knowledge.Inbox;
+using LocalAIAssistant.Knowledge.Tasks.Models;
 using LocalAIAssistant.Presentation;
 
 namespace LaaUnitTests;
@@ -57,5 +58,26 @@ public sealed class PresentationModelTests
         Assert.Contains(new PresentationBadge("Kind", "Journal"), model.Badges);
         Assert.Contains(new PresentationBadge("Status", "Unknown"), model.Badges);
         Assert.Null(model.LastModifiedAt);
+    }
+
+    [Fact]
+    public void TaskAdapter_ProjectsExistingTaskFieldsIntoReadOnlyCard()
+    {
+        var item = new TasksDto
+        {
+            ShortDescription = "Review execution profile evidence",
+            Details          = "Confirm the test evidence before closing the story.",
+            Priority         = TaskPriorityDto.High,
+            UpdatedAt        = new DateTimeOffset(2026, 9, 11, 15, 30, 0, TimeSpan.Zero)
+        };
+
+        var model = TaskPresentationAdapter.Create(item);
+
+        Assert.Equal(PresentationStyle.Card, model.Style);
+        Assert.Equal(item.ShortDescription,   model.Title);
+        Assert.Equal(item.Details,            model.Summary);
+        Assert.Contains(new PresentationBadge("Priority", "High"), model.Badges);
+        Assert.Contains(new PresentationBadge("Status", "Open"),    model.Badges);
+        Assert.Equal(item.UpdatedAt, model.LastModifiedAt);
     }
 }

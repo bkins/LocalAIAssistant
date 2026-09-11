@@ -55,6 +55,7 @@
     <Compile Include="../Knowledge/Inbox/KnowledgeItem.cs" Link="Linked/KnowledgeItem.cs" />
     <Compile Include="../Presentation/PresentationModel.cs" Link="Linked/PresentationModel.cs" />
     <Compile Include="../Presentation/KnowledgeItemPresentationAdapter.cs" Link="Linked/KnowledgeItemPresentationAdapter.cs" />
+    <Compile Include="../Presentation/TaskPresentationAdapter.cs" Link="Linked/TaskPresentationAdapter.cs" />
     <Compile Include="../CognitivePlatform/DTOs/ConverseResponseDto.cs" Link="Linked/ConverseResponseDto.cs" />
     <Compile Include="../CognitivePlatform/DTOs/TransparencyItemDto.cs" Link="Linked/TransparencyItemDto.cs" />
     <Compile Include="../CognitivePlatform/DTOs/InsightDto.cs" Link="Linked/InsightDto.cs" />

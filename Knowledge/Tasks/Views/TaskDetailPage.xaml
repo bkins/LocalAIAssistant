@@ -27,6 +27,8 @@
                        HorizontalOptions="Center" />
             </Border>
 
+            <controls:PresentationHost Model="{Binding Presentation}" />
+
             <!-- Consistent detail header: type badge · date · workspace -->
             <HorizontalStackLayout Spacing="8">
                 <Border Padding="5,2"

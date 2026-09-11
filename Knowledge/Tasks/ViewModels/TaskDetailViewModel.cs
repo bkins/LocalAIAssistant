@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using LocalAIAssistant.CognitivePlatform.CpClients.Tasks;
 using LocalAIAssistant.Knowledge.Tasks.Models;
 using LocalAIAssistant.Knowledge.Tasks.Views;
+using LocalAIAssistant.Presentation;
 
 namespace LocalAIAssistant.Knowledge.Tasks.ViewModels;
 
@@ -28,6 +29,7 @@ public partial class TaskDetailViewModel : ObservableObject, IQueryAttributable
     [ObservableProperty] private bool            _hasError;
     [ObservableProperty] private string          _errorMessage;
     [ObservableProperty] private string?         _workspace;
+    [ObservableProperty] private PresentationModel? _presentation;
 
     public TaskDetailViewModel(ITaskApiClientFactory clientFactory)
     {
@@ -89,6 +91,7 @@ public partial class TaskDetailViewModel : ObservableObject, IQueryAttributable
         Tags             = item.Tags.Count > 0
                                    ? string.Join(", ", item.Tags)
                                    : string.Empty;
+        Presentation     = TaskPresentationAdapter.Create(item);
         SetDtoError(item);
     }
     
