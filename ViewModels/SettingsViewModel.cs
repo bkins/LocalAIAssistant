@@ -183,8 +183,9 @@ public partial class SettingsViewModel : ObservableObject
         CocoHotkey                  = Preferences.Default.Get(StringConsts.CocoHotkeyPrefKey,                   StringConsts.CocoDefaultHotkey);
         var isProd                    = BuildEnvironment.Name.EqualsIgnoreCase("PROD");
         var defaultDiagnosticsEnabled = !isProd;
+        var defaultStartupProbesEnabled = !isProd;
 
-        EnableStartupProbes         = Preferences.Default.Get(StringConsts.EnableStartupProbesPrefKey,          true);
+        EnableStartupProbes         = Preferences.Default.Get(StringConsts.EnableStartupProbesPrefKey,          defaultStartupProbesEnabled);
         EnableStartupDiagnostics    = Preferences.Default.Get(StringConsts.EnableStartupDiagnosticsPrefKey,     defaultDiagnosticsEnabled);
         StreamingEnabled            = Preferences.Default.Get(StringConsts.StreamingEnabledPrefKey,              true);
         SelectedTheme               = Preferences.Default.Get("AppThemePreference",                             "System");
