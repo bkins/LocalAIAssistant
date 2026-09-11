@@ -62,7 +62,7 @@ public partial class App : Application
 			var defaultStartupProbesEnabled = !isProd;
 
 			var apiHealthService = Handler?.MauiContext?.Services.GetRequiredService<ApiHealthService>();
-			if (apiHealthService != null && Preferences.Default.Get(StringConsts.EnableStartupProbesPrefKey, defaultStartupProbesEnabled)) 
+			if (apiHealthService != null && Preferences.Default.Get(StringConsts.EnableStartupProbesPrefKey, defaultStartupProbesEnabled))
 			{
 				await apiHealthService.InitializeAsync().ConfigureAwait(false);
 			}
