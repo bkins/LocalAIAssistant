@@ -7,6 +7,9 @@ namespace LaaUnitTests;
 
 public class ConversationHistoryClientTests
 {
+    [Fact]
+    public async Task GetHistoryAsync_SuccessfulEmptyHistory_ReturnsEmpty()
+        => Assert.Empty(await BuildClient(HttpStatusCode.OK, "[]").GetHistoryAsync("new-qa-conversation"));
     // ── GetHistoryAsync ───────────────────────────────────────────────────────
 
     [Fact]
@@ -31,7 +34,7 @@ public class ConversationHistoryClientTests
     }
 
     [Fact]
-    public async Task GetHistoryAsync_ReturnsEmptyList_WhenApiIsUnreachable()
+    public async Task GetHistoryAsync_Throws_WhenApiIsUnreachable()
     {
         var client = new HttpClient(new ThrowingHttpMessageHandler())
                      {
@@ -40,19 +43,15 @@ public class ConversationHistoryClientTests
 
         var sut = new ConversationHistoryClient(client);
 
-        var result = await sut.GetHistoryAsync("conv-123");
-
-        Assert.Empty(result);
+        await Assert.ThrowsAsync<HttpRequestException>(() => sut.GetHistoryAsync("conv-123"));
     }
 
     [Fact]
-    public async Task GetHistoryAsync_ReturnsEmptyList_WhenApiReturnsNonSuccess()
+    public async Task GetHistoryAsync_Throws_WhenApiReturnsNonSuccess()
     {
         var sut = BuildClient(HttpStatusCode.ServiceUnavailable, string.Empty);
 
-        var result = await sut.GetHistoryAsync("conv-123");
-
-        Assert.Empty(result);
+        await Assert.ThrowsAsync<HttpRequestException>(() => sut.GetHistoryAsync("conv-123"));
     }
 
     [Fact]

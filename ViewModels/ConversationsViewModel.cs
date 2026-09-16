@@ -127,7 +127,7 @@ public partial class ConversationsViewModel : ObservableObject
         try
         {
             var newId = Guid.NewGuid().ToString();
-            Preferences.Set(StringConsts.ActiveConversationIdKey, newId);
+            Preferences.Set(global::LocalAIAssistant.Core.ConversationHistory.ChatHistoryScope.ActiveConversationKey(BuildEnvironment.Name), newId);
             await _chatViewModel.SwitchConversationAsync(newId);
             await Shell.Current.GoToAsync("//Chat");
         }

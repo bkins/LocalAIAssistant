@@ -158,11 +158,11 @@ public partial class ChatViewModel : ObservableObject
         _offlineQueueService.QueueProcessed += OnQueueProcessed;
 
         // ENH-20: persist ConversationId across app restarts so server history can be retrieved.
-        var savedConversationId = Preferences.Get(StringConsts.ActiveConversationIdKey, string.Empty);
+        var savedConversationId = Preferences.Get(ChatHistoryScope.ActiveConversationKey(BuildEnvironment.Name), string.Empty);
         if (savedConversationId.IsNullOrEmpty())
         {
             savedConversationId = Guid.NewGuid().ToString();
-            Preferences.Set(StringConsts.ActiveConversationIdKey, savedConversationId);
+            Preferences.Set(ChatHistoryScope.ActiveConversationKey(BuildEnvironment.Name), savedConversationId);
         }
         ConversationId = savedConversationId;
 
@@ -385,39 +385,23 @@ public partial class ChatViewModel : ObservableObject
         HasBeenInitialized = false;
         Messages.Clear();
 
-        // ENH-20: server-first rehydration. On any exception fall back to local STM silently.
-        var serverLoaded = false;
-
-        try
+        var history = await ConversationHistoryLoader.LoadAsync<Message>(async () =>
         {
             var turns = await _historyClient.GetHistoryAsync(ConversationId);
-            if (turns.Count > 0)
-            {
-                foreach (var turn in turns)
-                {
-                    Messages.Add(new Message
-                                 {
-                                         Sender         = turn.Role
-                                       , Content        = turn.Content
-                                       , Timestamp      = turn.Timestamp.LocalDateTime
-                                       , ConversationId = ConversationId
-                                 });
-                }
-                serverLoaded = true;
-            }
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+            return turns.Select(turn => new Message
+                                        {
+                                            Sender         = turn.Role
+                                          , Content        = turn.Content
+                                          , Timestamp      = turn.Timestamp.LocalDateTime
+                                          , ConversationId = ConversationId
+                                        }).ToArray();
+        }, async () =>
         {
-            // Server history unavailable — fall through to local STM.
-            _log.LogError(ex, "Failed to load conversation history from server; falling back to local STM", Category.ChatViewModel);
-        }
+            var local = await _conversationMemory.LoadShortTermAsync();
+            return local.OrderBy(message => message.Timestamp).ToArray();
+        }, exception => _log.LogError(exception, "Failed to load server history; using environment-local STM", Category.ChatViewModel));
 
-        if (serverLoaded.Not())
-        {
-            var stm = await _conversationMemory.LoadShortTermAsync();
-            foreach (var message in stm.OrderBy(message => message.Timestamp))
-                Messages.Add(message);
-        }
+        foreach (var message in history) Messages.Add(message);
 
         Personalities.Clear();
 
@@ -1089,7 +1073,7 @@ public partial class ChatViewModel : ObservableObject
         // ENH-20 fix: rotate the ConversationId so subsequent sends and the next
         // InitializeAsync load start a fresh server-side thread, not the old one.
         var newConversationId = Guid.NewGuid().ToString();
-        Preferences.Set(StringConsts.ActiveConversationIdKey, newConversationId);
+        Preferences.Set(ChatHistoryScope.ActiveConversationKey(BuildEnvironment.Name), newConversationId);
         ConversationId = newConversationId;
         await _appShellMasterViewModel.ActivateMemoryConfirmationConversationAsync(newConversationId);
 
@@ -1100,7 +1084,7 @@ public partial class ChatViewModel : ObservableObject
     {
         Messages.Clear();
 
-        Preferences.Set(StringConsts.ActiveConversationIdKey, conversationId);
+        Preferences.Set(ChatHistoryScope.ActiveConversationKey(BuildEnvironment.Name), conversationId);
         ConversationId = conversationId;
         await _appShellMasterViewModel.ActivateMemoryConfirmationConversationAsync(conversationId);
 

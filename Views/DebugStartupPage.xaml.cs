@@ -122,7 +122,7 @@ public partial class DebugStartupPage : ContentPage
         await Step("IConversationHistoryClient.GetHistoryAsync", async () =>
         {
             var svc            = services.GetService<IConversationHistoryClient>();
-            var conversationId = Preferences.Get(StringConsts.ActiveConversationIdKey, Guid.NewGuid().ToString());
+            var conversationId = Preferences.Get(global::LocalAIAssistant.Core.ConversationHistory.ChatHistoryScope.ActiveConversationKey(BuildEnvironment.Name), Guid.NewGuid().ToString());
             if (svc != null)
                 await svc.GetHistoryAsync(conversationId);
         });

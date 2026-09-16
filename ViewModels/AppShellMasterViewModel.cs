@@ -188,7 +188,7 @@ public partial class AppShellMasterViewModel : ObservableObject, IDisposable
 
     public async Task RefreshPendingMemoryConfirmationCountAsync(string? conversationId = null)
     {
-        var activeConversationId = conversationId ?? Preferences.Default.Get(StringConsts.ActiveConversationIdKey, string.Empty);
+        var activeConversationId = conversationId ?? Preferences.Default.Get(global::LocalAIAssistant.Core.ConversationHistory.ChatHistoryScope.ActiveConversationKey(BuildEnvironment.Name), string.Empty);
         if (activeConversationId.HasNoValue()) return;
 
         if (!string.Equals(_memoryConfirmationConversationId, activeConversationId, StringComparison.Ordinal))
@@ -235,7 +235,7 @@ public partial class AppShellMasterViewModel : ObservableObject, IDisposable
 
     private void RestoreMemoryConfirmationState(string? conversationId = null)
     {
-        var activeConversationId = conversationId ?? Preferences.Default.Get(StringConsts.ActiveConversationIdKey, string.Empty);
+        var activeConversationId = conversationId ?? Preferences.Default.Get(global::LocalAIAssistant.Core.ConversationHistory.ChatHistoryScope.ActiveConversationKey(BuildEnvironment.Name), string.Empty);
         if (activeConversationId.HasNoValue()) return;
 
         var cachedConversationId = Preferences.Default.Get(StringConsts.PendingMemoryConfirmationConversationIdPrefKey, string.Empty);

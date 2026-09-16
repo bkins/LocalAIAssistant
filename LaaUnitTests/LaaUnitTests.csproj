@@ -116,4 +116,10 @@
   <ItemGroup>
     <PackageReference Include="Markdig" Version="1.1.1" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="../ViewModels/ChatViewModel.cs" Link="Fixtures/ChatViewModel.cs.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../ViewModels/ConversationsViewModel.cs" Link="Fixtures/ConversationsViewModel.cs.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../ViewModels/AppShellMasterViewModel.cs" Link="Fixtures/AppShellMasterViewModel.cs.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../MauiProgram.cs" Link="Fixtures/MauiProgram.cs.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

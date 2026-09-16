@@ -17,16 +17,9 @@ public class ConversationHistoryClient : IConversationHistoryClient
                                                                          , int               last = 20
                                                                          , CancellationToken ct   = default )
     {
-        try
-        {
-            var route = $"{string.Format(HistoryRouteTemplate, conversationId)}?last={last}";
+        var route = $"{string.Format(HistoryRouteTemplate, conversationId)}?last={last}";
 
-            return await _httpClient.GetFromJsonAsync<List<ConversationTurnDto>>(route, ct)
-                ?? new List<ConversationTurnDto>();
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            return new List<ConversationTurnDto>();
-        }
+        return await _httpClient.GetFromJsonAsync<List<ConversationTurnDto>>(route, ct)
+            ?? new List<ConversationTurnDto>();
     }
 }

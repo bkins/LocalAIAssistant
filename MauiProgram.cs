@@ -181,9 +181,11 @@ public static class MauiProgram
 
 		// Paths
 		var appDir = FileSystem.AppDataDirectory;
+		var chatMemoryDir = global::LocalAIAssistant.Core.ConversationHistory.ChatHistoryScope.MemoryDirectory(appDir, BuildEnvironment.Name);
+		Directory.CreateDirectory(chatMemoryDir);
 
-		var memoryFilePath 		 = Path.Combine(appDir, "ai_memory.jsonl"); // JSONL for messages
-		var factsFilePath  		 = Path.Combine(appDir, "facts.json");      // JSON for k/v facts
+		var memoryFilePath 		 = Path.Combine(chatMemoryDir, "ai_memory.jsonl"); // environment-local chat memory
+		var factsFilePath  		 = Path.Combine(chatMemoryDir, "facts.json");      // environment-local facts
 		var ollamaConfigFilePath = Path.Combine(appDir, "OllamaConfig.json");
 
 		if (File.Exists(ollamaConfigFilePath).Not())
@@ -268,7 +270,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<FileGatewayService>();
 
 		builder.Services.AddAllServices(logPath, memoryFilePath);
-		builder.Services.AddAiMemoryServices(Path.Combine(FileSystem.AppDataDirectory, "Memory.db")
+		builder.Services.AddAiMemoryServices(Path.Combine(chatMemoryDir, "Memory.db")
 		                                   , memoryFilePath
 		                                   , factsFilePath
 		                                   , memoryFilePath);
