@@ -9,6 +9,8 @@ public class NativeMarkdownSpacingTests
 
         Assert.Contains("public NativeMarkdownView()", source);
         Assert.Contains("Spacing = 0;", source);
-        Assert.Contains("SearchResultSpacing.TopGap(rawText)", source);
+        Assert.Contains("SearchResultSpacing.TopGap(markdown.Substring(paragraph.Span.Start, paragraph.Span.Length))", source);
+        Assert.Contains("CreateSearchResultDivider()", source);
+        Assert.DoesNotContain("SearchResultSpacing.TopGap(rawText)", source);
     }
 }

@@ -113,4 +113,7 @@
     <Compile Include="../Views/Controls/SearchResultSpacing.cs" Link="Linked/SearchResultSpacing.cs" />
     <None Include="../Views/Controls/NativeMarkdownView.cs" Link="Fixtures/NativeMarkdownView.cs.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Markdig" Version="1.1.1" />
+  </ItemGroup>
 </Project>

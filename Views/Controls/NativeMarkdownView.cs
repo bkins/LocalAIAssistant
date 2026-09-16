@@ -64,8 +64,14 @@ public class NativeMarkdownView : VerticalStackLayout
         var document = Markdig.Markdown.Parse(markdown
                                             , Pipeline);
 
-        foreach (var uiElement in document.Select(block => CreateUiElementForBlock(block)).OfType<View>())
+        foreach (var block in document)
         {
+            var uiElement = CreateUiElementForBlock(block);
+            if (uiElement is null) continue;
+            // Match original Markdown: inline parsing can turn [journal] into a link.
+            if (block is ParagraphBlock paragraph
+                && SearchResultSpacing.TopGap(markdown.Substring(paragraph.Span.Start, paragraph.Span.Length)) > 0)
+                Children.Add(CreateSearchResultDivider());
             Children.Add(uiElement);
         }
 
@@ -99,7 +105,6 @@ public class NativeMarkdownView : VerticalStackLayout
             return new Label
                    {
                            Text                    = rawText
-                         , Margin                  = new Thickness(0, SearchResultSpacing.TopGap(rawText), 0, 0)
                          , TextColor               = TextColor
                          , FontSize                = 16
                          , LineBreakMode           = LineBreakMode.WordWrap
@@ -121,7 +126,6 @@ public class NativeMarkdownView : VerticalStackLayout
         Label label = new Label();
         
         label.FormattedText = formatted;
-        label.Margin = new Thickness(0, SearchResultSpacing.TopGap(rawText), 0, 0);
         
         return label;
     }
@@ -135,6 +139,15 @@ public class NativeMarkdownView : VerticalStackLayout
             && text.Contains("}")
             && text.Contains(":");
     }
+
+    private static View CreateSearchResultDivider()
+        => new BoxView
+           {
+               HeightRequest   = 1
+             , Color           = Colors.White.WithAlpha(.45f)
+             , Margin          = new Thickness(0, 12, 0, 8)
+             , HorizontalOptions = LayoutOptions.Fill
+           };
     
     private static string ExtractRawText(LeafBlock block)
     {
