@@ -8,6 +8,41 @@ namespace LaaUnitTests;
 
 public class JournalApiClientTests
 {
+    [Theory]
+    [InlineData("Committed")]
+    [InlineData("Edited")]
+    public async Task GetByIdAsync_ApiStringState_PreservesJournalContent(string state)
+    {
+        var id = Guid.NewGuid();
+        var json = $$"""
+                     {"id":"{{id}}","text":"# Historical title\n\nJournal body","createdAt":"2021-12-24T06:49:36Z","tags":["source:ttr","journal:personal"],"mood":"Happy 😊","moodScore":null,"state":"{{state}}","isEdited":true}
+                     """;
+        var sut = BuildClient(HttpStatusCode.OK, json);
+
+        var result = await sut.GetByIdAsync(id);
+
+        Assert.NotNull(result);
+        Assert.Equal(id, result.Id);
+        Assert.Equal("# Historical title\n\nJournal body", result.Text);
+        Assert.Equal(Enum.Parse<JournalEntryState>(state), result.State);
+        Assert.Equal(new[] { "source:ttr", "journal:personal" }, result.Tags);
+        Assert.Equal("Happy 😊", result.Mood);
+        Assert.Null(result.MoodScore);
+        Assert.True(result.IsEdited);
+    }
+
+    [Fact]
+    public async Task GetMostRecentAsync_ApiStringState_ReadsCommittedEntry()
+    {
+        var sut = BuildClient(HttpStatusCode.OK, """{"text":"Ordinary journal","state":"Committed"}""");
+
+        var result = await sut.GetMostRecentAsync();
+
+        Assert.NotNull(result);
+        Assert.Equal("Ordinary journal", result.Text);
+        Assert.Equal(JournalEntryState.Committed, result.State);
+    }
+
     [Fact]
     public async Task GetByIdAsync_ReturnsJournalEntry_WhenFound()
     {

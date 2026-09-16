@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using LocalAIAssistant.Data.Models;
 using LocalAIAssistant.Knowledge.Journals.Models;
 
@@ -7,6 +9,11 @@ namespace LocalAIAssistant.CognitivePlatform.CpClients.Journal;
 
 public sealed class JournalApiClient : IJournalApiClient
 {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() }
+    };
+
     private readonly HttpClient _httpClient;
     private readonly string     _journalsApiBaseRoute = "api/journals";
 
@@ -29,7 +36,7 @@ public sealed class JournalApiClient : IJournalApiClient
             response.EnsureSuccessStatusCode();
 
             return await response.Content
-                                 .ReadFromJsonAsync<JournalEntryDto>(cancellationToken: ct);
+                                 .ReadFromJsonAsync<JournalEntryDto>(JsonOptions, ct);
         }
         catch (OperationCanceledException)
         {
@@ -75,7 +82,7 @@ public sealed class JournalApiClient : IJournalApiClient
             response.EnsureSuccessStatusCode();
 
             return await response.Content
-                                 .ReadFromJsonAsync<IReadOnlyList<JournalRevisionDto>>(cancellationToken: ct);
+                                 .ReadFromJsonAsync<IReadOnlyList<JournalRevisionDto>>(JsonOptions, ct);
         }
         catch (OperationCanceledException)
         {
@@ -100,7 +107,7 @@ public sealed class JournalApiClient : IJournalApiClient
             response.EnsureSuccessStatusCode();
 
             return await response.Content
-                                 .ReadFromJsonAsync<JournalEntryDto>(cancellationToken: ct);
+                                 .ReadFromJsonAsync<JournalEntryDto>(JsonOptions, ct);
         }
         catch (OperationCanceledException)
         {

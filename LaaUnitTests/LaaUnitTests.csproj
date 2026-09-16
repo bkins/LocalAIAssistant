@@ -29,6 +29,8 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Using Include="Microsoft.Maui.Controls" />
+    <Using Include="Microsoft.Maui.ApplicationModel" />
   </ItemGroup>
 
   <ItemGroup>
@@ -43,6 +45,7 @@
     <None Include="../Views/SettingsPage.xaml" Link="Fixtures/SettingsPage.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Views/RecordingsPage.xaml" Link="Fixtures/RecordingsPage.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Knowledge/Inbox/KnowledgeInboxPage.xaml" Link="Fixtures/KnowledgeInboxPage.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../Knowledge/Inbox/KnowledgeInboxViewModel.cs" Link="Fixtures/KnowledgeInboxViewModel.cs.txt" CopyToOutputDirectory="PreserveNewest" />
 
     <Compile Include="../Data/Models/Message.cs" Link="Linked/Message.cs" />
     <Compile Include="../Data/Models/CommandSuggestion.cs" Link="Linked/CommandSuggestion.cs" />
@@ -53,6 +56,7 @@
     <Compile Include="../Knowledge/Journals/Models/JournalEntryDto.cs" Link="Linked/JournalEntryDto.cs" />
     <Compile Include="../Knowledge/Journals/Models/JournalRevisionDto.cs" Link="Linked/JournalRevisionDto.cs" />
     <Compile Include="../Knowledge/Inbox/KnowledgeItem.cs" Link="Linked/KnowledgeItem.cs" />
+    <Compile Include="../Knowledge/Inbox/KnowledgeItemDetailNavigation.cs" Link="Linked/KnowledgeItemDetailNavigation.cs" />
     <Compile Include="../Presentation/PresentationModel.cs" Link="Linked/PresentationModel.cs" />
     <Compile Include="../Presentation/KnowledgeItemPresentationAdapter.cs" Link="Linked/KnowledgeItemPresentationAdapter.cs" />
     <Compile Include="../Presentation/TaskPresentationAdapter.cs" Link="Linked/TaskPresentationAdapter.cs" />
@@ -70,6 +74,9 @@
     <Compile Include="../CognitivePlatform/CpClients/Tasks/TaskApiClient.cs" Link="Linked/TaskApiClient.cs" />
     <Compile Include="../CognitivePlatform/CpClients/Journal/IJournalApiClient.cs" Link="Linked/IJournalApiClient.cs" />
     <Compile Include="../CognitivePlatform/CpClients/Journal/JournalApiClient.cs" Link="Linked/JournalApiClient.cs" />
+    <Compile Include="../CognitivePlatform/CpClients/Journal/IJournalApiClientFactory.cs" Link="Linked/IJournalApiClientFactory.cs" />
+    <Compile Include="../Knowledge/Journals/ViewModels/JournalDetailViewModel.cs" Link="Linked/JournalDetailViewModel.cs" />
+    <Compile Include="../Knowledge/Journals/ViewModels/AttachmentViewModel.cs" Link="Linked/AttachmentViewModel.cs" />
     <Compile Include="../CognitivePlatform/CpClients/Knowledge/IKnowledgeApiClient.cs" Link="Linked/IKnowledgeApiClient.cs" />
     <Compile Include="../CognitivePlatform/CpClients/Knowledge/KnowledgeApiClient.cs" Link="Linked/KnowledgeApiClient.cs" />
     <Compile Include="../Services/Interfaces/IMealsClient.cs" Link="Linked/IMealsClient.cs" />

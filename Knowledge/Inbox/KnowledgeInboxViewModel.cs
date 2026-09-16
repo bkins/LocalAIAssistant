@@ -9,8 +9,6 @@ using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 using LocalAIAssistant.CognitivePlatform.DTOs;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Data.Models;
-using LocalAIAssistant.Knowledge.Journals.Views;
-using LocalAIAssistant.Knowledge.Tasks.Views;
 using Microsoft.EntityFrameworkCore;
 
 namespace LocalAIAssistant.Knowledge.Inbox;
@@ -356,32 +354,11 @@ public partial class KnowledgeInboxViewModel : ObservableObject
     [RelayCommand]
     private async Task OpenAsync(KnowledgeItem item)
     {
-        switch (item.Kind)
-        {
-            case KnowledgeKind.Journal:
-            {
-                var url = $"{nameof(JournalDetailPage)}?id={item.Id}";
-                if (item.Workspace.HasValue())
-                    url += $"&workspace={Uri.EscapeDataString(item.Workspace)}";
-                await Shell.Current.GoToAsync(url);
-                break;
-            }
-
-            case KnowledgeKind.Task:
-            {
-                var url = $"{nameof(TaskDetailPage)}?id={item.Id}";
-                if (item.Workspace.HasValue())
-                    url += $"&workspace={Uri.EscapeDataString(item.Workspace)}";
-                await Shell.Current.GoToAsync(url);
-                break;
-            }
-
-            case KnowledgeKind.Pending:
-                break;
-
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
+        HasError = false;
+        ErrorMessage = string.Empty;
+        var error = await KnowledgeItemDetailNavigation.OpenAsync(item, url => Shell.Current.GoToAsync(url));
+        ErrorMessage = error ?? string.Empty;
+        HasError = error is not null;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

@@ -4,6 +4,7 @@
              xmlns:controls="clr-namespace:LocalAIAssistant.Views.Controls"
              xmlns:converters1="clr-namespace:LocalAIAssistant.Converters"
              xmlns:vm="clr-namespace:LocalAIAssistant.Knowledge.Journals.ViewModels"
+             x:DataType="vm:JournalDetailViewModel"
              Title="Journal">
 
     <ContentPage.Resources>
@@ -21,10 +22,13 @@
             <Border Padding="10,6"
                     BackgroundColor="#553300"
                     IsVisible="{Binding HasError}">
-                <Label Text="Offline — Data will not be displayed or saved until connection is restored"
-                       FontSize="12"
-                       TextColor="#FFCC88"
-                       HorizontalOptions="Center" />
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="{Binding ErrorMessage}"
+                           FontSize="12"
+                           TextColor="#FFCC88"
+                           HorizontalOptions="Center" />
+                    <Button Text="Retry" Command="{Binding LoadCommand}" />
+                </VerticalStackLayout>
             </Border>
 
             <!-- Consistent detail header: type badge · date · workspace -->

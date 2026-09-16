@@ -23,7 +23,7 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
     [ObservableProperty] private Guid                  _journalId;
     [ObservableProperty] private bool                  _showAsMarkdown;
     [ObservableProperty] private bool                  _hasError;
-    [ObservableProperty] private string                _errorMessage;
+    [ObservableProperty] private string                _errorMessage = string.Empty;
     [ObservableProperty] private string?               _workspace;
 
     [ObservableProperty] private Exception?            _caughtException;
@@ -37,7 +37,6 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
     {
         _clientFactory   = clientFactory;
         _mediaClient     = mediaClient;
-        CaughtException  = new Exception();
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -55,33 +54,72 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
     [RelayCommand]
     public async Task LoadAsync()
     {
-        if (JournalId == Guid.Empty)
+        if (IsLoading)
+        {
             return;
+        }
+
+        HasError = false;
+        ErrorMessage = string.Empty;
+        CaughtException = null;
+        Text = string.Empty;
+        Tags = Array.Empty<string>();
+        Mood = null;
+        MoodScore = null;
+        IsEdited = false;
+        CreatedAt = default;
+        State = default;
+        Attachments.Clear();
+        OnPropertyChanged(nameof(HasAttachments));
+
+        if (JournalId == Guid.Empty)
+        {
+            HasError = true;
+            ErrorMessage = "This journal entry has an invalid identifier.";
+            return;
+        }
 
         IsLoading = true;
+        var journalLoaded = false;
         try
         {
             var client = _clientFactory.Create();
             var entry  = await client.GetByIdAsync(JournalId);
 
-            if (entry is not null)
+            if (entry is null)
             {
-                Text      = entry.Text;
-                CreatedAt = entry.CreatedAt.LocalDateTime;
-                Tags      = entry.Tags;
-                Mood      = entry.Mood;
-                State     = entry.State;
-                MoodScore = entry.MoodScore;
-                IsEdited  = entry.IsEdited;
-
-                SetDtoError(entry);
+                HasError = true;
+                ErrorMessage = "This journal entry could not be found. Return to the Inbox and refresh the list.";
+                return;
             }
 
+            if (entry.Error is not null)
+            {
+                HasError = true;
+                ErrorMessage = "Unable to load this journal entry. Check the API connection, then retry.";
+                Serilog.Log.Warning("Journal detail request failed for {JournalId}: {ExceptionType}", JournalId, entry.Error.ExceptionType);
+                return;
+            }
+
+            Text      = entry.Text;
+            CreatedAt = entry.CreatedAt.LocalDateTime;
+            Tags      = entry.Tags;
+            Mood      = entry.Mood;
+            State     = entry.State;
+            MoodScore = entry.MoodScore;
+            IsEdited  = entry.IsEdited;
+
+            journalLoaded = true;
             await LoadAttachmentsAsync();
         }
         catch (Exception exception)
         {
             CaughtException = exception;
+            HasError = true;
+            ErrorMessage = journalLoaded
+                ? "The journal loaded, but its attachments could not be displayed. Retry to reload."
+                : "Unable to display this journal entry. Retry to reload; if it continues, check the app logs.";
+            Serilog.Log.Error(exception, "Failed to load journal detail {JournalId}", JournalId);
         }
         finally
         {
@@ -102,23 +140,15 @@ public partial class JournalDetailViewModel : ObservableObject, IQueryAttributab
         OnPropertyChanged(nameof(HasAttachments));
     }
 
-    private void SetDtoError( JournalEntryDto? entry )
-    {
-        if (entry?.Error is null) return;
-
-        HasError     = true;
-        ErrorMessage = entry.Error.Message;
-    }
-
     [RelayCommand]
     private async Task ViewRevisionHistoryAsync()
     {
-        await Shell.Current.GoToAsync($"{nameof(JournalRevisionHistoryPage)}?id={_journalId}");
+        await Shell.Current.GoToAsync($"{nameof(JournalRevisionHistoryPage)}?id={JournalId}");
     }
 
     [RelayCommand]
     private async Task EditEntryAsync()
     {
-        await Shell.Current.GoToAsync($"{nameof(EditJournalEntryPage)}?id={_journalId}");
+        await Shell.Current.GoToAsync($"{nameof(EditJournalEntryPage)}?id={JournalId}");
     }
 }
