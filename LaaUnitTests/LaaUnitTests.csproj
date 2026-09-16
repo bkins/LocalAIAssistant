@@ -108,4 +108,7 @@
     <Compile Include="../ViewModels/LogsViewModel.cs" Link="Linked/LogsViewModel.cs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="../CognitivePlatform/CpClients/CognitivePlatform/ConversationStreamPayload.cs" Link="Linked/ConversationStreamPayload.cs" />
+  </ItemGroup>
 </Project>

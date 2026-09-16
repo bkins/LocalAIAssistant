@@ -242,11 +242,16 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
                                     Content = JsonContent.Create(requestDto)
                             };
 
+        request.Headers.Add(ConversationStreamPayload.HeaderName, ConversationStreamPayload.JsonStringFormat);
+
         using var response = await _httpClient.SendAsync(request
                                                        , HttpCompletionOption.ResponseHeadersRead
                                                        , ct);
 
         response.EnsureSuccessStatusCode();
+
+        var jsonStrings = response.Headers.TryGetValues(ConversationStreamPayload.HeaderName, out var streamFormats)
+                       && streamFormats.Contains(ConversationStreamPayload.JsonStringFormat, StringComparer.Ordinal);
 
         Connectivity.ReportOnline();
 
@@ -293,7 +298,7 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
 
             if (payload.StartsWith(' ')) payload = payload[1..];
 
-            if (payload.Length > 0) yield return payload;
+            if (payload.Length > 0) yield return ConversationStreamPayload.Decode(payload, jsonStrings);
         }
     }
 
