@@ -7,6 +7,12 @@ namespace LocalAIAssistant.Views.Controls;
 
 public class NativeMarkdownView : VerticalStackLayout
 {
+    public NativeMarkdownView()
+    {
+        // Markdown blank lines separate blocks but do not create layout space.
+        Spacing = 8;
+    }
+
     public static readonly BindableProperty MarkdownProperty = BindableProperty.Create(nameof(Markdown)
                                                                                      , typeof(string)
                                                                                      , typeof(NativeMarkdownView)
