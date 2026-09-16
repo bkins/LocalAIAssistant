@@ -110,6 +110,7 @@
 
   <ItemGroup>
     <Compile Include="../CognitivePlatform/CpClients/CognitivePlatform/ConversationStreamPayload.cs" Link="Linked/ConversationStreamPayload.cs" />
+    <Compile Include="../Views/Controls/SearchResultSpacing.cs" Link="Linked/SearchResultSpacing.cs" />
     <None Include="../Views/Controls/NativeMarkdownView.cs" Link="Fixtures/NativeMarkdownView.cs.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

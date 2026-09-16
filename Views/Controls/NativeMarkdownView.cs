@@ -9,8 +9,8 @@ public class NativeMarkdownView : VerticalStackLayout
 {
     public NativeMarkdownView()
     {
-        // Markdown blank lines separate blocks but do not create layout space.
-        Spacing = 8;
+        // Keep ordinary paragraphs compact; only search-result headers get a gap.
+        Spacing = 0;
     }
 
     public static readonly BindableProperty MarkdownProperty = BindableProperty.Create(nameof(Markdown)
@@ -99,6 +99,7 @@ public class NativeMarkdownView : VerticalStackLayout
             return new Label
                    {
                            Text                    = rawText
+                         , Margin                  = new Thickness(0, SearchResultSpacing.TopGap(rawText), 0, 0)
                          , TextColor               = TextColor
                          , FontSize                = 16
                          , LineBreakMode           = LineBreakMode.WordWrap
@@ -120,6 +121,7 @@ public class NativeMarkdownView : VerticalStackLayout
         Label label = new Label();
         
         label.FormattedText = formatted;
+        label.Margin = new Thickness(0, SearchResultSpacing.TopGap(rawText), 0, 0);
         
         return label;
     }
