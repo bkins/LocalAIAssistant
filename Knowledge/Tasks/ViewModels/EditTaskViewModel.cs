@@ -1,12 +1,14 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LocalAIAssistant.CognitivePlatform.CpClients.Tasks;
+using LocalAIAssistant.Knowledge.Inbox;
 
 namespace LocalAIAssistant.Knowledge.Tasks.ViewModels;
 
 public sealed partial class EditTaskViewModel : ObservableObject, IQueryAttributable
 {
     private readonly ITaskApiClientFactory _clientFactory;
+    private readonly KnowledgeInboxRefreshState _refreshState;
 
     private Guid _taskId;
 
@@ -22,9 +24,10 @@ public sealed partial class EditTaskViewModel : ObservableObject, IQueryAttribut
     [ObservableProperty] private bool     _isCompleted;
     [ObservableProperty] private DateTime _completedAtValue = DateTime.Today;
 
-    public EditTaskViewModel(ITaskApiClientFactory clientFactory)
+    public EditTaskViewModel(ITaskApiClientFactory clientFactory, KnowledgeInboxRefreshState refreshState)
     {
         _clientFactory = clientFactory;
+        _refreshState = refreshState;
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -100,6 +103,7 @@ public sealed partial class EditTaskViewModel : ObservableObject, IQueryAttribut
                                  , finalDueDate
                                  , finalCompletedAt);
 
+        _refreshState.MarkChanged();
         await Shell.Current.GoToAsync("..");
     }
 

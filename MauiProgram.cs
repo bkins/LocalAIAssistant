@@ -212,6 +212,7 @@ public static class MauiProgram
 
 		builder.Services.AddSingleton<ILocalKnowledgeStore>(_ => new SqliteLocalKnowledgeStore(localDbPath));
 		builder.Services.AddSingleton<IKnowledgeSyncService, KnowledgeSyncService>();
+		builder.Services.AddSingleton<KnowledgeInboxRefreshState>();
 		builder.Services.AddTransient<KnowledgeInboxViewModel>();
 		builder.Services.AddTransient<KnowledgeInboxPage>();
 		builder.Services.AddTransient<ActionDirectoryViewModel>();

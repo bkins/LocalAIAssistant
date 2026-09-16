@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using LocalAIAssistant.Core.Media;
 using LocalAIAssistant.CognitivePlatform.CpClients.Journal;
 using LocalAIAssistant.Knowledge.Journals.Models;
+using LocalAIAssistant.Knowledge.Inbox;
 
 namespace LocalAIAssistant.Knowledge.Journals.ViewModels;
 
@@ -12,14 +13,17 @@ public sealed partial class EditJournalEntryViewModel : ObservableObject
 {
     private readonly IJournalApiClientFactory   _clientFactory;
     private readonly IMediaAttachmentApiClient  _mediaClient;
+    private readonly KnowledgeInboxRefreshState _refreshState;
 
     private Guid _journalId;
 
     public EditJournalEntryViewModel( IJournalApiClientFactory  clientFactory
-                                    , IMediaAttachmentApiClient mediaClient )
+                                    , IMediaAttachmentApiClient mediaClient
+                                    , KnowledgeInboxRefreshState refreshState )
     {
         _clientFactory = clientFactory;
         _mediaClient   = mediaClient;
+        _refreshState  = refreshState;
     }
 
     // Editable fields (pre-populated)
@@ -155,6 +159,7 @@ public sealed partial class EditJournalEntryViewModel : ObservableObject
             }
 
             Attachments.Add(new AttachmentViewModel(dto, BuildEnvironment.ApiBaseUrl, DeleteAttachmentAsync));
+            _refreshState.MarkChanged();
             OnPropertyChanged(nameof(HasAttachments));
         }
         catch (Exception ex)
@@ -175,6 +180,7 @@ public sealed partial class EditJournalEntryViewModel : ObservableObject
             }
 
             var toRemove = Attachments.FirstOrDefault(chip => chip.Id == id);
+            _refreshState.MarkChanged();
             if (toRemove is not null)
             {
                 Attachments.Remove(toRemove);
@@ -215,6 +221,7 @@ public sealed partial class EditJournalEntryViewModel : ObservableObject
                                      , Mood
                                      , MoodScore);
 
+            _refreshState.MarkChanged();
             await Shell.Current.GoToAsync("..");
         }
         catch (Exception ex)

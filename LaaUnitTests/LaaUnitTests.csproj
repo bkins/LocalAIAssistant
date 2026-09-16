@@ -46,6 +46,7 @@
     <None Include="../Views/RecordingsPage.xaml" Link="Fixtures/RecordingsPage.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Knowledge/Inbox/KnowledgeInboxPage.xaml" Link="Fixtures/KnowledgeInboxPage.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Knowledge/Inbox/KnowledgeInboxViewModel.cs" Link="Fixtures/KnowledgeInboxViewModel.cs.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../Knowledge/Inbox/KnowledgeInboxPage.xaml.cs" Link="Fixtures/KnowledgeInboxPage.xaml.cs.txt" CopyToOutputDirectory="PreserveNewest" />
 
     <Compile Include="../Data/Models/Message.cs" Link="Linked/Message.cs" />
     <Compile Include="../Data/Models/CommandSuggestion.cs" Link="Linked/CommandSuggestion.cs" />
@@ -57,6 +58,12 @@
     <Compile Include="../Knowledge/Journals/Models/JournalRevisionDto.cs" Link="Linked/JournalRevisionDto.cs" />
     <Compile Include="../Knowledge/Inbox/KnowledgeItem.cs" Link="Linked/KnowledgeItem.cs" />
     <Compile Include="../Knowledge/Inbox/KnowledgeItemDetailNavigation.cs" Link="Linked/KnowledgeItemDetailNavigation.cs" />
+    <Compile Include="../Knowledge/Inbox/KnowledgeSyncService.cs" Link="Linked/KnowledgeSyncService.cs" />
+    <Compile Include="../Knowledge/Inbox/InboxReturnRefreshPolicy.cs" Link="Linked/InboxReturnRefreshPolicy.cs" />
+    <Compile Include="../Knowledge/Inbox/KnowledgeInboxRefreshState.cs" Link="Linked/KnowledgeInboxRefreshState.cs" />
+    <Compile Include="../Knowledge/Inbox/IKnowledgeSyncService.cs" Link="Linked/IKnowledgeSyncService.cs" />
+    <Compile Include="../Knowledge/Inbox/ILocalKnowledgeStore.cs" Link="Linked/ILocalKnowledgeStore.cs" />
+    <Compile Include="../CognitivePlatform/CpClients/Knowledge/IKnowledgeClientFactory.cs" Link="Linked/IKnowledgeClientFactory.cs" />
     <Compile Include="../Presentation/PresentationModel.cs" Link="Linked/PresentationModel.cs" />
     <Compile Include="../Presentation/KnowledgeItemPresentationAdapter.cs" Link="Linked/KnowledgeItemPresentationAdapter.cs" />
     <Compile Include="../Presentation/TaskPresentationAdapter.cs" Link="Linked/TaskPresentationAdapter.cs" />

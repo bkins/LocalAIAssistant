@@ -20,6 +20,8 @@ public partial class KnowledgeInboxViewModel : ObservableObject
     private readonly ILocalKnowledgeStore            _localStore;
     private readonly LocalAiAssistantDbContext       _db;
     private readonly ICognitivePlatformClientFactory _cpClientFactory;
+    private readonly KnowledgeInboxRefreshState _refreshState;
+    private readonly InboxReturnRefreshPolicy _returnRefreshPolicy = new();
 
     public ObservableCollection<KnowledgeItem> Items => _items;
 
@@ -73,13 +75,23 @@ public partial class KnowledgeInboxViewModel : ObservableObject
                                  , IKnowledgeSyncService           syncService
                                  , ILocalKnowledgeStore            localStore
                                  , LocalAiAssistantDbContext       db
-                                 , ICognitivePlatformClientFactory cpClientFactory )
+                                 , ICognitivePlatformClientFactory cpClientFactory
+                                 , KnowledgeInboxRefreshState      refreshState )
     {
         _clientFactory   = clientFactory;
         _syncService     = syncService;
         _localStore      = localStore;
         _db              = db;
         _cpClientFactory = cpClientFactory;
+        _refreshState    = refreshState;
+    }
+
+    public async Task LoadOnAppearingAsync()
+    {
+        if (_returnRefreshPolicy.ShouldLoadOnAppearance(_refreshState.Revision))
+        {
+            await LoadAsync();
+        }
     }
 
     [RelayCommand]
@@ -87,6 +99,8 @@ public partial class KnowledgeInboxViewModel : ObservableObject
     {
         if (IsLoading) return;
 
+        var revision = _refreshState.Revision;
+        var loadSucceeded = false;
         IsLoading    = true;
         IsOffline    = !_syncService.IsOnline;
         HasError     = false;
@@ -100,6 +114,7 @@ public partial class KnowledgeInboxViewModel : ObservableObject
                 await LoadOnlineAsync();
             else
                 await LoadOfflineAsync();
+            loadSucceeded = true;
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -110,6 +125,10 @@ public partial class KnowledgeInboxViewModel : ObservableObject
         {
             RebuildWorkspaceFilters();
             RebuildGroups();
+            if (loadSucceeded)
+            {
+                _returnRefreshPolicy.MarkLoaded(revision);
+            }
             IsLoading = false;
         }
     }
@@ -120,7 +139,7 @@ public partial class KnowledgeInboxViewModel : ObservableObject
 
         var pendingItems = await BuildPendingItemsAsync();
 
-        var localItems = _localStore.List();
+        var localItems = await _syncService.ReadLocalAsync();
 
         var combined = pendingItems.Concat(localItems)
                                    .OrderByDescending(item => item.CreatedAt);
@@ -133,7 +152,7 @@ public partial class KnowledgeInboxViewModel : ObservableObject
     {
         var pendingItems = await BuildPendingItemsAsync();
 
-        var localItems = _localStore.List();
+        var localItems = await _syncService.ReadLocalAsync();
 
         var combined = pendingItems.Concat(localItems)
                                    .OrderByDescending(item => item.CreatedAt);
@@ -356,7 +375,15 @@ public partial class KnowledgeInboxViewModel : ObservableObject
     {
         HasError = false;
         ErrorMessage = string.Empty;
-        var error = await KnowledgeItemDetailNavigation.OpenAsync(item, url => Shell.Current.GoToAsync(url));
+        var error = await KnowledgeItemDetailNavigation.OpenAsync(item, url =>
+        {
+            _returnRefreshPolicy.BeginDetailNavigation();
+            return Shell.Current.GoToAsync(url);
+        });
+        if (error is not null)
+        {
+            _returnRefreshPolicy.CancelDetailNavigation();
+        }
         ErrorMessage = error ?? string.Empty;
         HasError = error is not null;
     }

@@ -47,6 +47,12 @@
             </Border>
 
             <!-- Search bar -->
+            <Button Text="Refresh"
+                    x:DataType="inbox:KnowledgeInboxViewModel"
+                    Command="{Binding LoadCommand}"
+                    HorizontalOptions="End"
+                    FontSize="12"
+                    Margin="8,2" />
             <Border Margin="8,6,8,2"
                     Padding="8,0"
                     BackgroundColor="#1E1E2E"

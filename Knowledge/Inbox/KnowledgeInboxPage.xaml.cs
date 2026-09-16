@@ -21,6 +21,15 @@ public partial class KnowledgeInboxPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await ViewModel.LoadAsync();
+        try
+        {
+            await ViewModel.LoadOnAppearingAsync();
+        }
+        catch (Exception exception)
+        {
+            Serilog.Log.Error(exception, "Failed to show Knowledge Inbox");
+            ViewModel.HasError = true;
+            ViewModel.ErrorMessage = "Unable to refresh the Inbox. Try Refresh again.";
+        }
     }
 }
