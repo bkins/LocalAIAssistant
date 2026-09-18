@@ -7,6 +7,17 @@ namespace LaaUnitTests;
 
 public class MediaAttachmentApiClientTests
 {
+    [Fact]
+    public async Task List_Uses_Generic_Journal_Owner_Route()
+    {
+        var journalId = Guid.NewGuid();
+        var handler = new StubHttpMessageHandler(HttpStatusCode.OK, "[]");
+        var client = new MediaAttachmentApiClient(new HttpClient(handler) { BaseAddress = new Uri("http://localhost/") });
+
+        await client.ListAsync(journalId);
+
+        Assert.Equal($"/api/media/JournalEntry/{journalId}", handler.RequestPath);
+    }
     // ── UploadAsync ───────────────────────────────────────────────────────────
 
     [Fact]
@@ -195,6 +206,7 @@ public class MediaAttachmentApiClientTests
 
     private sealed class StubHttpMessageHandler : HttpMessageHandler
     {
+        public string? RequestPath { get; private set; }
         private readonly HttpStatusCode _status;
         private readonly string         _content;
 
@@ -208,6 +220,7 @@ public class MediaAttachmentApiClientTests
                                                               , CancellationToken  ct )
         {
             ct.ThrowIfCancellationRequested();
+            RequestPath = request.RequestUri!.AbsolutePath;
 
             return Task.FromResult(new HttpResponseMessage(_status)
                                    {

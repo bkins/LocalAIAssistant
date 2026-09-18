@@ -18,7 +18,7 @@ public sealed class AttachmentViewModel
     {
         Id           = dto.Id;
         FileName     = dto.FileName;
-        StoragePath  = dto.StoragePath;
+        StoragePath  = new Uri(new Uri(baseUrl.TrimEnd('/') + "/"), $"api/media/{dto.Id}/file").AbsoluteUri;
         IsImage      = dto.IsImage;
 
         DeleteCommand = new AsyncRelayCommand(() => onDelete(dto.Id));

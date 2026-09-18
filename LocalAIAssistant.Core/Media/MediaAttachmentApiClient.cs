@@ -40,7 +40,7 @@ public sealed class MediaAttachmentApiClient : IMediaAttachmentApiClient
     {
         try
         {
-            var response = await _http.GetAsync($"api/journals/{journalId}/media", ct);
+            var response = await _http.GetAsync($"api/media/JournalEntry/{journalId}", ct);
 
             if (response.StatusCode == HttpStatusCode.NotFound)
                 return null;
