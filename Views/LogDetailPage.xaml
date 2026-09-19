@@ -149,7 +149,7 @@
                         <Label Text="{Binding PropertiesFormatted}"
                                FontFamily="Consolas, monospace"
                                FontSize="12"
-                               TextColor="{AppThemeBinding Light={StaticResource Gray800}, Dark={StaticResource Gray300}}"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray300}}"
                                LineBreakMode="WordWrap" />
                     </Border>
                 </VerticalStackLayout>
@@ -186,7 +186,7 @@
                         <Label Text="{Binding PrettifiedFullText}"
                                FontFamily="Consolas, monospace"
                                FontSize="11"
-                               TextColor="{AppThemeBinding Light={StaticResource Gray800}, Dark={StaticResource Gray300}}"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray300}}"
                                LineBreakMode="WordWrap" />
                     </Border>
                 </VerticalStackLayout>

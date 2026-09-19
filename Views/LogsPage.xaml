@@ -69,8 +69,11 @@
 
             <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
                 <HorizontalStackLayout Spacing="8">
-                    <Switch IsToggled="{Binding IsDateFilterEnabled}" />
-                    <Label Text="Filter by date range" VerticalOptions="Center" FontSize="11" />
+                    <HorizontalStackLayout Spacing="2">
+                        <Switch IsToggled="{Binding IsDateFilterEnabled}"
+                                WidthRequest="52" />
+                        <Label Text="Filter by date range" VerticalOptions="Center" FontSize="11" />
+                    </HorizontalStackLayout>
                     <Label Text="From" VerticalOptions="Center" FontSize="11" />
                     <DatePicker Date="{Binding FromDate, Mode=TwoWay}" Format="yyyy-MM-dd" />
                     <Label Text="To" VerticalOptions="Center" FontSize="11" />
@@ -215,12 +218,16 @@
                             BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource SurfaceColor}}"
                             Margin="0,3"
                             Padding="10,8">
-                        <Grid RowDefinitions="Auto, Auto, Auto, Auto" RowSpacing="4">
+                        <Grid RowDefinitions="Auto, Auto, Auto" RowSpacing="4">
                             
                             <!-- Header Row: Level Badge, Category Pill, Timestamp, Exception Indicator -->
-                            <HorizontalStackLayout Grid.Row="0" Spacing="6" VerticalOptions="Center">
+                            <Grid Grid.Row="0"
+                                  ColumnDefinitions="Auto, Auto, Auto, *, Auto"
+                                  ColumnSpacing="6"
+                                  VerticalOptions="Center">
                                 
-                                <Border BackgroundColor="{Binding Level, Converter={StaticResource LogLevelToColorConverter}}"
+                                <Border Grid.Column="0"
+                                        BackgroundColor="{Binding Level, Converter={StaticResource LogLevelToColorConverter}}"
                                         StrokeThickness="0"
                                         StrokeShape="RoundRectangle 4"
                                         Padding="5,1">
@@ -230,7 +237,8 @@
                                            FontAttributes="Bold" />
                                 </Border>
 
-                                <Border BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource SurfaceAltColor}}"
+                                <Border Grid.Column="1"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource SurfaceAltColor}}"
                                         StrokeThickness="0"
                                         StrokeShape="RoundRectangle 4"
                                         Padding="5,1">
@@ -239,18 +247,35 @@
                                            TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray300}}" />
                                 </Border>
 
-                                <Label Text="{Binding DisplayTimestamp}"
+                                <Label Grid.Column="2"
+                                       Text="{Binding DisplayTimestamp}"
                                        FontSize="11"
                                        TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
                                        VerticalOptions="Center" />
 
-                                <Label Text="⚠ Exception"
+                                <Label Grid.Column="3"
+                                       Text="⚠ Exception"
                                        FontSize="10"
                                        TextColor="#E53935"
                                        FontAttributes="Bold"
                                        IsVisible="{Binding HasException}"
                                        VerticalOptions="Center" />
-                            </HorizontalStackLayout>
+                                <Border Grid.Column="4"
+                                        AutomationId="ViewLogDetailsButton"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 5"
+                                        Padding="7,2"
+                                        VerticalOptions="Center"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer CommandParameter="{Binding .}"
+                                                              Tapped="OnViewDetailsTapped" />
+                                    </Border.GestureRecognizers>
+                                    <Label Text="Details ›"
+                                           FontSize="10"
+                                           TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray100}}" />
+                                </Border>
+                            </Grid>
 
                             <!-- Log Message (Single Label - No Overlapping) -->
                             <Label Grid.Row="1"
@@ -274,19 +299,6 @@
                                        LineBreakMode="TailTruncation"
                                        TextColor="{AppThemeBinding Light=#BF360C, Dark=#FFCC80}" />
                             </Border>
-
-                            <Button Grid.Row="3"
-                                    AutomationId="ViewLogDetailsButton"
-                                    Text="View details"
-                                    CommandParameter="{Binding .}"
-                                    Clicked="OnViewDetailsClicked"
-                                    HorizontalOptions="End"
-                                    FontSize="11"
-                                    CornerRadius="6"
-                                    Padding="10,4"
-                                    HeightRequest="32"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
-                                    TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray100}}" />
 
                         </Grid>
                     </Border>

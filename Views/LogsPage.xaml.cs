@@ -20,9 +20,9 @@ public partial class LogsPage : ContentPage
         }
     }
 
-    private async void OnViewDetailsClicked(object? sender, EventArgs eventArgs)
+    private async void OnViewDetailsTapped(object? sender, TappedEventArgs eventArgs)
     {
-        if (sender is not Button { CommandParameter: Services.Logging.LogEntry entry }) return;
+        if (sender is not TapGestureRecognizer { CommandParameter: Services.Logging.LogEntry entry }) return;
 
         try
         {

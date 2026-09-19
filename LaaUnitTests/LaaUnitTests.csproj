@@ -46,6 +46,7 @@
     <None Include="../Views/RecordingsPage.xaml" Link="Fixtures/RecordingsPage.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Views/LogsPage.xaml" Link="Fixtures/LogsPage.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Views/LogsPage.xaml.cs" Link="Fixtures/LogsPage.xaml.cs.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../Views/LogDetailPage.xaml" Link="Fixtures/LogDetailPage.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Knowledge/Inbox/KnowledgeInboxPage.xaml" Link="Fixtures/KnowledgeInboxPage.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Knowledge/Inbox/KnowledgeInboxViewModel.cs" Link="Fixtures/KnowledgeInboxViewModel.cs.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Knowledge/Inbox/KnowledgeInboxPage.xaml.cs" Link="Fixtures/KnowledgeInboxPage.xaml.cs.txt" CopyToOutputDirectory="PreserveNewest" />
