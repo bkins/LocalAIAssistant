@@ -71,7 +71,11 @@
                 <HorizontalStackLayout Spacing="8">
                     <HorizontalStackLayout Spacing="2">
                         <Switch IsToggled="{Binding IsDateFilterEnabled}"
-                                WidthRequest="52" />
+                                WidthRequest="52"
+                                MinimumWidthRequest="0"
+                                MaximumWidthRequest="52"
+                                HorizontalOptions="Start"
+                                HandlerChanged="OnDateFilterSwitchHandlerChanged" />
                         <Label Text="Filter by date range" VerticalOptions="Center" FontSize="11" />
                     </HorizontalStackLayout>
                     <Label Text="From" VerticalOptions="Center" FontSize="11" />
@@ -260,21 +264,19 @@
                                        FontAttributes="Bold"
                                        IsVisible="{Binding HasException}"
                                        VerticalOptions="Center" />
-                                <Border Grid.Column="4"
+                                <Button Grid.Column="4"
                                         AutomationId="ViewLogDetailsButton"
-                                        StrokeThickness="0"
-                                        StrokeShape="RoundRectangle 5"
-                                        Padding="7,2"
+                                        Text="Details ›"
+                                        CommandParameter="{Binding .}"
+                                        Clicked="OnViewDetailsClicked"
+                                        FontSize="10"
+                                        Padding="7,0"
+                                        HeightRequest="26"
+                                        MinimumHeightRequest="0"
                                         VerticalOptions="Center"
-                                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}">
-                                    <Border.GestureRecognizers>
-                                        <TapGestureRecognizer CommandParameter="{Binding .}"
-                                                              Tapped="OnViewDetailsTapped" />
-                                    </Border.GestureRecognizers>
-                                    <Label Text="Details ›"
-                                           FontSize="10"
-                                           TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray100}}" />
-                                </Border>
+                                        CornerRadius="5"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                                        TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray100}}" />
                             </Grid>
 
                             <!-- Log Message (Single Label - No Overlapping) -->
