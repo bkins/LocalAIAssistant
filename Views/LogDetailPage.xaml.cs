@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using CP.Client.Core.Avails;
 using LocalAIAssistant.Services.Logging;
+using LocalAIAssistant.Services.Logging.Interfaces;
 using Microsoft.Maui.ApplicationModel.DataTransfer;
 using Microsoft.Maui.Controls;
 
@@ -10,6 +11,7 @@ namespace LocalAIAssistant.Views;
 [QueryProperty(nameof(Entry), nameof(LogEntry))]
 public partial class LogDetailPage : ContentPage
 {
+    private readonly ILoggingService _loggingService;
     private LogEntry? _entry;
     public LogEntry? Entry
     {
@@ -21,9 +23,41 @@ public partial class LogDetailPage : ContentPage
         }
     }
 
-    public LogDetailPage()
+    public LogDetailPage(ILoggingService loggingService)
     {
+        _loggingService = loggingService;
         InitializeComponent();
+    }
+
+    private async void OnDeleteEntryClicked(object? sender, EventArgs eventArgs)
+    {
+        if (_entry is null) return;
+
+        var excerpt = _entry.Message.ReplaceLineEndings(" ").Trim();
+        if (excerpt.Length > 120) excerpt = excerpt[..117] + "...";
+        var confirmed = await DisplayAlert("Delete log entry?"
+                                         , $"{_entry.DisplayTimestamp} [{_entry.LevelBadgeText}]\n{excerpt}"
+                                         , "Delete"
+                                         , "Cancel");
+        if (!confirmed) return;
+
+        try
+        {
+            var deleted = await _loggingService.DeleteLogEntryAsync(_entry.StorageId);
+            if (!deleted)
+            {
+                await DisplayAlert("Entry not deleted"
+                                 , "This entry was already removed or is no longer present. No other log entry was changed."
+                                 , "OK");
+                return;
+            }
+
+            await Shell.Current.GoToAsync("..");
+        }
+        catch (Exception exception)
+        {
+            await DisplayAlert("Unable to delete log entry", exception.Message, "OK");
+        }
     }
 
     private async void OnCopyMessageClicked(object? sender, EventArgs e)

@@ -10,6 +10,7 @@ namespace LocalAIAssistant.Services.Logging;
 public class LogEntry
 {
     public int                       Id                 { get; set; }
+    public string                    StorageId          { get; set; } = string.Empty;
     public DateTime                  Timestamp          { get; set; }
     public string                    Level              { get; set; } = "Information";
     public string                    Category           { get; set; } = "General";

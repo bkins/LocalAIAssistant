@@ -18,6 +18,7 @@ public interface ILoggingService
     // Retrieve log entries (parsed from JSON log file)
     Task<List<LogEntry>> GetLogEntriesAsync();
     Task<LogPage> GetLogPageAsync(int offset, int pageSize, CancellationToken cancellationToken = default);
+    Task<bool> DeleteLogEntryAsync(string storageId, CancellationToken cancellationToken = default);
 
     // Clear all logs
     Task ClearLogsAsync();

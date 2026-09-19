@@ -243,6 +243,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddTransient<MainPage>();
         services.AddTransient<LogsPage>();
+        services.AddTransient<LogDetailPage>();
         services.AddTransient<MemoryManagementPage>();
         services.AddTransient<AppShell>();
         services.AddSingleton<SettingsPage>();

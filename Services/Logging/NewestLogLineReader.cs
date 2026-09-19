@@ -6,7 +6,14 @@ public static class NewestLogLineReader
 {
     public static List<string> Read(string path, int count, CancellationToken cancellationToken = default)
     {
-        var result = new List<string>(count);
+        return ReadRecords(path, count, cancellationToken)
+              .Select(record => record.Text)
+              .ToList();
+    }
+
+    public static List<LogLineRecord> ReadRecords(string path, int count, CancellationToken cancellationToken = default)
+    {
+        var result = new List<LogLineRecord>(Math.Min(count, 4096));
         if (!File.Exists(path)) return result;
         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         var bytes = new List<byte>();
@@ -19,7 +26,8 @@ public static class NewestLogLineReader
             {
                 if (bytes.Count == 0) continue;
                 bytes.Reverse();
-                result.Add(Encoding.UTF8.GetString(bytes.ToArray()).TrimEnd('\r'));
+                var text = Encoding.UTF8.GetString(bytes.ToArray()).TrimEnd('\r');
+                result.Add(new LogLineRecord(position + 1, text));
                 bytes.Clear();
             }
             else bytes.Add((byte)value);
@@ -27,7 +35,7 @@ public static class NewestLogLineReader
         if (bytes.Count > 0 && result.Count < count)
         {
             bytes.Reverse();
-            result.Add(Encoding.UTF8.GetString(bytes.ToArray()).TrimEnd('\r'));
+            result.Add(new LogLineRecord(0, Encoding.UTF8.GetString(bytes.ToArray()).TrimEnd('\r')));
         }
         return result;
     }

@@ -8,6 +8,7 @@ public class LogsPageInteractionTests
         var markup = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "LogsPage.xaml.txt"));
         var codeBehind = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "LogsPage.xaml.cs.txt"));
         var detailMarkup = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "LogDetailPage.xaml.txt"));
+        var detailCodeBehind = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "LogDetailPage.xaml.cs.txt"));
 
         Assert.Contains("Text=\"Filter by date range\"", markup);
         Assert.Contains("WidthRequest=\"52\"", markup);
@@ -21,5 +22,14 @@ public class LogsPageInteractionTests
         Assert.DoesNotContain("<Button Grid.Row=\"3\"", markup);
         Assert.DoesNotContain("StaticResource Gray800", detailMarkup);
         Assert.Contains("GoToAsync(nameof(LogDetailPage)", codeBehind);
+        Assert.Contains("AutomationId=\"DeleteLogEntryButton\"", detailMarkup);
+        Assert.Contains("Clicked=\"OnDeleteEntryClicked\"", detailMarkup);
+        Assert.Contains("<Editor Text=\"{Binding Message}\"", detailMarkup);
+        Assert.Contains("<Editor Text=\"{Binding Exception}\"", detailMarkup);
+        Assert.Contains("<Editor Text=\"{Binding PropertiesFormatted}\"", detailMarkup);
+        Assert.Contains("<Editor Text=\"{Binding PrettifiedFullText}\"", detailMarkup);
+        Assert.Contains("IsReadOnly=\"True\"", detailMarkup);
+        Assert.Contains("DisplayAlert(\"Delete log entry?\"", detailCodeBehind);
+        Assert.Contains("DeleteLogEntryAsync", detailCodeBehind);
     }
 }

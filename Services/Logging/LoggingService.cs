@@ -11,14 +11,16 @@ namespace LocalAIAssistant.Services.Logging;
 
 public class LoggingService : ILoggingService
 {
-    private readonly ILogger _logger;
-    private readonly string  _logFilePath;
+    private readonly ILogger              _logger;
+    private readonly string               _logFilePath;
+    private readonly DeletedLogEntryStore _deletedEntryStore;
     
     public LoggingService(ILogger logger
                         , string  logFilePath)
     {
-        _logger      = logger;
-        _logFilePath = logFilePath;
+        _logger            = logger;
+        _logFilePath       = logFilePath;
+        _deletedEntryStore = new DeletedLogEntryStore($"{logFilePath}.deleted");
     }
 
     // 🔹 Core unified logger
@@ -100,18 +102,21 @@ public class LoggingService : ILoggingService
     {
         offset   = Math.Max(0, offset);
         pageSize = Math.Clamp(pageSize, 1, 500);
-        var requestedLines = offset + pageSize + 1;
-        var lines = await Task.Run(() => NewestLogLineReader.Read(_logFilePath, requestedLines, cancellationToken), cancellationToken);
-        var selected = lines.Skip(offset).Take(pageSize).ToList();
+        var deletedIds        = await _deletedEntryStore.GetAllAsync(cancellationToken);
+        var requestedLineCount = (int)Math.Min(int.MaxValue, (long)offset + pageSize + deletedIds.Count + 1);
+        var records            = await Task.Run(() => NewestLogLineReader.ReadRecords(_logFilePath, requestedLineCount, cancellationToken), cancellationToken);
+        var availableRecords = records.Where(record => !deletedIds.Contains(record.StorageId)).ToList();
+        var selected = availableRecords.Skip(offset).Take(pageSize).ToList();
         var entries = new List<LogEntry>();
         var malformed = 0;
 
         if (File.Exists(_logFilePath).Not())
             return new LogPage(entries, offset, false, 0);
 
-        foreach (var line in selected)
+        foreach (var record in selected)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            var line = record.Text;
             if (line.HasNoValue()) continue;
             try
             {
@@ -139,17 +144,31 @@ public class LoggingService : ILoggingService
 
                     var messageText = logEvent.RenderedMessage ?? logEvent.RenderedMessageCompact ?? logEvent.MessageTemplate ?? logEvent.Message;
                     entries.Add(new LogEntry
-                    {
-                        Id = offset + entries.Count + 1, Timestamp = logEvent.Timestamp.ToLocalTime(), Level = logEvent.Level ?? "Information",
-                        Category = category, Message = messageText, RenderedMessage = messageText, Exception = logEvent.Exception,
-                        Properties = properties, FullText = line
-                    });
+                                {
+                                    Id              = offset + entries.Count + 1
+                                  , StorageId       = record.StorageId
+                                  , Timestamp       = logEvent.Timestamp.ToLocalTime()
+                                  , Level           = logEvent.Level ?? "Information"
+                                  , Category        = category
+                                  , Message         = messageText
+                                  , RenderedMessage = messageText
+                                  , Exception       = logEvent.Exception
+                                  , Properties      = properties
+                                  , FullText        = line
+                                });
                 }
             }
             catch (JsonException) { malformed++; }
         }
 
-        return new LogPage(entries.OrderByDescending(entry => entry.Timestamp).ToList(), offset, lines.Count > offset + pageSize, malformed);
+        return new LogPage(entries.OrderByDescending(entry => entry.Timestamp).ToList(), offset, availableRecords.Count > offset + pageSize, malformed);
+    }
+
+    public Task<bool> DeleteLogEntryAsync(string storageId, CancellationToken cancellationToken = default)
+    {
+        // Serilog actively owns the JSONL file. A durable deletion index avoids
+        // rewriting that file and losing records appended during the operation.
+        return _deletedEntryStore.AddAsync(_logFilePath, storageId, cancellationToken);
     }
 
 
@@ -162,6 +181,7 @@ public class LoggingService : ILoggingService
                 await File.WriteAllTextAsync(_logFilePath
                                            , string.Empty);
             }
+            await _deletedEntryStore.ClearAsync();
         }
         catch (Exception ex)
         {

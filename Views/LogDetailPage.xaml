@@ -55,6 +55,16 @@
                     <Label Text="{Binding FormattedTimestamp, StringFormat='Timestamp: {0}'}"
                            FontSize="12"
                            TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
+                    <Button AutomationId="DeleteLogEntryButton"
+                            Text="Delete this log entry"
+                            Clicked="OnDeleteEntryClicked"
+                            FontSize="11"
+                            HorizontalOptions="Start"
+                            CornerRadius="6"
+                            Padding="10,4"
+                            HeightRequest="32"
+                            BackgroundColor="#B71C1C"
+                            TextColor="White" />
                 </VerticalStackLayout>
             </Border>
 
@@ -83,10 +93,13 @@
                                 TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray100}}" />
                     </Grid>
 
-                    <Label Text="{Binding Message}"
+                    <Editor Text="{Binding Message}"
+                           IsReadOnly="True"
+                           AutoSize="TextChanges"
+                           BackgroundColor="Transparent"
                            FontSize="14"
                            TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray100}}"
-                           LineBreakMode="WordWrap" />
+                           VerticalOptions="Start" />
                 </VerticalStackLayout>
             </Border>
 
@@ -121,11 +134,14 @@
                             StrokeThickness="1"
                             StrokeShape="RoundRectangle 6"
                             Padding="10">
-                        <Label Text="{Binding Exception}"
+                        <Editor Text="{Binding Exception}"
+                               IsReadOnly="True"
+                               AutoSize="TextChanges"
+                               BackgroundColor="Transparent"
                                FontFamily="Consolas, monospace"
                                FontSize="12"
                                TextColor="{AppThemeBinding Light=#B71C1C, Dark=#FF8A80}"
-                               LineBreakMode="WordWrap" />
+                               VerticalOptions="Start" />
                     </Border>
                 </VerticalStackLayout>
             </Border>
@@ -146,11 +162,14 @@
                     <Border BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource SurfaceAltColor}}"
                             StrokeShape="RoundRectangle 6"
                             Padding="10">
-                        <Label Text="{Binding PropertiesFormatted}"
+                        <Editor Text="{Binding PropertiesFormatted}"
+                               IsReadOnly="True"
+                               AutoSize="TextChanges"
+                               BackgroundColor="Transparent"
                                FontFamily="Consolas, monospace"
                                FontSize="12"
                                TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray300}}"
-                               LineBreakMode="WordWrap" />
+                               VerticalOptions="Start" />
                     </Border>
                 </VerticalStackLayout>
             </Border>
@@ -183,11 +202,14 @@
                     <Border BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource SurfaceAltColor}}"
                             StrokeShape="RoundRectangle 6"
                             Padding="10">
-                        <Label Text="{Binding PrettifiedFullText}"
+                        <Editor Text="{Binding PrettifiedFullText}"
+                               IsReadOnly="True"
+                               AutoSize="TextChanges"
+                               BackgroundColor="Transparent"
                                FontFamily="Consolas, monospace"
                                FontSize="11"
                                TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray300}}"
-                               LineBreakMode="WordWrap" />
+                               VerticalOptions="Start" />
                     </Border>
                 </VerticalStackLayout>
             </Border>

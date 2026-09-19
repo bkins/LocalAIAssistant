@@ -47,6 +47,7 @@
     <None Include="../Views/LogsPage.xaml" Link="Fixtures/LogsPage.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Views/LogsPage.xaml.cs" Link="Fixtures/LogsPage.xaml.cs.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Views/LogDetailPage.xaml" Link="Fixtures/LogDetailPage.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../Views/LogDetailPage.xaml.cs" Link="Fixtures/LogDetailPage.xaml.cs.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Knowledge/Inbox/KnowledgeInboxPage.xaml" Link="Fixtures/KnowledgeInboxPage.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Knowledge/Inbox/KnowledgeInboxViewModel.cs" Link="Fixtures/KnowledgeInboxViewModel.cs.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Knowledge/Inbox/KnowledgeInboxPage.xaml.cs" Link="Fixtures/KnowledgeInboxPage.xaml.cs.txt" CopyToOutputDirectory="PreserveNewest" />
@@ -100,6 +101,11 @@
     <Compile Include="../Services/Logging/LogPage.cs" Link="Linked/LogPage.cs" />
     <Compile Include="../Services/Logging/LogRedaction.cs" Link="Linked/LogRedaction.cs" />
     <Compile Include="../Services/Logging/NewestLogLineReader.cs" Link="Linked/NewestLogLineReader.cs" />
+    <Compile Include="../Services/Logging/LogEntryIdentity.cs" Link="Linked/LogEntryIdentity.cs" />
+    <Compile Include="../Services/Logging/LogLineRecord.cs" Link="Linked/LogLineRecord.cs" />
+    <Compile Include="../Services/Logging/DeletedLogEntryStore.cs" Link="Linked/DeletedLogEntryStore.cs" />
+    <Compile Include="../Services/Logging/LoggingService.cs" Link="Linked/LoggingService.cs" />
+    <Compile Include="../Extensions/LogLevelExtensions.cs" Link="Linked/LogLevelExtensions.cs" />
     <Compile Include="../Core/Environment/EnvironmentHandshakePolicy.cs" Link="Linked/EnvironmentHandshakePolicy.cs" />
     <Compile Include="../Core/Environment/Models/EnvironmentHandshakeResult.cs" Link="Linked/EnvironmentHandshakeResult.cs" />
     <Compile Include="../Data/IObjectStore.cs" Link="Linked/IObjectStore.cs" />
