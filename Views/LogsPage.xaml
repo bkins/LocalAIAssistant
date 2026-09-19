@@ -8,7 +8,7 @@
              Title="Diagnostic Logs"
              BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource AppBackgroundColor}}">
 
-    <Grid RowDefinitions="Auto, Auto, *" Padding="12" RowSpacing="10">
+    <Grid RowDefinitions="Auto, Auto, *, Auto" Padding="12" RowSpacing="10">
         
         <!-- Controls Header Area -->
         <VerticalStackLayout Grid.Row="0" Spacing="8">
@@ -66,6 +66,19 @@
                             TitleColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" />
                 </Border>
             </Grid>
+
+            <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                <HorizontalStackLayout Spacing="8">
+                    <Switch IsToggled="{Binding IsDateFilterEnabled}" />
+                    <Label Text="From" VerticalOptions="Center" FontSize="11" />
+                    <DatePicker Date="{Binding FromDate, Mode=TwoWay}" Format="yyyy-MM-dd" />
+                    <Label Text="To" VerticalOptions="Center" FontSize="11" />
+                    <DatePicker Date="{Binding ToDate, Mode=TwoWay}" Format="yyyy-MM-dd" />
+                    <Button Text="Today" Command="{Binding ShowTodayCommand}" FontSize="11" />
+                    <Button Text="7 days" Command="{Binding ShowLastSevenDaysCommand}" FontSize="11" />
+                    <Button Text="All dates" Command="{Binding ClearDateFilterCommand}" FontSize="11" />
+                </HorizontalStackLayout>
+            </ScrollView>
 
             <!-- Level Filter Chips Bar -->
             <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
@@ -226,7 +239,7 @@
                                            TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray300}}" />
                                 </Border>
 
-                                <Label Text="{Binding FormattedTime}"
+                                <Label Text="{Binding DisplayTimestamp}"
                                        FontSize="11"
                                        TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"
                                        VerticalOptions="Center" />
@@ -288,6 +301,13 @@
                 </VerticalStackLayout>
             </CollectionView.EmptyView>
         </CollectionView>
+
+        <HorizontalStackLayout Grid.Row="3" Spacing="10" HorizontalOptions="Center">
+            <Label Text="{Binding LoadSummary}" FontSize="11" VerticalOptions="Center" />
+            <Label Text="{Binding MalformedLineCount, StringFormat='Skipped malformed: {0}'}"
+                   FontSize="11" TextColor="#E67E22" IsVisible="{Binding HasMalformedLines}" />
+            <Button Text="Load older" Command="{Binding LoadOlderCommand}" IsVisible="{Binding CanLoadOlder}" />
+        </HorizontalStackLayout>
 
     </Grid>
 </ContentPage>

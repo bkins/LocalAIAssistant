@@ -17,8 +17,10 @@ namespace LocalAIAssistant.ViewModels;
 
 public partial class LogsViewModel : ObservableObject
 {
+    private const int PageSize = 200;
     private readonly ILoggingService _loggingService;
     private readonly List<LogEntry> _allEntries = new();
+    private int _nextOffset;
 
     [ObservableProperty] private ObservableCollection<LogEntry> _logEntries = new();
     [ObservableProperty] private ObservableCollection<string>   _categories = new() { "All Categories" };
@@ -26,10 +28,16 @@ public partial class LogsViewModel : ObservableObject
     [ObservableProperty] private bool                           _hasError;
     [ObservableProperty] private string                         _errorMessage = string.Empty;
     [ObservableProperty] private LogEntry?                      _selectedLogEntry;
+    [ObservableProperty] private bool                           _canLoadOlder;
+    [ObservableProperty] private int                            _malformedLineCount;
+    [ObservableProperty] private string                         _loadSummary = string.Empty;
 
     [ObservableProperty] private string _searchText          = string.Empty;
     [ObservableProperty] private string _selectedLevelFilter  = "All";
     [ObservableProperty] private string _selectedCategory     = "All Categories";
+    [ObservableProperty] private DateTime? _fromDate;
+    [ObservableProperty] private DateTime? _toDate;
+    [ObservableProperty] private bool      _isDateFilterEnabled;
 
     [ObservableProperty] private int _totalCount;
     [ObservableProperty] private int _errorCount;
@@ -39,6 +47,7 @@ public partial class LogsViewModel : ObservableObject
 
     public bool HasLogs => LogEntries.Count > 0;
     public bool IsEmpty => !IsLoading && LogEntries.Count == 0;
+    public bool HasMalformedLines => MalformedLineCount > 0;
 
     public LogsViewModel(ILoggingService loggingService)
     {
@@ -48,6 +57,9 @@ public partial class LogsViewModel : ObservableObject
     partial void OnSearchTextChanged(string value) => ApplyFilters();
     partial void OnSelectedLevelFilterChanged(string value) => ApplyFilters();
     partial void OnSelectedCategoryChanged(string value) => ApplyFilters();
+    partial void OnFromDateChanged(DateTime? value) => ApplyFilters();
+    partial void OnToDateChanged(DateTime? value) => ApplyFilters();
+    partial void OnIsDateFilterEnabledChanged(bool value) => ApplyFilters();
 
     [RelayCommand]
     public async Task LoadLogs()
@@ -57,9 +69,15 @@ public partial class LogsViewModel : ObservableObject
             IsLoading = true;
             HasError  = false;
 
-            var rawLogs = await _loggingService.GetLogEntriesAsync();
+            var page = await _loggingService.GetLogPageAsync(0, PageSize);
+            var rawLogs = page?.Entries ?? await _loggingService.GetLogEntriesAsync();
             _allEntries.Clear();
             _allEntries.AddRange(rawLogs);
+            CanLoadOlder = page?.HasMore ?? false;
+            _nextOffset = page is null ? rawLogs.Count : page.Offset + PageSize;
+            MalformedLineCount = page?.MalformedLineCount ?? 0;
+            OnPropertyChanged(nameof(HasMalformedLines));
+            LoadSummary = $"Loaded {_allEntries.Count} newest entries" + (CanLoadOlder ? " · older entries available" : string.Empty);
 
             UpdateMetrics();
             UpdateCategories();
@@ -78,6 +96,33 @@ public partial class LogsViewModel : ObservableObject
             OnPropertyChanged(nameof(HasLogs));
             OnPropertyChanged(nameof(IsEmpty));
         }
+    }
+
+    [RelayCommand]
+    public async Task LoadOlder()
+    {
+        if (IsLoading || !CanLoadOlder) return;
+        try
+        {
+            IsLoading = true;
+            HasError = false;
+            var page = await _loggingService.GetLogPageAsync(_nextOffset, PageSize);
+            _allEntries.AddRange(page.Entries);
+            _nextOffset = page.Offset + PageSize;
+            CanLoadOlder = page.HasMore;
+            MalformedLineCount += page.MalformedLineCount;
+            OnPropertyChanged(nameof(HasMalformedLines));
+            LoadSummary = $"Loaded {_allEntries.Count} newest entries" + (page.HasMore ? " · older entries available" : string.Empty);
+            UpdateMetrics();
+            UpdateCategories();
+            ApplyFilters();
+        }
+        catch (Exception exception)
+        {
+            HasError = true;
+            ErrorMessage = $"Failed to load older logs: {exception.Message}";
+        }
+        finally { IsLoading = false; }
     }
 
     [RelayCommand]
@@ -123,6 +168,12 @@ public partial class LogsViewModel : ObservableObject
                                       || (entry.FullText.HasValue() && entry.FullText.ContainsIgnoreCase(search)));
         }
 
+        if (IsDateFilterEnabled && FromDate.HasValue)
+            query = query.Where(entry => entry.Timestamp >= FromDate.Value.Date);
+
+        if (IsDateFilterEnabled && ToDate.HasValue)
+            query = query.Where(entry => entry.Timestamp < ToDate.Value.Date.AddDays(1));
+
         var filteredList = query.OrderByDescending(entry => entry.Timestamp).ToList();
 
         LogEntries.Clear();
@@ -133,6 +184,30 @@ public partial class LogsViewModel : ObservableObject
 
         OnPropertyChanged(nameof(HasLogs));
         OnPropertyChanged(nameof(IsEmpty));
+    }
+
+    [RelayCommand]
+    private void ShowToday()
+    {
+        FromDate = DateTime.Today;
+        ToDate   = DateTime.Today;
+        IsDateFilterEnabled = true;
+    }
+
+    [RelayCommand]
+    private void ShowLastSevenDays()
+    {
+        FromDate = DateTime.Today.AddDays(-6);
+        ToDate   = DateTime.Today;
+        IsDateFilterEnabled = true;
+    }
+
+    [RelayCommand]
+    private void ClearDateFilter()
+    {
+        FromDate = null;
+        ToDate   = null;
+        IsDateFilterEnabled = false;
     }
 
     private void UpdateMetrics()
@@ -218,15 +293,16 @@ public partial class LogsViewModel : ObservableObject
 
             foreach (var entry in LogEntries)
             {
-                sb.AppendLine($"[{entry.FormattedTimestamp}] [{entry.LevelBadgeText}] [{entry.Category}] {entry.Message}");
+                sb.AppendLine($"[{entry.DisplayTimestamp}] [{entry.LevelBadgeText}] [{entry.Category}] {LogRedaction.Text(entry.Message)}");
                 if (entry.HasException)
                 {
                     sb.AppendLine("Exception Details:");
-                    sb.AppendLine(entry.Exception);
+                    sb.AppendLine(LogRedaction.Text(entry.Exception));
                 }
                 if (entry.Properties.Count > 0)
                 {
-                    sb.AppendLine($"Properties: {entry.PropertiesFormatted}");
+                    sb.AppendLine("Properties:");
+                    foreach (var property in LogRedaction.Properties(entry.Properties)) sb.AppendLine($"{property.Key}: {property.Value}");
                 }
                 sb.AppendLine(new string('-', 80));
             }
@@ -254,15 +330,16 @@ public partial class LogsViewModel : ObservableObject
 
             foreach (var entry in LogEntries)
             {
-                sb.AppendLine($"[{entry.FormattedTimestamp}] [{entry.LevelBadgeText}] [{entry.Category}] {entry.Message}");
+                sb.AppendLine($"[{entry.DisplayTimestamp}] [{entry.LevelBadgeText}] [{entry.Category}] {LogRedaction.Text(entry.Message)}");
                 if (entry.HasException)
                 {
                     sb.AppendLine("Exception Details:");
-                    sb.AppendLine(entry.Exception);
+                    sb.AppendLine(LogRedaction.Text(entry.Exception));
                 }
                 if (entry.Properties.Count > 0)
                 {
-                    sb.AppendLine($"Properties: {entry.PropertiesFormatted}");
+                    sb.AppendLine("Properties:");
+                    foreach (var property in LogRedaction.Properties(entry.Properties)) sb.AppendLine($"{property.Key}: {property.Value}");
                 }
                 sb.AppendLine(new string('-', 80));
             }

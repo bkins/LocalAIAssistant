@@ -34,6 +34,7 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
                                                                  , CancellationToken ct = default )
     {
         var response = new HttpResponseMessage();
+        var diagnosticId = Guid.NewGuid();
 
         try
         {
@@ -41,11 +42,20 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
 
             var request = BuildRequest(userMessage
                                      , conversationId
-                                     , model);
+                                     , model
+                                     , diagnosticId);
+
+            _loggingService.LogInformation("Chat API request started. DiagnosticId={DiagnosticId} Route={Route} ConversationId={ConversationId}"
+                                         , Category.CognitivePlatformClient
+                                         , request.ClientRequestId, "converse", conversationId);
 
             response = await _httpClient.PostAsJsonAsync("api/conversation/converse"
                                                        , request
                                                        , ct);
+
+            _loggingService.LogInformation("Chat API response received. DiagnosticId={DiagnosticId} StatusCode={StatusCode}"
+                                         , Category.CognitivePlatformClient
+                                         , request.ClientRequestId, (int)response.StatusCode);
 
             if (response.IsSuccessStatusCode)
             {
@@ -61,13 +71,14 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
             // Server responded with an error status — not a connectivity failure
             return new ConverseResponseDto
                    {
-                           Message = await BuildServerErrorMessageAsync(response)
+                           Message = await BuildServerErrorMessageAsync(response, request.ClientRequestId)
                    };
         }
         catch (HttpRequestException ex)
         {
             Connectivity.ReportOffline(ex);
-            throw;
+            _loggingService.LogError(ex, "Chat API transport failure. DiagnosticId={DiagnosticId}", Category.CognitivePlatformClient, diagnosticId);
+            throw new HttpRequestException($"Chat request failed. Diagnostic ID: {diagnosticId:N}", ex, ex.StatusCode);
         }
         catch (TaskCanceledException ex)
         {
@@ -77,11 +88,12 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
             }
 
             Connectivity.ReportOffline(ex);
-            throw;
+            _loggingService.LogError(ex, "Chat API timeout. DiagnosticId={DiagnosticId}", Category.CognitivePlatformClient, diagnosticId);
+            throw new HttpRequestException($"Chat request timed out. Diagnostic ID: {diagnosticId:N}", ex);
         }
     }
 
-    private static async Task<string> BuildServerErrorMessageAsync( HttpResponseMessage response )
+    private static async Task<string> BuildServerErrorMessageAsync( HttpResponseMessage response, Guid diagnosticId )
     {
         var statusCode = (int)response.StatusCode;
 
@@ -90,17 +102,17 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
             var errorDto = await response.Content.ReadFromJsonAsync<ConverseResponseDto>();
 
             if (errorDto?.Message.ContainsIgnoreCase("Rate limit reached") ?? false)
-                return MarkdownFormatter.Format(errorDto.Message);
+                return $"{MarkdownFormatter.Format(errorDto.Message)}\nDiagnostic ID: `{diagnosticId:N}`";
 
             if ((errorDto?.Message).HasNoValue().Not())
-                return $"Server error ({statusCode}): {errorDto!.Message}";
+                return $"Server error ({statusCode}): {errorDto!.Message}\nDiagnostic ID: `{diagnosticId:N}`";
         }
         catch
         {
             // Content not JSON or not parseable — fall through to generic message
         }
 
-        return $"Server error: the API returned HTTP {statusCode} {response.ReasonPhrase}.";
+        return $"Server error: the API returned HTTP {statusCode} {response.ReasonPhrase}.\nDiagnostic ID: `{diagnosticId:N}`";
     }
 
     public static class MarkdownFormatter
@@ -207,8 +219,9 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
     }
 
     private static ConverseRequestDto BuildRequest( string userMessage
-                                                  , string conversationId
-                                                  , string model )
+                                                   , string conversationId
+                                                   , string model
+                                                   , Guid?  clientRequestId = null )
     {
         var isFastPath    = FastPathIntentDetector.IsFastPathIntent(userMessage);
         var isDestructive = IsDestructiveInput(userMessage);
@@ -216,6 +229,7 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
         return new ConverseRequestDto
                {
                        Input     = userMessage
+                     , ClientRequestId = clientRequestId ?? Guid.NewGuid()
                      , SessionId = conversationId
                      , Model     = model
                      , FastPath  = isFastPath
@@ -231,6 +245,9 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
         var requestDto = BuildRequest(userMessage
                                     , conversationId
                                     , model);
+        _loggingService.LogInformation("Chat API stream started. DiagnosticId={DiagnosticId} ConversationId={ConversationId}"
+                                     , Category.CognitivePlatformClient
+                                     , requestDto.ClientRequestId, conversationId);
         var route = "api/conversation/converse";
         route += requestDto.Streaming
                          ? "/stream"
@@ -244,24 +261,37 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
 
         request.Headers.Add(ConversationStreamPayload.HeaderName, ConversationStreamPayload.JsonStringFormat);
 
-        using var response = await _httpClient.SendAsync(request
-                                                       , HttpCompletionOption.ResponseHeadersRead
-                                                       , ct);
-
-        response.EnsureSuccessStatusCode();
-
-        var jsonStrings = response.Headers.TryGetValues(ConversationStreamPayload.HeaderName, out var streamFormats)
-                       && streamFormats.Contains(ConversationStreamPayload.JsonStringFormat, StringComparer.Ordinal);
-
-        Connectivity.ReportOnline();
-
-        await using var stream = await response.Content.ReadAsStreamAsync(ct);
-        using var       reader = new StreamReader(stream);
-
-        while (reader.EndOfStream.Not()
-            && ct.IsCancellationRequested.Not())
+        HttpResponseMessage response;
+        try
         {
-            var line = await reader.ReadLineAsync(ct) ?? string.Empty;
+            response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+        }
+        catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException)
+        {
+            _loggingService.LogError(exception, "Chat API stream transport failure. DiagnosticId={DiagnosticId}", Category.CognitivePlatformClient, requestDto.ClientRequestId);
+            throw new HttpRequestException($"Chat request failed. Diagnostic ID: {requestDto.ClientRequestId:N}", exception);
+        }
+        using (response)
+        {
+            _loggingService.LogInformation("Chat API stream headers received. DiagnosticId={DiagnosticId} StatusCode={StatusCode}"
+                                         , Category.CognitivePlatformClient
+                                         , requestDto.ClientRequestId, (int)response.StatusCode);
+
+            if (!response.IsSuccessStatusCode)
+                throw new HttpRequestException($"Chat API returned HTTP {(int)response.StatusCode}. Diagnostic ID: {requestDto.ClientRequestId:N}");
+
+            var jsonStrings = response.Headers.TryGetValues(ConversationStreamPayload.HeaderName, out var streamFormats)
+                           && streamFormats.Contains(ConversationStreamPayload.JsonStringFormat, StringComparer.Ordinal);
+
+            Connectivity.ReportOnline();
+
+            await using var stream = await response.Content.ReadAsStreamAsync(ct);
+            using var       reader = new StreamReader(stream);
+
+            while (reader.EndOfStream.Not()
+                && ct.IsCancellationRequested.Not())
+            {
+                var line = await reader.ReadLineAsync(ct) ?? string.Empty;
 
             if (line.HasNoValue()) continue;
 
@@ -298,7 +328,8 @@ public class CognitivePlatformClient : CognitivePlatformClientBase
 
             if (payload.StartsWith(' ')) payload = payload[1..];
 
-            if (payload.Length > 0) yield return ConversationStreamPayload.Decode(payload, jsonStrings);
+                if (payload.Length > 0) yield return ConversationStreamPayload.Decode(payload, jsonStrings);
+            }
         }
     }
 

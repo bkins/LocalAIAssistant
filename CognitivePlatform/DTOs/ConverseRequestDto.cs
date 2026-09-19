@@ -3,6 +3,7 @@ namespace LocalAIAssistant.CognitivePlatform.DTOs;
 public class ConverseRequestDto
 {
     public string  SessionId { get; set; } = string.Empty;
+    public Guid    ClientRequestId { get; set; }
     public string? Input     { get; set; }
     public string? Model     { get; set; }
     public bool    FastPath  { get; set; }

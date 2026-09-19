@@ -33,6 +33,7 @@ public class LogEntry
 
     public string FormattedTime      => Timestamp.ToString("HH:mm:ss.fff");
     public string FormattedTimestamp => Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff");
+    public string DisplayTimestamp   => Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff zzz");
     public string DisplayText        => $"[{FormattedTime}] [{LevelBadgeText}] [{Category}] {Message}";
     public string PrettifiedFullText => Prettify(FullText);
 

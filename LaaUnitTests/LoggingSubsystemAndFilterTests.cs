@@ -16,6 +16,39 @@ namespace LaaUnitTests;
 public class LoggingSubsystemAndFilterTests
 {
     [Fact]
+    public void NewestLogLineReader_Reads_Only_Requested_Tail_In_Newest_First_Order()
+    {
+        var path = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(path, "first\nsecond 😀\nthird\nfourth\n");
+
+            var lines = NewestLogLineReader.Read(path, 2);
+
+            Assert.Equal(new[] { "fourth", "third" }, lines);
+        }
+        finally { File.Delete(path); }
+    }
+    [Fact]
+    public void LogRedaction_Removes_Bearer_And_Sensitive_Properties()
+    {
+        var text = LogRedaction.Text("Authorization: Bearer abc.def-123");
+        var properties = LogRedaction.Properties(new Dictionary<string, string> { ["ApiKey"] = "secret-value", ["DiagnosticId"] = "safe-id" }).ToDictionary();
+
+        Assert.DoesNotContain("abc.def-123", text);
+        Assert.Equal("[REDACTED]", properties["ApiKey"]);
+        Assert.Equal("safe-id", properties["DiagnosticId"]);
+    }
+    [Fact]
+    public void LogEntry_DisplayTimestamp_Includes_Date_Time_And_Offset()
+    {
+        var entry = new LogEntry { Timestamp = new DateTime(2026, 9, 18, 14, 5, 6, DateTimeKind.Local) };
+
+        Assert.Contains("2026-09-18 14:05:06", entry.DisplayTimestamp);
+        Assert.Matches(@"[+-]\d{2}:\d{2}$", entry.DisplayTimestamp);
+    }
+
+    [Fact]
     public void LogEntry_LevelBadgeText_FormatsCorrectly()
     {
         var errEntry  = new LogEntry { Level = "Error" };
@@ -179,5 +212,47 @@ public class LoggingSubsystemAndFilterTests
         // Clear search
         viewModel.SearchText = string.Empty;
         Assert.Equal(3, viewModel.LogEntries.Count);
+    }
+
+    [Fact]
+    public async Task LogsViewModel_Composes_Date_Level_And_Text_Filters()
+    {
+        var service = new Mock<ILoggingService>();
+        service.Setup(item => item.GetLogEntriesAsync()).ReturnsAsync(new List<LogEntry>
+        {
+            new() { Timestamp = new DateTime(2026, 9, 17, 10, 0, 0), Level = "Error", Category = "Chat", Message = "old timeout" },
+            new() { Timestamp = new DateTime(2026, 9, 18, 10, 0, 0), Level = "Error", Category = "Chat", Message = "provider timeout" },
+            new() { Timestamp = new DateTime(2026, 9, 18, 11, 0, 0), Level = "Information", Category = "Chat", Message = "provider ready" }
+        });
+        var viewModel = new LogsViewModel(service.Object);
+        await viewModel.LoadLogs();
+
+        viewModel.FromDate = new DateTime(2026, 9, 18);
+        viewModel.ToDate = new DateTime(2026, 9, 18);
+        viewModel.IsDateFilterEnabled = true;
+        viewModel.SetLevelFilter("Error");
+        viewModel.SearchText = "provider";
+
+        Assert.Single(viewModel.LogEntries);
+        Assert.Equal("provider timeout", viewModel.LogEntries[0].Message);
+    }
+
+    [Fact]
+    public async Task LogsViewModel_Loads_Bounded_Page_Then_Older_Entries()
+    {
+        var service = new Mock<ILoggingService>();
+        service.Setup(item => item.GetLogPageAsync(0, 200, It.IsAny<CancellationToken>()))
+               .ReturnsAsync(new LogPage(new[] { new LogEntry { Id = 1, Timestamp = DateTime.Now, Message = "new" } }, 0, true, 1));
+        service.Setup(item => item.GetLogPageAsync(200, 200, It.IsAny<CancellationToken>()))
+               .ReturnsAsync(new LogPage(new[] { new LogEntry { Id = 2, Timestamp = DateTime.Now.AddDays(-1), Message = "old" } }, 200, false, 0));
+        var viewModel = new LogsViewModel(service.Object);
+
+        await viewModel.LoadLogs();
+        await viewModel.LoadOlder();
+
+        Assert.Equal(2, viewModel.LogEntries.Count);
+        Assert.False(viewModel.CanLoadOlder);
+        Assert.Equal(1, viewModel.MalformedLineCount);
+        Assert.True(viewModel.HasMalformedLines);
     }
 }
