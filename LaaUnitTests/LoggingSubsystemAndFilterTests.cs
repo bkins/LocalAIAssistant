@@ -215,6 +215,34 @@ public class LoggingSubsystemAndFilterTests
     }
 
     [Fact]
+    public async Task LogsViewModel_FindsHyphenatedDiagnosticId_WhenSearchUsesCompactForm()
+    {
+        var mockLoggingService = new Mock<ILoggingService>();
+        var sampleLogs = new List<LogEntry>
+        {
+            new()
+            {
+                Id = 1,
+                Level = "Information",
+                Category = "CognitivePlatformClient",
+                Message = "Chat API stream started",
+                Properties = new Dictionary<string, string>
+                {
+                    ["DiagnosticId"] = "b6f7ef35-25f6-4b1b-a6ab-61412f50afda"
+                }
+            }
+        };
+        mockLoggingService.Setup(service => service.GetLogPageAsync(0, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                          .ReturnsAsync(new LogPage(sampleLogs, 0, false, 0));
+        var viewModel = new LogsViewModel(mockLoggingService.Object);
+        await viewModel.LoadLogs();
+
+        viewModel.SearchText = "b6f7ef3525f64b1ba6ab61412f50afda";
+
+        Assert.Single(viewModel.LogEntries);
+    }
+
+    [Fact]
     public async Task LogsViewModel_Composes_Date_Level_And_Text_Filters()
     {
         var service = new Mock<ILoggingService>();

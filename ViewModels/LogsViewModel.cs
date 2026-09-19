@@ -160,11 +160,8 @@ public partial class LogsViewModel : ObservableObject
         if (SearchText.HasValue())
         {
             var search = SearchText.Trim();
-            query = query.Where(entry => (entry.Message.HasValue() && entry.Message.ContainsIgnoreCase(search))
-                                      || (entry.RenderedMessage.HasValue() && entry.RenderedMessage.ContainsIgnoreCase(search))
-                                      || (entry.Category.HasValue() && entry.Category.ContainsIgnoreCase(search))
-                                      || (entry.Exception.HasValue() && entry.Exception.ContainsIgnoreCase(search))
-                                      || (entry.FullText.HasValue() && entry.FullText.ContainsIgnoreCase(search)));
+            var searchTerms = DiagnosticSearchTerms(search);
+            query = query.Where(entry => searchTerms.Any(searchTerm => EntryContains(entry, searchTerm)));
         }
 
         if (IsDateFilterEnabled && FromDate.HasValue)
@@ -183,6 +180,24 @@ public partial class LogsViewModel : ObservableObject
 
         OnPropertyChanged(nameof(HasLogs));
         OnPropertyChanged(nameof(IsEmpty));
+    }
+
+    private static IReadOnlyList<string> DiagnosticSearchTerms(string search)
+    {
+        if (!Guid.TryParse(search, out var diagnosticId)) return [search];
+
+        return [diagnosticId.ToString("N"), diagnosticId.ToString("D")];
+    }
+
+    private static bool EntryContains(LogEntry entry, string search)
+    {
+        return (entry.Message.HasValue() && entry.Message.ContainsIgnoreCase(search))
+            || (entry.RenderedMessage.HasValue() && entry.RenderedMessage.ContainsIgnoreCase(search))
+            || (entry.Category.HasValue() && entry.Category.ContainsIgnoreCase(search))
+            || (entry.Exception.HasValue() && entry.Exception.ContainsIgnoreCase(search))
+            || (entry.FullText.HasValue() && entry.FullText.ContainsIgnoreCase(search))
+            || entry.Properties.Any(property => property.Key.ContainsIgnoreCase(search)
+                                             || property.Value.ContainsIgnoreCase(search));
     }
 
     [RelayCommand]
