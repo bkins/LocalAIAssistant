@@ -70,6 +70,7 @@
             <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
                 <HorizontalStackLayout Spacing="8">
                     <Switch IsToggled="{Binding IsDateFilterEnabled}" />
+                    <Label Text="Filter by date range" VerticalOptions="Center" FontSize="11" />
                     <Label Text="From" VerticalOptions="Center" FontSize="11" />
                     <DatePicker Date="{Binding FromDate, Mode=TwoWay}" Format="yyyy-MM-dd" />
                     <Label Text="To" VerticalOptions="Center" FontSize="11" />
@@ -205,8 +206,7 @@
                         x:Name="LogCollection"
                         AutomationId="LogCollection"
                         ItemsSource="{Binding LogEntries}"
-                        SelectionMode="Single"
-                        SelectedItem="{Binding SelectedLogEntry, Mode=TwoWay}">
+                        SelectionMode="None">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="logging:LogEntry">
                     <Border Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
@@ -215,7 +215,7 @@
                             BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource SurfaceColor}}"
                             Margin="0,3"
                             Padding="10,8">
-                        <Grid RowDefinitions="Auto, Auto, Auto" RowSpacing="4">
+                        <Grid RowDefinitions="Auto, Auto, Auto, Auto" RowSpacing="4">
                             
                             <!-- Header Row: Level Badge, Category Pill, Timestamp, Exception Indicator -->
                             <HorizontalStackLayout Grid.Row="0" Spacing="6" VerticalOptions="Center">
@@ -274,6 +274,19 @@
                                        LineBreakMode="TailTruncation"
                                        TextColor="{AppThemeBinding Light=#BF360C, Dark=#FFCC80}" />
                             </Border>
+
+                            <Button Grid.Row="3"
+                                    AutomationId="ViewLogDetailsButton"
+                                    Text="View details"
+                                    CommandParameter="{Binding .}"
+                                    Clicked="OnViewDetailsClicked"
+                                    HorizontalOptions="End"
+                                    FontSize="11"
+                                    CornerRadius="6"
+                                    Padding="10,4"
+                                    HeightRequest="32"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+                                    TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray100}}" />
 
                         </Grid>
                     </Border>

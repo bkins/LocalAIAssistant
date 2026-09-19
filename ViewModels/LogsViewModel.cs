@@ -27,7 +27,6 @@ public partial class LogsViewModel : ObservableObject
     [ObservableProperty] private bool                           _isLoading;
     [ObservableProperty] private bool                           _hasError;
     [ObservableProperty] private string                         _errorMessage = string.Empty;
-    [ObservableProperty] private LogEntry?                      _selectedLogEntry;
     [ObservableProperty] private bool                           _canLoadOlder;
     [ObservableProperty] private int                            _malformedLineCount;
     [ObservableProperty] private string                         _loadSummary = string.Empty;
@@ -385,46 +384,6 @@ public partial class LogsViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
-    private async Task LogSelected(SelectionChangedEventArgs args)
-    {
-        try
-        {
-            var entry = args?.CurrentSelection?.FirstOrDefault() as LogEntry;
-            if (entry == null) return;
-
-            if (Shell.Current != null)
-            {
-                await Shell.Current.GoToAsync("LogDetailPage", new Dictionary<string, object> { { "LogEntry", entry } });
-            }
-            SelectedLogEntry = null;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"LogSelected error: {ex}");
-        }
-    }
-
-    async partial void OnSelectedLogEntryChanged(LogEntry? value)
-    {
-        if (value is null) return;
-
-        try
-        {
-            if (Shell.Current != null)
-            {
-                await Shell.Current.GoToAsync("LogDetailPage", new Dictionary<string, object>
-                {
-                    { "LogEntry", value }
-                });
-            }
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
-        SelectedLogEntry = null;
-    }
 }
 
 public class LogErrorsChangedMessage

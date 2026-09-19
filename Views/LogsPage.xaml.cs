@@ -19,4 +19,21 @@ public partial class LogsPage : ContentPage
             await vm.LoadLogsCommand.ExecuteAsync(null);
         }
     }
+
+    private async void OnViewDetailsClicked(object? sender, EventArgs eventArgs)
+    {
+        if (sender is not Button { CommandParameter: Services.Logging.LogEntry entry }) return;
+
+        try
+        {
+            await Shell.Current.GoToAsync(nameof(LogDetailPage), new Dictionary<string, object>
+            {
+                { nameof(Services.Logging.LogEntry), entry }
+            });
+        }
+        catch (Exception exception)
+        {
+            await DisplayAlert("Unable to open log details", exception.Message, "OK");
+        }
+    }
 }
