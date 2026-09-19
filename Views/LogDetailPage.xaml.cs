@@ -29,6 +29,21 @@ public partial class LogDetailPage : ContentPage
         InitializeComponent();
     }
 
+    private void OnSelectableEditorLoaded(object? sender, EventArgs eventArgs)
+    {
+#if ANDROID
+        if (sender is Editor editor
+         && editor.Handler?.PlatformView is Android.Widget.EditText nativeEditor)
+        {
+            // MAUI's Android read-only mapping suppresses the focus/long-press state
+            // required for selection. Restore selection without opening the keyboard.
+            nativeEditor.SetTextIsSelectable(true);
+            nativeEditor.LongClickable = true;
+            nativeEditor.ShowSoftInputOnFocus = false;
+        }
+#endif
+    }
+
     private async void OnDeleteEntryClicked(object? sender, EventArgs eventArgs)
     {
         if (_entry is null) return;

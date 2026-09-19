@@ -96,6 +96,7 @@
 
                     <Editor Text="{Binding Message}"
                            IsReadOnly="True"
+                           Loaded="OnSelectableEditorLoaded"
                            AutoSize="TextChanges"
                            BackgroundColor="Transparent"
                            FontSize="14"
@@ -137,6 +138,7 @@
                             Padding="10">
                         <Editor Text="{Binding Exception}"
                                IsReadOnly="True"
+                               Loaded="OnSelectableEditorLoaded"
                                AutoSize="TextChanges"
                                BackgroundColor="Transparent"
                                FontFamily="Consolas, monospace"
@@ -165,6 +167,7 @@
                             Padding="10">
                         <Editor Text="{Binding PropertiesFormatted}"
                                IsReadOnly="True"
+                               Loaded="OnSelectableEditorLoaded"
                                AutoSize="TextChanges"
                                BackgroundColor="Transparent"
                                FontFamily="Consolas, monospace"
@@ -205,6 +208,7 @@
                             Padding="10">
                         <Editor Text="{Binding PrettifiedFullText}"
                                IsReadOnly="True"
+                               Loaded="OnSelectableEditorLoaded"
                                AutoSize="TextChanges"
                                BackgroundColor="Transparent"
                                FontFamily="Consolas, monospace"
