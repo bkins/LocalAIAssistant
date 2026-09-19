@@ -147,6 +147,7 @@ public class LoggingService : ILoggingService
                                 {
                                     Id              = offset + entries.Count + 1
                                   , StorageId       = record.StorageId
+                                  , StorageOffset   = record.Offset
                                   , Timestamp       = logEvent.Timestamp.ToLocalTime()
                                   , Level           = logEvent.Level ?? "Information"
                                   , Category        = category
@@ -164,11 +165,15 @@ public class LoggingService : ILoggingService
         return new LogPage(entries.OrderByDescending(entry => entry.Timestamp).ToList(), offset, availableRecords.Count > offset + pageSize, malformed);
     }
 
-    public Task<bool> DeleteLogEntryAsync(string storageId, CancellationToken cancellationToken = default)
+    public Task<bool> DeleteLogEntryAsync(LogEntry entry, CancellationToken cancellationToken = default)
     {
         // Serilog actively owns the JSONL file. A durable deletion index avoids
         // rewriting that file and losing records appended during the operation.
-        return _deletedEntryStore.AddAsync(_logFilePath, storageId, cancellationToken);
+        return _deletedEntryStore.AddAsync(_logFilePath
+                                         , entry.StorageId
+                                         , entry.StorageOffset
+                                         , entry.FullText
+                                         , cancellationToken);
     }
 
 

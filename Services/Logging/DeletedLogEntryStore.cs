@@ -30,6 +30,8 @@ public sealed class DeletedLogEntryStore
 
     public async Task<bool> AddAsync( string            logFilePath
                                     , string            storageId
+                                    , long              offset
+                                    , string            expectedText
                                     , CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(storageId) || !File.Exists(logFilePath)) return false;
@@ -40,10 +42,11 @@ public sealed class DeletedLogEntryStore
             var deletedIds = await ReadAllAsync(cancellationToken);
             if (deletedIds.Contains(storageId)) return false;
 
-            var exists = await Task.Run(() => NewestLogLineReader.ReadRecords(logFilePath, int.MaxValue, cancellationToken)
-                                                                    .Any(record => record.StorageId.Equals(storageId, StringComparison.OrdinalIgnoreCase))
-                                      , cancellationToken);
-            if (!exists) return false;
+            var currentRecord = await Task.Run(() => NewestLogLineReader.ReadRecordAtOffset(logFilePath, offset, cancellationToken)
+                                             , cancellationToken);
+            if (currentRecord is null
+             || !currentRecord.Text.Equals(expectedText, StringComparison.Ordinal)
+             || !currentRecord.StorageId.Equals(storageId, StringComparison.OrdinalIgnoreCase)) return false;
 
             await File.AppendAllTextAsync(_deletionFilePath
                                         , storageId + Environment.NewLine

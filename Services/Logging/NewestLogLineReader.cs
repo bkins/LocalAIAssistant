@@ -39,4 +39,27 @@ public static class NewestLogLineReader
         }
         return result;
     }
+
+    public static LogLineRecord? ReadRecordAtOffset( string            path
+                                                   , long              offset
+                                                   , CancellationToken cancellationToken = default)
+    {
+        if (!File.Exists(path) || offset < 0) return null;
+
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        if (offset >= stream.Length) return null;
+
+        stream.Position = offset;
+        var bytes = new List<byte>();
+        while (stream.Position < stream.Length)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var value = stream.ReadByte();
+            if (value == '\n') break;
+            bytes.Add((byte)value);
+        }
+
+        var text = Encoding.UTF8.GetString(bytes.ToArray()).TrimEnd('\r');
+        return new LogLineRecord(offset, text);
+    }
 }

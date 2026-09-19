@@ -24,6 +24,7 @@ public class LogsPageInteractionTests
         Assert.Contains("GoToAsync(nameof(LogDetailPage)", codeBehind);
         Assert.Contains("AutomationId=\"DeleteLogEntryButton\"", detailMarkup);
         Assert.Contains("Clicked=\"OnDeleteEntryClicked\"", detailMarkup);
+        Assert.Contains("x:Name=\"DeleteEntryButton\"", detailMarkup);
         Assert.Contains("<Editor Text=\"{Binding Message}\"", detailMarkup);
         Assert.Contains("<Editor Text=\"{Binding Exception}\"", detailMarkup);
         Assert.Contains("<Editor Text=\"{Binding PropertiesFormatted}\"", detailMarkup);
@@ -31,5 +32,6 @@ public class LogsPageInteractionTests
         Assert.Contains("IsReadOnly=\"True\"", detailMarkup);
         Assert.Contains("DisplayAlert(\"Delete log entry?\"", detailCodeBehind);
         Assert.Contains("DeleteLogEntryAsync", detailCodeBehind);
+        Assert.Contains("DeleteEntryButton.Text = \"Deleting...\"", detailCodeBehind);
     }
 }

@@ -28,6 +28,26 @@ public class LogEntryDeletionTests
     }
 
     [Fact]
+    public void ReadRecordAtOffset_Reads_Only_Requested_Record()
+    {
+        var path = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(path, "first\r\nsecond\r\n", new UTF8Encoding(false));
+
+            var record = NewestLogLineReader.ReadRecordAtOffset(path, 7);
+
+            Assert.NotNull(record);
+            Assert.Equal("second", record.Text);
+            Assert.Equal(7, record.Offset);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
     public async Task AddAsync_Persists_Only_Selected_Identity_Across_Store_Instances()
     {
         var logPath = Path.GetTempFileName();
@@ -38,7 +58,7 @@ public class LogEntryDeletionTests
             var records = NewestLogLineReader.ReadRecords(logPath, 2);
             var store = new DeletedLogEntryStore(deletionPath);
 
-            var deleted = await store.AddAsync(logPath, records[0].StorageId);
+            var deleted = await store.AddAsync(logPath, records[0].StorageId, records[0].Offset, records[0].Text);
             var persisted = await new DeletedLogEntryStore(deletionPath).GetAllAsync();
 
             Assert.True(deleted);
@@ -63,9 +83,9 @@ public class LogEntryDeletionTests
             var record = Assert.Single(NewestLogLineReader.ReadRecords(logPath, 1));
             var store = new DeletedLogEntryStore(deletionPath);
 
-            var first = await store.AddAsync(logPath, record.StorageId);
-            var duplicate = await store.AddAsync(logPath, record.StorageId);
-            var stale = await store.AddAsync(logPath, "missing");
+            var first = await store.AddAsync(logPath, record.StorageId, record.Offset, record.Text);
+            var duplicate = await store.AddAsync(logPath, record.StorageId, record.Offset, record.Text);
+            var stale = await store.AddAsync(logPath, "missing", record.Offset, record.Text);
 
             Assert.True(first);
             Assert.False(duplicate);
@@ -96,7 +116,7 @@ public class LogEntryDeletionTests
             var initial = await service.GetLogPageAsync(0, 200);
             var selected = Assert.Single(initial.Entries, entry => entry.Message == "second");
 
-            var deleted = await service.DeleteLogEntryAsync(selected.StorageId);
+            var deleted = await service.DeleteLogEntryAsync(selected);
             var restarted = new LoggingService(logger, logPath);
             var remaining = await restarted.GetLogPageAsync(0, 200);
 

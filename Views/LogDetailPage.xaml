@@ -55,7 +55,8 @@
                     <Label Text="{Binding FormattedTimestamp, StringFormat='Timestamp: {0}'}"
                            FontSize="12"
                            TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
-                    <Button AutomationId="DeleteLogEntryButton"
+                    <Button x:Name="DeleteEntryButton"
+                            AutomationId="DeleteLogEntryButton"
                             Text="Delete this log entry"
                             Clicked="OnDeleteEntryClicked"
                             FontSize="11"

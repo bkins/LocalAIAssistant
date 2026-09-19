@@ -41,9 +41,11 @@ public partial class LogDetailPage : ContentPage
                                          , "Cancel");
         if (!confirmed) return;
 
+        DeleteEntryButton.IsEnabled = false;
+        DeleteEntryButton.Text = "Deleting...";
         try
         {
-            var deleted = await _loggingService.DeleteLogEntryAsync(_entry.StorageId);
+            var deleted = await _loggingService.DeleteLogEntryAsync(_entry);
             if (!deleted)
             {
                 await DisplayAlert("Entry not deleted"
@@ -57,6 +59,11 @@ public partial class LogDetailPage : ContentPage
         catch (Exception exception)
         {
             await DisplayAlert("Unable to delete log entry", exception.Message, "OK");
+        }
+        finally
+        {
+            DeleteEntryButton.IsEnabled = true;
+            DeleteEntryButton.Text = "Delete this log entry";
         }
     }
 
