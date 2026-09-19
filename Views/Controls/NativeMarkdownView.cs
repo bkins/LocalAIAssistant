@@ -254,8 +254,12 @@ public class NativeMarkdownView : VerticalStackLayout
     private View CreateCodeBlock(FencedCodeBlock block)
     {
         var lines = new List<string>();
+        var blockLines = block.Lines.Lines;
 
-        foreach (var line in block.Lines.Lines)
+        if (blockLines is null)
+            blockLines = [];
+
+        foreach (var line in blockLines)
         {
             if (line.Slice.Text == null)
                 continue;
