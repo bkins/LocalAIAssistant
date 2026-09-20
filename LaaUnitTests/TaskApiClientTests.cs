@@ -30,6 +30,35 @@ public class TaskApiClientTests
     }
 
     [Fact]
+    public async Task GetByIdAsync_StringPriorityFromApi_ReturnsTask()
+    {
+        var id = Guid.NewGuid();
+        var json = $$"""
+                     {
+                       "id": "{{id:N}}",
+                       "shortDescription": "go to store tomorrow",
+                       "details": null,
+                       "priority": "Normal",
+                       "isImportant": true,
+                       "isUrgent": false,
+                       "createdAt": "2026-09-20T11:01:18.7862319-07:00",
+                       "updatedAt": "2026-09-20T11:01:18.7863569-07:00",
+                       "dueDate": null,
+                       "completedAt": null,
+                       "tags": []
+                     }
+                     """;
+
+        var sut = BuildClient(HttpStatusCode.OK, json);
+
+        var result = await sut.GetByIdAsync(id);
+
+        Assert.NotNull(result);
+        Assert.Equal(TaskPriorityDto.Normal, result!.Priority);
+        Assert.Equal("go to store tomorrow", result.ShortDescription);
+    }
+
+    [Fact]
     public async Task GetByIdAsync_ReturnsNull_WhenNotFound()
     {
         var sut    = BuildClient(HttpStatusCode.NotFound, string.Empty);
