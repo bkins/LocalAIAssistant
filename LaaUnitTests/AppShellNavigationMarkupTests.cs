@@ -36,4 +36,14 @@ public sealed class AppShellNavigationMarkupTests
         Assert.True(logsIndex > actionsIndex);
         Assert.True(settingsIndex > actionsIndex);
     }
+
+    [Fact]
+    public void Header_ShowsRunningApplicationVersionBesideEnvironment()
+    {
+        var markup = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "AppShell.xaml.txt"));
+
+        Assert.Contains("AutomationId=\"ApplicationVersionLabel\"", markup, StringComparison.Ordinal);
+        Assert.Contains("Text=\"{Binding ApplicationVersionText}\"", markup, StringComparison.Ordinal);
+        Assert.Contains("SemanticProperties.Description=\"Running application version\"", markup, StringComparison.Ordinal);
+    }
 }

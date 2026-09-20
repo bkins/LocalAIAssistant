@@ -62,14 +62,23 @@
                 </Border.GestureRecognizers>
             </Border>
             
-            <!-- Environment Name (Row 1 — secondary info) -->
-            <Label Grid.Column="0"
-                   Grid.Row="1"
-                   Text="{Binding EnvironmentName}"
-                   FontSize="10"
-                   TextColor="Orange"
-                   Margin="0,0,12,0"
-                   VerticalOptions="Center"/>
+            <!-- Environment and exact running app version (Row 1 — secondary info) -->
+            <HorizontalStackLayout Grid.Column="0"
+                                   Grid.Row="1"
+                                   Spacing="6"
+                                   Margin="0,0,12,0"
+                                   VerticalOptions="Center">
+                <Label Text="{Binding EnvironmentName}"
+                       FontSize="10"
+                       TextColor="Orange"
+                       VerticalOptions="Center" />
+                <Label AutomationId="ApplicationVersionLabel"
+                       Text="{Binding ApplicationVersionText}"
+                       FontSize="10"
+                       TextColor="{StaticResource SecondaryTextColor}"
+                       SemanticProperties.Description="Running application version"
+                       VerticalOptions="Center" />
+            </HorizontalStackLayout>
 
             <!-- Usage Indicator -->
             <Label Grid.Column="1"

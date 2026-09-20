@@ -7,6 +7,7 @@ using LocalAIAssistant.CognitivePlatform.CpClients.CognitivePlatform;
 using LocalAIAssistant.CognitivePlatform.CpClients.Personas;
 using LocalAIAssistant.Core.Environment;
 using LocalAIAssistant.Core.Environment.Models;
+using LocalAIAssistant.Core.Versioning;
 using LocalAIAssistant.Data;
 using LocalAIAssistant.Services;
 using LocalAIAssistant.Services.Interfaces;
@@ -62,6 +63,8 @@ public partial class AppShellMasterViewModel : ObservableObject, IDisposable
     public UsageViewModel     UsageViewModel     { get; }
 
     public string EnvironmentName => _environment.Name;
+    public string ApplicationVersionText => RunningApplicationVersion.Format(AppInfo.Current.VersionString
+                                                                           , AppInfo.Current.BuildString);
 
     private static Color _statusColor;
     private readonly EnvironmentHandshakeResult _currentEnv;

@@ -108,6 +108,7 @@
     <Compile Include="../Extensions/LogLevelExtensions.cs" Link="Linked/LogLevelExtensions.cs" />
     <Compile Include="../Core/Environment/EnvironmentHandshakePolicy.cs" Link="Linked/EnvironmentHandshakePolicy.cs" />
     <Compile Include="../Core/Environment/Models/EnvironmentHandshakeResult.cs" Link="Linked/EnvironmentHandshakeResult.cs" />
+    <Compile Include="../Core/Versioning/RunningApplicationVersion.cs" Link="Linked/RunningApplicationVersion.cs" />
     <Compile Include="../Data/IObjectStore.cs" Link="Linked/IObjectStore.cs" />
     <Compile Include="../Services/Recordings/ConversationRecording.cs" Link="Linked/ConversationRecording.cs" />
     <Compile Include="../Services/Recordings/IConversationRecordingStore.cs" Link="Linked/IConversationRecordingStore.cs" />
