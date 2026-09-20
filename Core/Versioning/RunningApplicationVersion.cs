@@ -2,6 +2,11 @@ namespace LocalAIAssistant.Core.Versioning;
 
 public static class RunningApplicationVersion
 {
+    public static string Format(string? stampedVersion)
+    {
+        return Format(stampedVersion, null);
+    }
+
     public static string Format(string? displayVersion, string? buildVersion)
     {
         var display = displayVersion?.Trim() ?? string.Empty;

@@ -46,4 +46,15 @@ public sealed class AppShellNavigationMarkupTests
         Assert.Contains("Text=\"{Binding ApplicationVersionText}\"", markup, StringComparison.Ordinal);
         Assert.Contains("SemanticProperties.Description=\"Running application version\"", markup, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void Header_UsesBuildStampedReleaseVersionOnUnpackagedWindows()
+    {
+        var viewModel = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "AppShellMasterViewModel.cs.txt"));
+        var project   = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "LocalAIAssistant.Ui.Maui.csproj.txt"));
+
+        Assert.Contains("RunningApplicationVersion.Format(global::LocalAIAssistant.BuildEnvironment.Version", viewModel, StringComparison.Ordinal);
+        Assert.DoesNotContain("AppInfo.Current.VersionString", viewModel, StringComparison.Ordinal);
+        Assert.Contains("public const string Version = &quot;$(ApplicationDisplayVersion).$(ApplicationVersion)&quot;%3B", project, StringComparison.Ordinal);
+    }
 }

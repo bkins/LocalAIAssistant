@@ -92,6 +92,7 @@
 		<_BuildEnvironmentLines Include="        public const string Name = &quot;$(ApiEnvironmentName)&quot;%3B" />
 		<_BuildEnvironmentLines Include="        public const string ApiBaseUrl = &quot;$(ApiBaseUrl)&quot;%3B" />
 		<_BuildEnvironmentLines Include="        public const string OllamaBaseUrl = &quot;$(OllamaBaseUrl)&quot;%3B" />
+		<_BuildEnvironmentLines Include="        public const string Version = &quot;$(ApplicationDisplayVersion).$(ApplicationVersion)&quot;%3B" />
 		<_BuildEnvironmentLines Include="    }" />
 		<_BuildEnvironmentLines Include="}" />
 	</ItemGroup>

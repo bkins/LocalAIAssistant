@@ -62,9 +62,8 @@ public partial class AppShellMasterViewModel : ObservableObject, IDisposable
     public AppShellViewModel  AppShellViewModel  { get; }
     public UsageViewModel     UsageViewModel     { get; }
 
-    public string EnvironmentName => _environment.Name;
-    public string ApplicationVersionText => RunningApplicationVersion.Format(AppInfo.Current.VersionString
-                                                                           , AppInfo.Current.BuildString);
+    public string EnvironmentName        => _environment.Name;
+    public string ApplicationVersionText => RunningApplicationVersion.Format(global::LocalAIAssistant.BuildEnvironment.Version);
 
     private static Color _statusColor;
     private readonly EnvironmentHandshakeResult _currentEnv;
