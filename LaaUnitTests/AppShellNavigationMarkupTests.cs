@@ -56,5 +56,6 @@ public sealed class AppShellNavigationMarkupTests
         Assert.Contains("RunningApplicationVersion.Format(global::LocalAIAssistant.BuildEnvironment.Version", viewModel, StringComparison.Ordinal);
         Assert.DoesNotContain("AppInfo.Current.VersionString", viewModel, StringComparison.Ordinal);
         Assert.Contains("public const string Version = &quot;$(ApplicationDisplayVersion).$(ApplicationVersion)&quot;%3B", project, StringComparison.Ordinal);
+        Assert.Contains("<Target Name=\"GenerateBuildEnvironment\" BeforeTargets=\"CoreCompile\">", project, StringComparison.Ordinal);
     }
 }

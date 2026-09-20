@@ -97,7 +97,7 @@
 		<_BuildEnvironmentLines Include="}" />
 	</ItemGroup>
 	
-	<Target Name="GenerateBuildEnvironment" BeforeTargets="BeforeCompile">
+	<Target Name="GenerateBuildEnvironment" BeforeTargets="CoreCompile">
 		<WriteLinesToFile
 				File="$(IntermediateOutputPath)BuildEnvironment.g.cs"
 				Lines="@(_BuildEnvironmentLines)"
