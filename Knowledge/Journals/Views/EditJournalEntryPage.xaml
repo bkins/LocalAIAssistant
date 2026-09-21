@@ -55,7 +55,7 @@
 
             <CollectionView ItemsSource="{Binding Attachments}"
                             IsVisible="{Binding HasAttachments}"
-                            HeightRequest="100">
+                            HeightRequest="132">
                 <CollectionView.ItemsLayout>
                     <LinearItemsLayout Orientation="Horizontal" ItemSpacing="8" />
                 </CollectionView.ItemsLayout>
@@ -65,8 +65,8 @@
                                 StrokeThickness="1"
                                 StrokeShape="RoundRectangle 6"
                                 Padding="4"
-                                WidthRequest="84">
-                            <Grid RowDefinitions="60,Auto,Auto" RowSpacing="2">
+                                WidthRequest="104">
+                            <Grid RowDefinitions="60,Auto,44" RowSpacing="2">
 
                                 <!-- Thumbnail for images -->
                                 <Image Grid.Row="0"
@@ -99,12 +99,14 @@
                                        HorizontalOptions="Center" />
 
                                 <Button Grid.Row="2"
-                                        Text="✕"
-                                        FontSize="10"
-                                        Padding="2,0"
-                                        HeightRequest="22"
+                                        Text="Remove"
+                                        FontSize="12"
+                                        Padding="8,4"
+                                        MinimumHeightRequest="44"
+                                        MinimumWidthRequest="88"
+                                        SemanticProperties.Description="{Binding RemoveAccessibilityText}"
                                         BackgroundColor="Transparent"
-                                        TextColor="{AppThemeBinding Light=#888, Dark=#AAA}"
+                                        TextColor="{AppThemeBinding Light=#A01818, Dark=#FF8A80}"
                                         Command="{Binding DeleteCommand}" />
                             </Grid>
                         </Border>

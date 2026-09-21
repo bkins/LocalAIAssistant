@@ -83,7 +83,10 @@ public sealed partial class EditJournalEntryViewModel : ObservableObject
         if (list is null) return;
 
         foreach (var attachment in list)
-            Attachments.Add(new AttachmentViewModel(attachment, BuildEnvironment.ApiBaseUrl, DeleteAttachmentAsync));
+            Attachments.Add(new AttachmentViewModel( attachment
+                                                   , BuildEnvironment.ApiBaseUrl
+                                                   , DeleteAttachmentAsync
+                                                   , ConfirmAttachmentRemovalAsync ));
 
         OnPropertyChanged(nameof(HasAttachments));
     }
@@ -158,7 +161,10 @@ public sealed partial class EditJournalEntryViewModel : ObservableObject
                 return;
             }
 
-            Attachments.Add(new AttachmentViewModel(dto, BuildEnvironment.ApiBaseUrl, DeleteAttachmentAsync));
+            Attachments.Add(new AttachmentViewModel( dto
+                                                   , BuildEnvironment.ApiBaseUrl
+                                                   , DeleteAttachmentAsync
+                                                   , ConfirmAttachmentRemovalAsync ));
             _refreshState.MarkChanged();
             OnPropertyChanged(nameof(HasAttachments));
         }
@@ -191,6 +197,15 @@ public sealed partial class EditJournalEntryViewModel : ObservableObject
         {
             SetError($"Failed to delete attachment: {ex.Message}");
         }
+    }
+
+    private static Task<bool> ConfirmAttachmentRemovalAsync(string fileName)
+    {
+        return Shell.Current.DisplayAlert(
+            "Remove attachment?",
+            $"Remove {fileName}? This cannot be undone.",
+            "Remove",
+            "Cancel");
     }
 
     private void SetError(string message)
