@@ -88,6 +88,9 @@ public partial class KnowledgeInboxViewModel : ObservableObject
 
     public async Task LoadOnAppearingAsync()
     {
+        // Keep the process-wide mutation signal pointed at this exact Shell Inbox
+        // instance so a successful edit can refresh it before navigation returns.
+        _refreshState.RegisterRefresh(LoadAsync);
         if (_returnRefreshPolicy.ShouldLoadOnAppearance(_refreshState.Revision))
         {
             await LoadAsync();
@@ -243,6 +246,7 @@ public partial class KnowledgeInboxViewModel : ObservableObject
 
     private void RebuildWorkspaceFilters()
     {
+        var activeWorkspace = _activeWorkspaceFilter;
         var workspaces = _items.Where(item => item.Workspace != null 
                                            && item.Workspace.HasValue())
                                .Select(item => item.Workspace!)
@@ -257,10 +261,16 @@ public partial class KnowledgeInboxViewModel : ObservableObject
             return;
         }
 
-        var chips = new List<FilterChip> { new FilterChip("All Workspaces", "All", isSelected: true) };
-        chips.AddRange(workspaces.Select(ws => new FilterChip(ws, ws)));
+        if (activeWorkspace is not null && !workspaces.Contains(activeWorkspace))
+            activeWorkspace = null;
+
+        var chips = new List<FilterChip>
+        {
+            new FilterChip("All Workspaces", "All", isSelected: activeWorkspace is null)
+        };
+        chips.AddRange(workspaces.Select(ws => new FilterChip(ws, ws, isSelected: ws == activeWorkspace)));
         WorkspaceFilters       = new ObservableCollection<FilterChip>(chips);
-        _activeWorkspaceFilter = null;
+        _activeWorkspaceFilter = activeWorkspace;
     }
 
     // ── Archive ───────────────────────────────────────────────────────────────

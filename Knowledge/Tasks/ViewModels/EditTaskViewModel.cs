@@ -103,7 +103,7 @@ public sealed partial class EditTaskViewModel : ObservableObject, IQueryAttribut
                                  , finalDueDate
                                  , finalCompletedAt);
 
-        _refreshState.MarkChanged();
+        await _refreshState.MarkChangedAndRefreshAsync();
         await Shell.Current.GoToAsync("..");
     }
 
