@@ -58,4 +58,20 @@ public sealed class AppShellNavigationMarkupTests
         Assert.Contains("public const string Version = &quot;$(ApplicationDisplayVersion).$(ApplicationVersion)&quot;%3B", project, StringComparison.Ordinal);
         Assert.Contains("<Target Name=\"GenerateBuildEnvironment\" BeforeTargets=\"CoreCompile\">", project, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void BuildEnvironmentVersion_UsesDefaultsWithoutOverridingExplicitReleaseVersion()
+    {
+        var project = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "LocalAIAssistant.Ui.Maui.csproj.txt"));
+
+        Assert.Contains("<ApplicationDisplayVersion Condition=\"'$(ApplicationDisplayVersion)' == ''\">1.0.0</ApplicationDisplayVersion>"
+                      , project
+                      , StringComparison.Ordinal);
+        Assert.Contains("<ApplicationVersion Condition=\"'$(ApplicationVersion)' == ''\">1</ApplicationVersion>"
+                      , project
+                      , StringComparison.Ordinal);
+        Assert.Contains("public const string Version = &quot;$(ApplicationDisplayVersion).$(ApplicationVersion)&quot;%3B"
+                      , project
+                      , StringComparison.Ordinal);
+    }
 }
