@@ -128,6 +128,7 @@
             <CollectionView Grid.Row="1"
                             x:Name="MessagesView"
                             AutomationId="MessagesView"
+                            Scrolled="OnMessagesViewScrolled"
                             Margin="12"
                             ItemsSource="{Binding Messages}"
                             ItemsUpdatingScrollMode="KeepLastItemInView"
@@ -144,8 +145,9 @@
                                   • Sender triggers set BackgroundColor / HorizontalOptions per sender.
                                   • IsInsight trigger (last) overrides color for insight turns.
                             -->
-                            <Border Padding="12"
-                                    Margin="0,6"
+                             <Border Padding="12"
+                                     SizeChanged="OnMessageContentSizeChanged"
+                                     Margin="0,6"
                                     Stroke="#000000"
                                     StrokeThickness="0"
                                     MaximumWidthRequest="900"

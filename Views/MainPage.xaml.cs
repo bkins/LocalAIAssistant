@@ -11,9 +11,12 @@ public partial class MainPage : ContentPage
 {
     private readonly ILoggingService _logger;
     private readonly MainViewModel   _mainViewModel;
+    private readonly ChatScrollState _chatScrollState = new();
 
     private bool                     _isPageActive;
+    private bool                     _isPinningLatest;
     private bool                     _isPulsing;
+    private CancellationTokenSource? _bottomPinCts;
     private CancellationTokenSource? _pulseCts;
 
     public ChatViewModel ChatViewModel { get; }
@@ -82,6 +85,7 @@ public partial class MainPage : ContentPage
         _isPageActive = false;
         ChatViewModel.Messages.CollectionChanged -= OnMessagesCollectionChanged;
         ChatViewModel.PropertyChanged            -= OnChatViewModelPropertyChanged;
+        CancelBottomPin();
         StopBackgroundPulse();
         _ = ChatViewModel.StopSpeakingAsync();
         base.OnDisappearing();
@@ -89,15 +93,18 @@ public partial class MainPage : ContentPage
 
     // ── Scroll management ─────────────────────────────────────────────────────
 
-    private async void OnMessagesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    private void OnMessagesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         // Only scroll when a new message arrives, not on Clear() or Remove().
         if (e.Action != NotifyCollectionChangedAction.Add) return;
 
-        ScrollToBottom();
+        if (e.NewItems?.OfType<Message>().Any(message => message.Sender == "user") == true)
+            _chatScrollState.MarkPromptSent();
+
+        ScheduleBottomPin();
     }
 
-    private async void OnChatViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void OnChatViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         // Scroll to the bottom when a response finishes (IsTyping: true → false).
         // Content changes happen in-place on the assistant message so CollectionChanged
@@ -105,10 +112,66 @@ public partial class MainPage : ContentPage
         if (e.PropertyName != nameof(ChatViewModel.IsTyping)) return;
         if (ChatViewModel.IsTyping) return;
 
-        // Multi-pass scroll after turn completion allows layout measurement of markdown content to settle.
-        ScrollToBottom();
-        await Task.Delay(150);
-        ScrollToBottom();
+        ScheduleBottomPin();
+    }
+
+    private void OnMessagesViewScrolled(object? sender, ItemsViewScrolledEventArgs e)
+    {
+        if (_isPinningLatest) return;
+
+        _chatScrollState.ObserveViewport(e.LastVisibleItemIndex, ChatViewModel.Messages.Count);
+        if (_chatScrollState.IsFollowingLatest.Not())
+            CancelBottomPin();
+    }
+
+    private void OnMessageContentSizeChanged(object? sender, EventArgs e)
+    {
+        ScheduleBottomPin();
+    }
+
+    private void ScheduleBottomPin()
+    {
+        if (_isPageActive.Not() || _chatScrollState.ShouldPinAfterContentChange.Not()) return;
+
+        CancelBottomPin();
+        _bottomPinCts = new CancellationTokenSource();
+        _ = SettleAtBottomAsync(_bottomPinCts.Token);
+    }
+
+    private async Task SettleAtBottomAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            foreach (var delayMilliseconds in new[] { 0, 50, 150, 300 })
+            {
+                if (delayMilliseconds > 0)
+                    await Task.Delay(delayMilliseconds, cancellationToken);
+
+                if (_isPageActive.Not() || _chatScrollState.ShouldPinAfterContentChange.Not()) return;
+                ScrollToBottom();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // A newer layout pass or intentional upward scroll superseded this request.
+        }
+    }
+
+    private void CancelBottomPin()
+    {
+        try
+        {
+            _bottomPinCts?.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Cancellation raced with page teardown.
+        }
+        finally
+        {
+            _bottomPinCts?.Dispose();
+            _bottomPinCts = null;
+        }
     }
 
     private void ScrollToBottom()
@@ -120,6 +183,7 @@ public partial class MainPage : ContentPage
 
             try
             {
+                _isPinningLatest = true;
                 MessagesView.ScrollTo(lastMessage
                                     , position: ScrollToPosition.End
                                     , animate: false);
@@ -127,6 +191,10 @@ public partial class MainPage : ContentPage
             catch
             {
                 // Guard against potential transient scroll errors during view teardown
+            }
+            finally
+            {
+                _isPinningLatest = false;
             }
         });
     }

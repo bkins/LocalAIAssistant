@@ -41,6 +41,7 @@
 
   <ItemGroup>
     <None Include="../Views/MainPage.xaml" Link="Fixtures/MainPage.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../Views/MainPage.xaml.cs" Link="Fixtures/MainPage.xaml.cs.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../AppShell.xaml" Link="Fixtures/AppShell.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../LocalAIAssistant.Ui.Maui.csproj" Link="Fixtures/LocalAIAssistant.Ui.Maui.csproj.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Views/SettingsPage.xaml" Link="Fixtures/SettingsPage.xaml.txt" CopyToOutputDirectory="PreserveNewest" />
@@ -125,6 +126,7 @@
   <ItemGroup>
     <Compile Include="../CognitivePlatform/CpClients/CognitivePlatform/ConversationStreamPayload.cs" Link="Linked/ConversationStreamPayload.cs" />
     <Compile Include="../Views/Controls/SearchResultSpacing.cs" Link="Linked/SearchResultSpacing.cs" />
+    <Compile Include="../Views/ChatScrollState.cs" Link="Linked/ChatScrollState.cs" />
     <None Include="../Views/Controls/NativeMarkdownView.cs" Link="Fixtures/NativeMarkdownView.cs.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
